@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="SaveTabs background.js" type="JavascriptDebugType" uri="chrome-extension://jnnlfckgpfafkiiefolamnaakfeepagh/background.js" useFirstLineBreakpoints="true">
+    <method v="2" />
+  </configuration>
+</component>

@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="openapi.yaml" type="DslRunConfigurationType" factoryName="DslRun">
+    <efsettings hostname="https://localhost" key="a8f87a86-7a23-4d79-a611-2236c2b1fea6" dslFile="$PROJECT_DIR$/restapi/openapi.yaml" />
+    <method v="2" />
+  </configuration>
+</component>

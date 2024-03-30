@@ -1,0 +1,201 @@
+openapi: 3.0.0
+info:
+  title: SaveTabs API
+  version: 1.0.0
+paths:
+  /my-endpoint:
+    post:
+      summary: Adds multiple resources
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourcesWithGroups'
+      responses:
+        '201':
+          $ref: '#/components/responses/IdResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /groups:
+    post:
+      summary: Adds a new group
+      description: >
+        This endpoint when POSTed to adds a new group to the database. 
+        The response will simply be the database's `group.id` property.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '201':
+          $ref: '#/components/responses/IdResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+
+  /groups/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdParameter'
+
+    get:
+      description: Returns a specific group
+      responses:
+        '200':
+          description: A group object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupWithId'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+
+    put:
+      summary: Updates a specific group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupWithId'
+      responses:
+        '200':
+          description: The group was updated
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+
+    delete:
+      summary: Deletes a specific group
+      responses:
+        '204':
+          description: The group was deleted
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+
+  /resources/with-groups:
+    post:
+      summary: Adds multiple resources
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourcesWithGroups'
+      responses:
+        '201':
+          description: The resources were created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IdObjects'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+
+components:
+  parameters:
+    IdParameter:
+      name: id
+      in: path
+      description: Primary key of database table
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+        format: int64
+
+  responses:
+    IdResponse:
+      description: A generic response containing a primary key Id in JSON format
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IdObject'
+    IdsResponse:
+      description: A generic response containing multiple primary key Ids in JSON format
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IdObjects'
+    UnexpectedError:
+      description: unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Id:
+      type: integer
+      format: int64
+      description: Primary key identifier
+    IdObject:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+    IdObjects:
+      type: array
+      items:
+        $ref: '#/components/schemas/IdObject'
+    Resource:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: false
+        url:
+          type: string
+          nullable: false
+    ResourceWithGroup:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          properties:
+            groupId:
+              type: integer
+              format: int64
+              nullable: false
+            group:
+              type: string
+              nullable: false
+            groupType:
+              type: string
+              nullable: false
+    ResourcesWithGroups:
+      type: array
+      items:
+        $ref: '#/components/schemas/ResourceWithGroup'
+    Group:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        name:
+          type: string
+        type:
+          type: string
+          enum: [category, tag, keyword, tab-group]
+    GroupWithId:
+      allOf:
+        - $ref: '#/components/schemas/Group'
+        - type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+              description: The unique identifier for the group
+    Error:
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message

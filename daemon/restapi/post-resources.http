@@ -1,0 +1,66 @@
+### Send POST request to add Resources with Groups
+POST http://localhost:8642/resources/with-groups
+Content-Type: application/json
+
+[
+   {
+      "groupId":   1,
+      "groupType": "tab-group",
+      "group":     "Search Engines",
+      "url":       "https://www.google.com/"
+   },
+   {
+      "groupId":   1,
+      "groupType": "tab-group",
+      "group":     "Search Engines",
+      "url":       "https://www.bing.com/"
+   },
+   {
+      "groupId":   2,
+      "groupType": "tab-group",
+      "group":     "Social Media",
+      "url":       "https://www.twitter.com/"
+   },
+   {
+      "groupId":   2,
+      "groupType": "tab-group",
+      "group":     "Social Media",
+      "url":       "https://www.facebook.com/"
+   },
+   {
+      "groupId":   3,
+      "groupType": "tab-group",
+      "group":     "Software",
+      "url":       "https://www.microsoft.com/en-us/"
+   },
+   {
+      "groupId":   3,
+      "groupType": "tab-group",
+      "group":     "Software",
+      "url":       "https://www.adobe.com/"
+   },
+   {
+      "groupId":   4,
+      "groupType": "tab-group",
+      "group":     "Stores",
+      "url":       "https://www.amazon.com/"
+   },
+   {
+      "groupId":   4,
+      "groupType": "tab-group",
+      "group":     "Stores",
+      "url":       "https://www.bestbuy.com/"
+   },
+   {
+      "groupId":   5,
+      "groupType": "tab-group",
+      "group":     "Hardware",
+      "url":       "https://www.apple.com/"
+   },
+   {
+      "groupId":   5,
+      "groupType": "tab-group",
+      "group":     "Hardware",
+      "url":       "https://www.dell.com/"
+   }
+]

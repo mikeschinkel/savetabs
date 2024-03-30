@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Tab List</title>
+   <style>
+      table {
+         width: 100%;
+         border-collapse: collapse;
+      }
+      th, td {
+         border: 1px solid black;
+         padding: 8px;
+      }
+      th#url-header {
+         text-align: left; /* Align text to the left */
+      }
+   </style>
+</head>
+<body>
+<table id="tabList">
+   <thead>
+   <tr>
+      <th>Window</th>
+      <th>Tab Group</th>
+      <th id="url-header">URL</th>
+   </tr>
+   </thead>
+   <tbody id="tabListBody"></tbody>
+</table>
+<script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+   "manifest_version": 3,
+   "name": "Tab Saver",
+   "version": "0.1",
+   "description": "Save tabs to external source",
+   "permissions": [
+      "tabs",
+      "tabGroups"
+   ],
+   "background": {
+      "service_worker": "./background.js",
+      "type": "module"
+   },
+   "action": {
+      "default_popup": "./popup.html",
+      "default_icon": {
+         "16": "./icons/savetabs-16.png",
+         "48": "./icons/savetabs-48.png",
+         "128": "./icons/savetabs-128.png"
+      }
+   },
+   "icons": {
+      "16": "./icons/savetabs-16.png",
+      "48": "./icons/savetabs-48.png",
+      "128": "./icons/savetabs-128.png"
+   }
+}
