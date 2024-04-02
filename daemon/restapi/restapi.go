@@ -48,7 +48,9 @@ func NewAPI(port string, s *swagger) *API {
 	// OpenAPI schema.
 	h := middleware.OapiRequestValidator(api.Swagger)(api.Mux)
 	// Use middleware to address CORS security
-	api.Handler = api.addCORSHeaders(h)
+	h = api.addCORSHeaders(h)
+	// Add authentication
+	api.Handler = requireAuth(h)
 	api.Server = &http.Server{
 		Handler: api.Handler,
 		Addr:    net.JoinHostPort("0.0.0.0", api.Port),
@@ -119,51 +121,6 @@ func (a *API) PostResourcesWithGroups(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) PostGroups(w http.ResponseWriter, r *http.Request) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (a *API) DeleteGroupsId(w http.ResponseWriter, r *http.Request, id IdParameter) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (a *API) GetGroupsId(w http.ResponseWriter, r *http.Request, id IdParameter) {
-	var gt sqlc.GroupType
-	var t GroupType
-
-	q := sqlc.GetQueries()
-	ctx := context.TODO()
-
-	g, err := q.LoadGroup(ctx, id)
-	if errors.Is(err, sql.ErrNoRows) {
-		sendError(w, http.StatusNotFound, fmt.Sprintf("group.id %d not found", id))
-		goto end
-	}
-	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
-		goto end
-	}
-
-	gt, err = q.LoadGroupType(ctx, g.Type)
-	t = GroupType(gt.Name.String)
-	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			sendError(w, http.StatusInternalServerError, err.Error())
-			goto end
-		}
-		// Not really an error, we just don't know the type
-		t = "Unknown"
-	}
-	sendSuccess(w, http.StatusOK, Group{
-		Id:   ptr(Id(id)),
-		Name: ptr(g.Name.String),
-		Type: ptr(t),
-	})
-end:
-}
-
-func (a *API) PutGroupsId(w http.ResponseWriter, r *http.Request, id IdParameter) {
 	//TODO implement me
 	panic("implement me")
 }

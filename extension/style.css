@@ -1,0 +1,33 @@
+body {
+    min-width: 50em;
+    min-height: 25em;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    border: 1px solid black;
+    padding: 8px;
+}
+th#url-header {
+    text-align: left; /* Align text to the left */
+}
+
+section {
+    padding: 2em;
+    margin: 2em;
+}
+#no-daemon-warning {
+    border: 1px solid red;
+   background-color: pink;
+}
+.extension-ui {
+    border: 1px solid grey;
+   background-color: aliceblue;
+}
+
+.hidden {
+    display: none; /* Initially hidden */
+}

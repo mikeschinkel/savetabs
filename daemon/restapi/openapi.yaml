@@ -1,81 +1,29 @@
 openapi: 3.0.0
 info:
-  title: SaveTabs API
+  title: SaveTabs Daemon API
   version: 1.0.0
 paths:
-  /my-endpoint:
-    post:
-      summary: Adds multiple resources
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ResourcesWithGroups'
-      responses:
-        '201':
-          $ref: '#/components/responses/IdResponse'
-        default:
-          $ref: '#/components/responses/UnexpectedError'
-  /groups:
-    post:
-      summary: Adds a new group
-      description: >
-        This endpoint when POSTed to adds a new group to the database. 
-        The response will simply be the database's `group.id` property.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Group'
-      responses:
-        '201':
-          $ref: '#/components/responses/IdResponse'
-        default:
-          $ref: '#/components/responses/UnexpectedError'
-
-  /groups/{id}:
-    parameters:
-      - $ref: '#/components/parameters/IdParameter'
-
+  /healthz:
     get:
-      description: Returns a specific group
+      summary: Health Check
+      description: Check the health status of SaveTabs daemon.
       responses:
         '200':
-          description: A group object
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GroupWithId'
-        default:
-          $ref: '#/components/responses/UnexpectedError'
-
-    put:
-      summary: Updates a specific group
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GroupWithId'
+          description: OK
+        '503':
+          description: Service Unavailable
+  /readyz:
+    get:
+      summary: Readiness Check
+      description: Check if SaveTabs daemon is ready to serve.
       responses:
         '200':
-          description: The group was updated
-        default:
-          $ref: '#/components/responses/UnexpectedError'
-
-    delete:
-      summary: Deletes a specific group
-      responses:
-        '204':
-          description: The group was deleted
-        default:
-          $ref: '#/components/responses/UnexpectedError'
-
+          description: OK
+        '503':
+          description: Service Unavailable
   /resources/with-groups:
     post:
-      summary: Adds multiple resources
+      summary: Adds multiple resources, each with group info
       requestBody:
         required: true
         content:
@@ -94,6 +42,71 @@ paths:
         default:
           $ref: '#/components/responses/UnexpectedError'
 
+#  /groups:
+#    post:
+#      summary: Adds a new group
+#      description: >
+#        This endpoint when POSTed to adds a new group to the database.
+#        The response will simply be the database's `group.id` property.
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/Group'
+#      responses:
+#        '201':
+#          $ref: '#/components/responses/IdResponse'
+#        default:
+#          $ref: '#/components/responses/UnexpectedError'
+#
+#  /groups/{id}:
+#    parameters:
+#      - $ref: '#/components/parameters/IdParameter'
+#
+#    get:
+#      description: Returns a specific group
+#      responses:
+#        '200':
+#          description: A group object
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/GroupWithId'
+#        default:
+#          $ref: '#/components/responses/UnexpectedError'
+#
+#    put:
+#      summary: Updates a specific group
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/GroupWithId'
+#      responses:
+#        '200':
+#          description: The group was updated
+#        default:
+#          $ref: '#/components/responses/UnexpectedError'
+#
+#    delete:
+#      summary: Deletes a specific group
+#      responses:
+#        '204':
+#          description: The group was deleted
+#        default:
+#          $ref: '#/components/responses/UnexpectedError'
+#
+jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
+#security:
+#  -
+servers:
+  -
+webhooks:
+externalDocs:
+tags:
+  -
 components:
   parameters:
     IdParameter:
@@ -177,7 +190,7 @@ components:
           type: string
         type:
           type: string
-          enum: [category, tag, keyword, tab-group]
+          enum: [ category, tag, keyword, tab-group ]
     GroupWithId:
       allOf:
         - $ref: '#/components/schemas/Group'
@@ -189,8 +202,8 @@ components:
               description: The unique identifier for the group
     Error:
       required:
-      - code
-      - message
+        - code
+        - message
       properties:
         code:
           type: integer

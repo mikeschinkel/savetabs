@@ -8,25 +8,17 @@ package restapi
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/oapi-codegen/runtime"
 )
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Adds a new group
-	// (POST /groups)
-	PostGroups(w http.ResponseWriter, r *http.Request)
-	// Deletes a specific group
-	// (DELETE /groups/{id})
-	DeleteGroupsId(w http.ResponseWriter, r *http.Request, id IdParameter)
-
-	// (GET /groups/{id})
-	GetGroupsId(w http.ResponseWriter, r *http.Request, id IdParameter)
-	// Updates a specific group
-	// (PUT /groups/{id})
-	PutGroupsId(w http.ResponseWriter, r *http.Request, id IdParameter)
-	// Adds multiple resources
+	// Health Check
+	// (GET /healthz)
+	GetHealthz(w http.ResponseWriter, r *http.Request)
+	// Readiness Check
+	// (GET /readyz)
+	GetReadyz(w http.ResponseWriter, r *http.Request)
+	// Adds multiple resources, each with group info
 	// (POST /resources/with-groups)
 	PostResourcesWithGroups(w http.ResponseWriter, r *http.Request)
 }
@@ -40,12 +32,12 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// PostGroups operation middleware
-func (siw *ServerInterfaceWrapper) PostGroups(w http.ResponseWriter, r *http.Request) {
+// GetHealthz operation middleware
+func (siw *ServerInterfaceWrapper) GetHealthz(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PostGroups(w, r)
+		siw.Handler.GetHealthz(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -55,75 +47,12 @@ func (siw *ServerInterfaceWrapper) PostGroups(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// DeleteGroupsId operation middleware
-func (siw *ServerInterfaceWrapper) DeleteGroupsId(w http.ResponseWriter, r *http.Request) {
+// GetReadyz operation middleware
+func (siw *ServerInterfaceWrapper) GetReadyz(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id IdParameter
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteGroupsId(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r.WithContext(ctx))
-}
-
-// GetGroupsId operation middleware
-func (siw *ServerInterfaceWrapper) GetGroupsId(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id IdParameter
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetGroupsId(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r.WithContext(ctx))
-}
-
-// PutGroupsId operation middleware
-func (siw *ServerInterfaceWrapper) PutGroupsId(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id IdParameter
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PutGroupsId(w, r, id)
+		siw.Handler.GetReadyz(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -262,10 +191,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc("POST "+options.BaseURL+"/groups", wrapper.PostGroups)
-	m.HandleFunc("DELETE "+options.BaseURL+"/groups/{id}", wrapper.DeleteGroupsId)
-	m.HandleFunc("GET "+options.BaseURL+"/groups/{id}", wrapper.GetGroupsId)
-	m.HandleFunc("PUT "+options.BaseURL+"/groups/{id}", wrapper.PutGroupsId)
+	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
+	m.HandleFunc("GET "+options.BaseURL+"/readyz", wrapper.GetReadyz)
 	m.HandleFunc("POST "+options.BaseURL+"/resources/with-groups", wrapper.PostResourcesWithGroups)
 
 	return m

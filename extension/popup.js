@@ -1,64 +1,39 @@
+const apiServerUrl = "http://localhost:8642"
+
+async function checkApiHealth(callback) {
+   const response = await fetch(`${apiServerUrl}/healthz`).catch( (_)=>{return {ok:false}})
+   callback(response.ok)
+}
+
+// Function to load content from API
+async function loadExtensionUiFromApi() {
+   return new Promise((resolve, reject) => {
+      let content;
+      fetch(`${apiServerUrl}/ui/home`)
+            .then(response => {
+               content = response.text();
+            })
+            .catch(reason => {
+               content = reason.text();
+            })
+      document.getElementById("content-section").innerHTML = content
+   })
+}
+function getFocusSection(isApiHealthy) {
+   return isApiHealthy
+      ? "extension-popup"
+      : "no-daemon-warning";
+}
+async function handleApiHealthCheck() {
+   await checkApiHealth(isApiHealthy => {
+      document.getElementById(getFocusSection(isApiHealthy)).style.display = "block";
+      document.getElementById(getFocusSection(!isApiHealthy)).style.display = "none";
+   });
+}
+
+// Call the function to handle API health check
 document.addEventListener('DOMContentLoaded', function () {
-  chrome.windows.getAll({ populate: true }, function (windows) {
-    var windowMap = {};
-    windows.forEach(function (window, index) {
-      windowMap[window.id] = `Window${index + 1}`;
-    });
-
-    chrome.tabs.query({}, function (tabs) {
-      var tabListBody = document.getElementById('tabListBody');
-      var tabGroupPromises = [];
-      var noTabGroupUrls = [];
-
-      tabs.forEach(function (tab) {
-        var windowName = windowMap[tab.windowId] || 'Unknown';
-
-        var promise = new Promise(function(resolve, reject) {
-          if (tab.groupId !== -1) {
-            chrome.tabGroups.get(tab.groupId, function(tabGroup) {
-              resolve({ windowName: windowName, tabGroup: tabGroup ? tabGroup.title : '<none>', url: tab.url });
-            });
-          } else {
-            noTabGroupUrls.push({ windowName: windowName, url: tab.url });
-            resolve(null);
-          }
-        });
-
-        tabGroupPromises.push(promise);
-      });
-
-      Promise.all(tabGroupPromises).then(function(tabGroupData) {
-        // Populate the table with URLs without a TabGroup
-        noTabGroupUrls.forEach(function(data) {
-          var row = document.createElement('tr');
-          row.innerHTML = `<td>${data.windowName}</td><td><none></td><td>${data.url}</td>`;
-          tabListBody.appendChild(row);
-        });
-
-        var groupedUrls = {};
-
-        // Group URLs by TabGroup
-        tabGroupData.forEach(function(data) {
-          if (data) {
-            if (!groupedUrls[data.tabGroup]) {
-              groupedUrls[data.tabGroup] = [];
-            }
-            groupedUrls[data.tabGroup].push({ windowName: data.windowName, url: data.url });
-          }
-        });
-
-        // Populate the table with grouped URLs
-        for (var tabGroup in groupedUrls) {
-          var urls = groupedUrls[tabGroup];
-          urls.forEach(function(data) {
-            var row = document.createElement('tr');
-            row.innerHTML = `<td>${data.windowName}</td><td>${tabGroup}</td><td>${data.url}</td>`;
-            tabListBody.appendChild(row);
-          });
-        }
-      });
-    });
-  });
+   _ = handleApiHealthCheck();
+   intervalHandle = setInterval(handleApiHealthCheck, 5000)
 });
-
 

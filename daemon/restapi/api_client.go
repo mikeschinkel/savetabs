@@ -12,8 +12,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/oapi-codegen/runtime"
 )
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -89,21 +87,11 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// PostGroupsWithBody request with any body
-	PostGroupsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetHealthz request
+	GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostGroups(ctx context.Context, body PostGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// DeleteGroupsId request
-	DeleteGroupsId(ctx context.Context, id IdParameter, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetGroupsId request
-	GetGroupsId(ctx context.Context, id IdParameter, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// PutGroupsIdWithBody request with any body
-	PutGroupsIdWithBody(ctx context.Context, id IdParameter, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	PutGroupsId(ctx context.Context, id IdParameter, body PutGroupsIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetReadyz request
+	GetReadyz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostResourcesWithGroupsWithBody request with any body
 	PostResourcesWithGroupsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -111,8 +99,8 @@ type ClientInterface interface {
 	PostResourcesWithGroups(ctx context.Context, body PostResourcesWithGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) PostGroupsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostGroupsRequestWithBody(c.Server, contentType, body)
+func (c *Client) GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHealthzRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -123,56 +111,8 @@ func (c *Client) PostGroupsWithBody(ctx context.Context, contentType string, bod
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostGroups(ctx context.Context, body PostGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostGroupsRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) DeleteGroupsId(ctx context.Context, id IdParameter, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteGroupsIdRequest(c.Server, id)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetGroupsId(ctx context.Context, id IdParameter, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetGroupsIdRequest(c.Server, id)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) PutGroupsIdWithBody(ctx context.Context, id IdParameter, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutGroupsIdRequestWithBody(c.Server, id, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) PutGroupsId(ctx context.Context, id IdParameter, body PutGroupsIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutGroupsIdRequest(c.Server, id, body)
+func (c *Client) GetReadyz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetReadyzRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -207,19 +147,8 @@ func (c *Client) PostResourcesWithGroups(ctx context.Context, body PostResources
 	return c.Client.Do(req)
 }
 
-// NewPostGroupsRequest calls the generic PostGroups builder with application/json body
-func NewPostGroupsRequest(server string, body PostGroupsJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewPostGroupsRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewPostGroupsRequestWithBody generates requests for PostGroups with any type of body
-func NewPostGroupsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewGetHealthzRequest generates requests for GetHealthz
+func NewGetHealthzRequest(server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -227,77 +156,7 @@ func NewPostGroupsRequestWithBody(server string, contentType string, body io.Rea
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/groups")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewDeleteGroupsIdRequest generates requests for DeleteGroupsId
-func NewDeleteGroupsIdRequest(server string, id IdParameter) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/groups/%s", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetGroupsIdRequest generates requests for GetGroupsId
-func NewGetGroupsIdRequest(server string, id IdParameter) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/groups/%s", pathParam0)
+	operationPath := fmt.Sprintf("/healthz")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -315,34 +174,16 @@ func NewGetGroupsIdRequest(server string, id IdParameter) (*http.Request, error)
 	return req, nil
 }
 
-// NewPutGroupsIdRequest calls the generic PutGroupsId builder with application/json body
-func NewPutGroupsIdRequest(server string, id IdParameter, body PutGroupsIdJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewPutGroupsIdRequestWithBody(server, id, "application/json", bodyReader)
-}
-
-// NewPutGroupsIdRequestWithBody generates requests for PutGroupsId with any type of body
-func NewPutGroupsIdRequestWithBody(server string, id IdParameter, contentType string, body io.Reader) (*http.Request, error) {
+// NewGetReadyzRequest generates requests for GetReadyz
+func NewGetReadyzRequest(server string) (*http.Request, error) {
 	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
-	if err != nil {
-		return nil, err
-	}
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/groups/%s", pathParam0)
+	operationPath := fmt.Sprintf("/readyz")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -352,12 +193,10 @@ func NewPutGroupsIdRequestWithBody(server string, id IdParameter, contentType st
 		return nil, err
 	}
 
-	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -445,21 +284,11 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// PostGroupsWithBodyWithResponse request with any body
-	PostGroupsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostGroupsResponse, error)
+	// GetHealthzWithResponse request
+	GetHealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthzResponse, error)
 
-	PostGroupsWithResponse(ctx context.Context, body PostGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostGroupsResponse, error)
-
-	// DeleteGroupsIdWithResponse request
-	DeleteGroupsIdWithResponse(ctx context.Context, id IdParameter, reqEditors ...RequestEditorFn) (*DeleteGroupsIdResponse, error)
-
-	// GetGroupsIdWithResponse request
-	GetGroupsIdWithResponse(ctx context.Context, id IdParameter, reqEditors ...RequestEditorFn) (*GetGroupsIdResponse, error)
-
-	// PutGroupsIdWithBodyWithResponse request with any body
-	PutGroupsIdWithBodyWithResponse(ctx context.Context, id IdParameter, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutGroupsIdResponse, error)
-
-	PutGroupsIdWithResponse(ctx context.Context, id IdParameter, body PutGroupsIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutGroupsIdResponse, error)
+	// GetReadyzWithResponse request
+	GetReadyzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetReadyzResponse, error)
 
 	// PostResourcesWithGroupsWithBodyWithResponse request with any body
 	PostResourcesWithGroupsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostResourcesWithGroupsResponse, error)
@@ -467,15 +296,13 @@ type ClientWithResponsesInterface interface {
 	PostResourcesWithGroupsWithResponse(ctx context.Context, body PostResourcesWithGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostResourcesWithGroupsResponse, error)
 }
 
-type PostGroupsResponse struct {
+type GetHealthzResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *IdResponse
-	JSONDefault  *UnexpectedError
 }
 
 // Status returns HTTPResponse.Status
-func (r PostGroupsResponse) Status() string {
+func (r GetHealthzResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -483,21 +310,20 @@ func (r PostGroupsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostGroupsResponse) StatusCode() int {
+func (r GetHealthzResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type DeleteGroupsIdResponse struct {
+type GetReadyzResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *UnexpectedError
 }
 
 // Status returns HTTPResponse.Status
-func (r DeleteGroupsIdResponse) Status() string {
+func (r GetReadyzResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -505,52 +331,7 @@ func (r DeleteGroupsIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r DeleteGroupsIdResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type GetGroupsIdResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *GroupWithId
-	JSONDefault  *UnexpectedError
-}
-
-// Status returns HTTPResponse.Status
-func (r GetGroupsIdResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetGroupsIdResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type PutGroupsIdResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSONDefault  *UnexpectedError
-}
-
-// Status returns HTTPResponse.Status
-func (r PutGroupsIdResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r PutGroupsIdResponse) StatusCode() int {
+func (r GetReadyzResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -580,56 +361,22 @@ func (r PostResourcesWithGroupsResponse) StatusCode() int {
 	return 0
 }
 
-// PostGroupsWithBodyWithResponse request with arbitrary body returning *PostGroupsResponse
-func (c *ClientWithResponses) PostGroupsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostGroupsResponse, error) {
-	rsp, err := c.PostGroupsWithBody(ctx, contentType, body, reqEditors...)
+// GetHealthzWithResponse request returning *GetHealthzResponse
+func (c *ClientWithResponses) GetHealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthzResponse, error) {
+	rsp, err := c.GetHealthz(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostGroupsResponse(rsp)
+	return ParseGetHealthzResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostGroupsWithResponse(ctx context.Context, body PostGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostGroupsResponse, error) {
-	rsp, err := c.PostGroups(ctx, body, reqEditors...)
+// GetReadyzWithResponse request returning *GetReadyzResponse
+func (c *ClientWithResponses) GetReadyzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetReadyzResponse, error) {
+	rsp, err := c.GetReadyz(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostGroupsResponse(rsp)
-}
-
-// DeleteGroupsIdWithResponse request returning *DeleteGroupsIdResponse
-func (c *ClientWithResponses) DeleteGroupsIdWithResponse(ctx context.Context, id IdParameter, reqEditors ...RequestEditorFn) (*DeleteGroupsIdResponse, error) {
-	rsp, err := c.DeleteGroupsId(ctx, id, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseDeleteGroupsIdResponse(rsp)
-}
-
-// GetGroupsIdWithResponse request returning *GetGroupsIdResponse
-func (c *ClientWithResponses) GetGroupsIdWithResponse(ctx context.Context, id IdParameter, reqEditors ...RequestEditorFn) (*GetGroupsIdResponse, error) {
-	rsp, err := c.GetGroupsId(ctx, id, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetGroupsIdResponse(rsp)
-}
-
-// PutGroupsIdWithBodyWithResponse request with arbitrary body returning *PutGroupsIdResponse
-func (c *ClientWithResponses) PutGroupsIdWithBodyWithResponse(ctx context.Context, id IdParameter, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutGroupsIdResponse, error) {
-	rsp, err := c.PutGroupsIdWithBody(ctx, id, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePutGroupsIdResponse(rsp)
-}
-
-func (c *ClientWithResponses) PutGroupsIdWithResponse(ctx context.Context, id IdParameter, body PutGroupsIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutGroupsIdResponse, error) {
-	rsp, err := c.PutGroupsId(ctx, id, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePutGroupsIdResponse(rsp)
+	return ParseGetReadyzResponse(rsp)
 }
 
 // PostResourcesWithGroupsWithBodyWithResponse request with arbitrary body returning *PostResourcesWithGroupsResponse
@@ -649,119 +396,33 @@ func (c *ClientWithResponses) PostResourcesWithGroupsWithResponse(ctx context.Co
 	return ParsePostResourcesWithGroupsResponse(rsp)
 }
 
-// ParsePostGroupsResponse parses an HTTP response from a PostGroupsWithResponse call
-func ParsePostGroupsResponse(rsp *http.Response) (*PostGroupsResponse, error) {
+// ParseGetHealthzResponse parses an HTTP response from a GetHealthzWithResponse call
+func ParseGetHealthzResponse(rsp *http.Response) (*GetHealthzResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostGroupsResponse{
+	response := &GetHealthzResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest IdResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON201 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSONDefault = &dest
-
 	}
 
 	return response, nil
 }
 
-// ParseDeleteGroupsIdResponse parses an HTTP response from a DeleteGroupsIdWithResponse call
-func ParseDeleteGroupsIdResponse(rsp *http.Response) (*DeleteGroupsIdResponse, error) {
+// ParseGetReadyzResponse parses an HTTP response from a GetReadyzWithResponse call
+func ParseGetReadyzResponse(rsp *http.Response) (*GetReadyzResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &DeleteGroupsIdResponse{
+	response := &GetReadyzResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSONDefault = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseGetGroupsIdResponse parses an HTTP response from a GetGroupsIdWithResponse call
-func ParseGetGroupsIdResponse(rsp *http.Response) (*GetGroupsIdResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetGroupsIdResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GroupWithId
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSONDefault = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParsePutGroupsIdResponse parses an HTTP response from a PutGroupsIdWithResponse call
-func ParsePutGroupsIdResponse(rsp *http.Response) (*PutGroupsIdResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &PutGroupsIdResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSONDefault = &dest
-
 	}
 
 	return response, nil

@@ -28,17 +28,6 @@ export function setChromeObject(chromeObj) {
    chrome = chromeObj;
 }
 
-export function getChromeObject() {
-   return chrome;
-}
-
-const chromeUrlsRegex = /^(chrome(-\w+)?):\/\//;
-function rejectUrl(url,groupId){
-   if (url.match(chromeUrlsRegex)) {
-      return true;
-   }
-   return resourceSubmittedRecently(url, groupId);
-}
 export function getTabGroupResources(tabGroup) {
    return new Promise((resolve, reject) => {
       chrome.tabs.query({ groupId: tabGroup.id }, tabs => {
@@ -108,15 +97,27 @@ export async function getAllResources() {
    }
 }
 
+export function addRecentlySubmittedResources(resources) {
+   let d = new Date();
+   resources.forEach(r => {
+      recentlySubmittedResources[urlKey(r.url,r.groupId)] = d;
+   })
+}
+
+const chromeUrlsRegex = /^(chrome(-\w+)?):\/\//;
+function rejectUrl(url,groupId){
+   if (url.match(chromeUrlsRegex)) {
+      return true;
+   }
+   return resourceSubmittedRecently(url, groupId);
+}
+
 function urlKey(url,groupId) {
    return `${url}[${groupId}]`
 }
 
 let recentlySubmittedResources = {};
-/*
-resourceSubmittedRecently checks to see if a URL + groupId has been submitted within the past hour.
-SIDE EFFECT!!!: If not submitted in past hour it adds to the list of URLs submitted
- */
+// resourceSubmittedRecently checks to see if a URL + groupId has been submitted within the past hour.
 function resourceSubmittedRecently(url,groupId) {
    let key = urlKey(url,groupId)
    if (!recentlySubmittedResources.hasOwnProperty(key)) {
@@ -129,9 +130,4 @@ function resourceSubmittedRecently(url,groupId) {
    return hours < 1;
 }
 
-export function addRecentlySubmittedResources(resources) {
-   let d = new Date();
-   resources.forEach(r => {
-      recentlySubmittedResources[urlKey(r.url,r.groupId)] = d;
-   })
-}
+
