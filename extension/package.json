@@ -1,0 +1,30 @@
+{
+  "name": "savetabs-chrome-extension",
+  "version": "0.1.0",
+  "description": "SaveTabs Chrome Extension ensures you never loose your Chrome tab history again",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+  },
+  "keywords": [
+    "chrome-extension",
+    "tabs",
+    "tab-groups",
+    "urls",
+    "resources",
+    "sqlite"
+  ],
+  "author": "Mike Schinkel",
+  "license": "FSL-1.1-Apache-2.0",
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "daisyui": "^4.10.1",
+    "postcss": "^8.4.38",
+    "postcss-cli": "^11.0.0",
+    "tailwindcss": "^3.4.3"
+  },
+  "dependencies": {
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/typography": "^0.5.12"
+  }
+}

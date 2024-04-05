@@ -35,5 +35,17 @@ async function handleApiHealthCheck() {
 document.addEventListener('DOMContentLoaded', function () {
    _ = handleApiHealthCheck();
    intervalHandle = setInterval(handleApiHealthCheck, 5000)
+
+   document.addEventListener('click', function(event) {
+      const target = event.target;
+      if (target.tagName !== 'BUTTON') {
+         return
+      }
+      if (!target.hasAttribute('data-href')) {
+         return
+      }
+      chrome.tabs.create({url: target.getAttribute('data-href')});
+   });
 });
+
 

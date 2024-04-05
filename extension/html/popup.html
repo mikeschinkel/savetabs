@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>SaveTabs UI</title>
+   <link rel="stylesheet" type="text/css" href="styles/dist.css" />
+   <script src="scripts/htmx-1.9.11.min.js" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="min-w-80 max-w-80 p-4">
+   <section class="hero bg-base-200">
+      <div class="hero-content text-center">
+         <div id="no-daemon-warning" class="hidden extension-ui">
+            <h1 class="text-3xl font-bold">SaveTabs</h1>
+            <p>It appears your privacy-first <strong>SaveTabs local daemon</strong> is not installed, not running, or maybe there is some other issue.</p>
+            <button class="btn btn-primary">Troubleshoot</button>
+         </div>
+         <div id="extension-popup"  class="hidden extension-ui">
+            <h1 class="text-3xl font-bold"><img src="assets/savetabs-48.png" alt="SaveTabs Icon" class="size-8 inline"/> SaveTabs</h1>
+            <p class="m-4">The extension's popup UI goes here.</p>
+            <div class="grid grid-cols-2 gap-6 place-content-center w-full">
+               <button class="btn btn-primary btn-sm" data-href="/html/browse.html">Browse</button>
+               <button class="btn btn-primary btn-sm">Settings</button>
+            </div>
+         </div>
+      </div>
+   </section>
+<script src="scripts/popup.js"></script>
+</body>
+</html>
