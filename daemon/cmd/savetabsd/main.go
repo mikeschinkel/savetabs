@@ -16,6 +16,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"savetabs/restapi"
 	"savetabs/sqlc"
+	"savetabs/ui"
 )
 
 const (
@@ -55,6 +56,12 @@ func runServer(port *string) (err error) {
 	// Clear out the servers array in the swagger spec, that skips validating
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
+
+	err = ui.Initialize(ctx, ds)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error initializing UI: %s", err)
+		os.Exit(2)
+	}
 
 	api = restapi.NewAPI(*port, swagger)
 	err = api.ListenAndServe()

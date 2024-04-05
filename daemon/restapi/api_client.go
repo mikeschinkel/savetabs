@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -90,6 +92,12 @@ type ClientInterface interface {
 	// GetHealthz request
 	GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetHtmlBrowse request
+	GetHtmlBrowse(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetHtmlGroupTypesTypeNameGroups request
+	GetHtmlGroupTypesTypeNameGroups(ctx context.Context, typeName GroupTypeName, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetReadyz request
 	GetReadyz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -101,6 +109,30 @@ type ClientInterface interface {
 
 func (c *Client) GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetHealthzRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetHtmlBrowse(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHtmlBrowseRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetHtmlGroupTypesTypeNameGroups(ctx context.Context, typeName GroupTypeName, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHtmlGroupTypesTypeNameGroupsRequest(c.Server, typeName)
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +189,67 @@ func NewGetHealthzRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/healthz")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetHtmlBrowseRequest generates requests for GetHtmlBrowse
+func NewGetHtmlBrowseRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/html/browse")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetHtmlGroupTypesTypeNameGroupsRequest generates requests for GetHtmlGroupTypesTypeNameGroups
+func NewGetHtmlGroupTypesTypeNameGroupsRequest(server string, typeName GroupTypeName) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "typeName", runtime.ParamLocationPath, typeName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/html/group-types/%s/groups", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -287,6 +380,12 @@ type ClientWithResponsesInterface interface {
 	// GetHealthzWithResponse request
 	GetHealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthzResponse, error)
 
+	// GetHtmlBrowseWithResponse request
+	GetHtmlBrowseWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHtmlBrowseResponse, error)
+
+	// GetHtmlGroupTypesTypeNameGroupsWithResponse request
+	GetHtmlGroupTypesTypeNameGroupsWithResponse(ctx context.Context, typeName GroupTypeName, reqEditors ...RequestEditorFn) (*GetHtmlGroupTypesTypeNameGroupsResponse, error)
+
 	// GetReadyzWithResponse request
 	GetReadyzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetReadyzResponse, error)
 
@@ -311,6 +410,48 @@ func (r GetHealthzResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetHealthzResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetHtmlBrowseResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetHtmlBrowseResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetHtmlBrowseResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetHtmlGroupTypesTypeNameGroupsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetHtmlGroupTypesTypeNameGroupsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetHtmlGroupTypesTypeNameGroupsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -370,6 +511,24 @@ func (c *ClientWithResponses) GetHealthzWithResponse(ctx context.Context, reqEdi
 	return ParseGetHealthzResponse(rsp)
 }
 
+// GetHtmlBrowseWithResponse request returning *GetHtmlBrowseResponse
+func (c *ClientWithResponses) GetHtmlBrowseWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHtmlBrowseResponse, error) {
+	rsp, err := c.GetHtmlBrowse(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetHtmlBrowseResponse(rsp)
+}
+
+// GetHtmlGroupTypesTypeNameGroupsWithResponse request returning *GetHtmlGroupTypesTypeNameGroupsResponse
+func (c *ClientWithResponses) GetHtmlGroupTypesTypeNameGroupsWithResponse(ctx context.Context, typeName GroupTypeName, reqEditors ...RequestEditorFn) (*GetHtmlGroupTypesTypeNameGroupsResponse, error) {
+	rsp, err := c.GetHtmlGroupTypesTypeNameGroups(ctx, typeName, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetHtmlGroupTypesTypeNameGroupsResponse(rsp)
+}
+
 // GetReadyzWithResponse request returning *GetReadyzResponse
 func (c *ClientWithResponses) GetReadyzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetReadyzResponse, error) {
 	rsp, err := c.GetReadyz(ctx, reqEditors...)
@@ -405,6 +564,38 @@ func ParseGetHealthzResponse(rsp *http.Response) (*GetHealthzResponse, error) {
 	}
 
 	response := &GetHealthzResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetHtmlBrowseResponse parses an HTTP response from a GetHtmlBrowseWithResponse call
+func ParseGetHtmlBrowseResponse(rsp *http.Response) (*GetHtmlBrowseResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetHtmlBrowseResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetHtmlGroupTypesTypeNameGroupsResponse parses an HTTP response from a GetHtmlGroupTypesTypeNameGroupsWithResponse call
+func ParseGetHtmlGroupTypesTypeNameGroupsResponse(rsp *http.Response) (*GetHtmlGroupTypesTypeNameGroupsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetHtmlGroupTypesTypeNameGroupsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

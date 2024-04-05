@@ -42,6 +42,9 @@ type ResourceWithGroup struct {
 // ResourcesWithGroups defines model for ResourcesWithGroups.
 type ResourcesWithGroups = []ResourceWithGroup
 
+// GroupTypeName defines model for GroupTypeName.
+type GroupTypeName = string
+
 // UnexpectedError defines model for UnexpectedError.
 type UnexpectedError = Error
 

@@ -24,14 +24,6 @@ CREATE TABLE IF NOT EXISTS history
 )
 ;
 
-CREATE TABLE IF NOT EXISTS group_type
-(
-   type        CHAR(1) PRIMARY KEY,
-   name        VARCHAR(32),
-   description VARCHAR(128)
-)
-;
-
 CREATE TABLE IF NOT EXISTS key_value
 (
    id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,29 +51,30 @@ END
 
 
 
+CREATE TABLE IF NOT EXISTS group_type
+(
+   type        CHAR(1) PRIMARY KEY,
+   sort        INTEGER,
+   name        VARCHAR(32),
+   description VARCHAR(128)
+)
+;
+
 DELETE FROM group_type WHERE 1=1
 ;
 
 DELETE FROM sqlite_sequence WHERE name = 'group_type'
 ;
 
-WITH types(type, name, description) AS (
-   VALUES
-      ('C', 'Category', 'AI-generated top-level categorization'),
-      ('K', 'Keyword', 'AI-generated notable tags for resource content'),
-      ('T', 'Tag', 'Human-specified keywords for resource content'),
-      ('G', 'TabGroup', 'Browser''s name for the containing Tab Group'),
-      ('I', 'Invalid', 'Unspecified or not a valid group type')
-   )
 INSERT
 INTO group_type
-   (type, name, description)
-SELECT
-   type,
-   name,
-   description
-FROM
-   types
+   (sort, type, name, description)
+VALUES
+   (1, 'G', 'TabGroup', 'Browser''s name for the containing Tab Group'),
+   (2, 'T', 'Tag', 'Human-specified keywords for resource content'),
+   (3, 'C', 'Category', 'AI-generated top-level categorization'),
+   (4, 'K', 'Keyword', 'AI-generated notable tags for resource content'),
+   (5, 'I', 'Invalid', 'Unspecified or not a valid group type')
 ;
 
 CREATE TABLE IF NOT EXISTS `group`
@@ -96,6 +89,8 @@ CREATE TABLE IF NOT EXISTS `group`
    UNIQUE (name, type)
 )
 ;
+DROP INDEX IF EXISTS idx_group__type;
+CREATE INDEX idx_group__type ON `group`(type);
 
 CREATE TRIGGER IF NOT EXISTS update_group_latest
    AFTER UPDATE
@@ -110,8 +105,25 @@ CREATE TABLE IF NOT EXISTS resource_group
 (
    group_id    INTEGER,
    resource_id INTEGER,
+   created_time TEXT GENERATED ALWAYS AS (DATETIME(created, 'unixepoch')) VIRTUAL,
+   latest_time  TEXT GENERATED ALWAYS AS (DATETIME(latest, 'unixepoch')) VIRTUAL,
+   created      INTEGER DEFAULT (STRFTIME('%s', 'now')),
+   latest       INTEGER DEFAULT (STRFTIME('%s', 'now')),
    UNIQUE (group_id, resource_id)
 )
+;
+
+CREATE TRIGGER IF NOT EXISTS update_resource_group_latest
+   AFTER UPDATE
+   ON resource_group
+   FOR EACH ROW
+BEGIN
+   UPDATE resource_group
+   SET latest = STRFTIME('%s', 'now')
+   WHERE 1=1
+      AND group_id = old.group_id
+      AND resource_id = old.resource_id;
+END
 ;
 
 CREATE TABLE IF NOT EXISTS resource
@@ -134,4 +146,26 @@ BEGIN
 END
 ;
 
+--=======================================================================--
+-- VIEWS BELOW
+--=======================================================================--
+DROP VIEW IF EXISTS groups_with_counts;
 
+CREATE VIEW groups_with_counts AS
+SELECT
+   g.id,
+   COUNT(*) AS resource_count,
+   g.name,
+   g.type,
+   gt.name AS type_name
+FROM `group` g
+  JOIN resource_group rg ON rg.group_id=g.id
+  JOIN group_type gt ON gt.type=g.type
+GROUP BY
+   g.id,
+   g.name,
+   gt.name
+ORDER BY
+   gt.name,
+   iif(g.name='<none>',0,1),
+   g.name;

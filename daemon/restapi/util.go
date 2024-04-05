@@ -20,8 +20,22 @@ func sendError(w http.ResponseWriter, code int, message string) {
 	_ = json.NewEncoder(w).Encode(petErr)
 }
 
-// sendSuccess sends a success code and json encoded content
-func sendSuccess(w http.ResponseWriter, code int, content any) {
+// sendJSON sends a success code and json encoded content
+func sendJSON(w http.ResponseWriter, code int, content any) {
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(content)
+}
+
+// sendHTML sends a success code of 200 and the HTML content provided
+func sendHTML(w http.ResponseWriter, html []byte) {
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(html)
+}
+
+func deleteElement[T any](slice []T, index int) []T {
+	// Copy the elements following the index one position to the left.
+	copy(slice[index:], slice[index+1:])
+	// Return the slice without the last element.
+	return slice[:len(slice)-1]
 }

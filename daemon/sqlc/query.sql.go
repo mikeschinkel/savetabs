@@ -19,38 +19,127 @@ func (q *Queries) DeleteVar(ctx context.Context, id int64) error {
 	return err
 }
 
-const listGroup = `-- name: ListGroup :one
-SELECT id, name, type, created_time, latest_time, created, latest FROM ` + "`" + `group` + "`" + ` ORDER BY latest DESC
+const listGroupsType = `-- name: ListGroupsType :many
+SELECT DISTINCT
+   gt.type,
+   gt.name,
+   CASE WHEN g.ID IS NULL THEN 0
+      ELSE COUNT(*) END AS resource_count,
+   gt.sort
+FROM group_type gt
+   LEFT JOIN ` + "`" + `group` + "`" + ` g ON gt.type=g.type
+   LEFT JOIN resource_group rg ON g.id=rg.group_id
+GROUP BY
+   gt.sort,
+   gt.type,
+   gt.name
+ORDER BY
+   gt.sort
 `
 
-func (q *Queries) ListGroup(ctx context.Context) (Group, error) {
-	row := q.db.QueryRowContext(ctx, listGroup)
-	var i Group
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Type,
-		&i.CreatedTime,
-		&i.LatestTime,
-		&i.Created,
-		&i.Latest,
-	)
-	return i, err
+type ListGroupsTypeRow struct {
+	Type          interface{}    `json:"type"`
+	Name          sql.NullString `json:"name"`
+	ResourceCount interface{}    `json:"resource_count"`
+	Sort          sql.NullInt64  `json:"sort"`
 }
 
-const listGroupType = `-- name: ListGroupType :one
-SELECT type, name, description FROM group_type ORDER BY name DESC
+func (q *Queries) ListGroupsType(ctx context.Context) ([]ListGroupsTypeRow, error) {
+	rows, err := q.db.QueryContext(ctx, listGroupsType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListGroupsTypeRow
+	for rows.Next() {
+		var i ListGroupsTypeRow
+		if err := rows.Scan(
+			&i.Type,
+			&i.Name,
+			&i.ResourceCount,
+			&i.Sort,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGroupsWithCounts = `-- name: ListGroupsWithCounts :many
+SELECT id, resource_count, name, type, type_name FROM groups_with_counts
 `
 
-func (q *Queries) ListGroupType(ctx context.Context) (GroupType, error) {
-	row := q.db.QueryRowContext(ctx, listGroupType)
-	var i GroupType
-	err := row.Scan(&i.Type, &i.Name, &i.Description)
-	return i, err
+func (q *Queries) ListGroupsWithCounts(ctx context.Context) ([]GroupsWithCount, error) {
+	rows, err := q.db.QueryContext(ctx, listGroupsWithCounts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GroupsWithCount
+	for rows.Next() {
+		var i GroupsWithCount
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResourceCount,
+			&i.Name,
+			&i.Type,
+			&i.TypeName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGroupsWithCountsByGroupType = `-- name: ListGroupsWithCountsByGroupType :many
+SELECT id, resource_count, name, type, type_name FROM groups_with_counts WHERE type = ?
+`
+
+func (q *Queries) ListGroupsWithCountsByGroupType(ctx context.Context, type_ interface{}) ([]GroupsWithCount, error) {
+	rows, err := q.db.QueryContext(ctx, listGroupsWithCountsByGroupType, type_)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GroupsWithCount
+	for rows.Next() {
+		var i GroupsWithCount
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResourceCount,
+			&i.Name,
+			&i.Type,
+			&i.TypeName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listKeyValues = `-- name: ListKeyValues :many
-SELECT id, resource_id, "key", value, created_time, updated_time, created, modified FROM key_value ORDER BY resource_id,key DESC
+SELECT id, resource_id, "key", value, created_time, modified_time, created, modified FROM key_value ORDER BY resource_id,key DESC
 `
 
 func (q *Queries) ListKeyValues(ctx context.Context) ([]KeyValue, error) {
@@ -68,7 +157,7 @@ func (q *Queries) ListKeyValues(ctx context.Context) ([]KeyValue, error) {
 			&i.Key,
 			&i.Value,
 			&i.CreatedTime,
-			&i.UpdatedTime,
+			&i.ModifiedTime,
 			&i.Created,
 			&i.Modified,
 		); err != nil {
@@ -139,13 +228,18 @@ func (q *Queries) LoadGroup(ctx context.Context, id int64) (Group, error) {
 }
 
 const loadGroupType = `-- name: LoadGroupType :one
-SELECT type, name, description FROM group_type WHERE type = ? LIMIT 1
+SELECT type, sort, name, description FROM group_type WHERE type = ? LIMIT 1
 `
 
 func (q *Queries) LoadGroupType(ctx context.Context, type_ interface{}) (GroupType, error) {
 	row := q.db.QueryRowContext(ctx, loadGroupType, type_)
 	var i GroupType
-	err := row.Scan(&i.Type, &i.Name, &i.Description)
+	err := row.Scan(
+		&i.Type,
+		&i.Sort,
+		&i.Name,
+		&i.Description,
+	)
 	return i, err
 }
 
@@ -202,6 +296,26 @@ WHERE var.id = ?
 
 func (q *Queries) UpsertKeyValuesFromVarJSON(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, upsertKeyValuesFromVarJSON, id)
+	return err
+}
+
+const upsertResourceGroupsFromVarJSON = `-- name: UpsertResourceGroupsFromVarJSON :exec
+INSERT INTO resource_group (group_id, resource_id)
+SELECT g.id, r.id
+FROM var
+   JOIN json_each( var.value ) j ON var.key='json'
+   JOIN resource r ON r.url=json_extract(j.value,'$.resource_url')
+   JOIN ` + "`" + `group` + "`" + ` g ON 1=1
+      AND g.name=json_extract(j.value,'$.group_name')
+      AND g.type=json_extract(j.value,'$.group_type')
+WHERE var.id = ?
+ON CONFLICT (group_id, resource_id)
+   DO UPDATE
+            SET latest = strftime('%s','now')
+`
+
+func (q *Queries) UpsertResourceGroupsFromVarJSON(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, upsertResourceGroupsFromVarJSON, id)
 	return err
 }
 

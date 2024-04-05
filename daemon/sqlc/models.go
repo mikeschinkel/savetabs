@@ -25,8 +25,17 @@ type Group struct {
 
 type GroupType struct {
 	Type        interface{}    `json:"type"`
+	Sort        sql.NullInt64  `json:"sort"`
 	Name        sql.NullString `json:"name"`
 	Description sql.NullString `json:"description"`
+}
+
+type GroupsWithCount struct {
+	ID            int64          `json:"id"`
+	ResourceCount int64          `json:"resource_count"`
+	Name          sql.NullString `json:"name"`
+	Type          interface{}    `json:"type"`
+	TypeName      sql.NullString `json:"type_name"`
 }
 
 type History struct {
@@ -35,6 +44,17 @@ type History struct {
 	DateTime   sql.NullInt64 `json:"date_time"`
 	ActionID   sql.NullInt64 `json:"action_id"`
 	ActionData []byte        `json:"action_data"`
+}
+
+type KeyValue struct {
+	ID           int64          `json:"id"`
+	ResourceID   sql.NullInt64  `json:"resource_id"`
+	Key          sql.NullString `json:"key"`
+	Value        sql.NullString `json:"value"`
+	CreatedTime  sql.NullString `json:"created_time"`
+	ModifiedTime sql.NullString `json:"modified_time"`
+	Created      sql.NullInt64  `json:"created"`
+	Modified     sql.NullInt64  `json:"modified"`
 }
 
 type Resource struct {
@@ -47,19 +67,12 @@ type Resource struct {
 }
 
 type ResourceGroup struct {
-	GroupID    sql.NullInt64 `json:"group_id"`
-	ResourceID sql.NullInt64 `json:"resource_id"`
-}
-
-type KeyValue struct {
-	ID          int64          `json:"id"`
+	GroupID     sql.NullInt64  `json:"group_id"`
 	ResourceID  sql.NullInt64  `json:"resource_id"`
-	Key         sql.NullString `json:"key"`
-	Value       sql.NullString `json:"value"`
 	CreatedTime sql.NullString `json:"created_time"`
-	UpdatedTime sql.NullString `json:"updated_time"`
+	LatestTime  sql.NullString `json:"latest_time"`
 	Created     sql.NullInt64  `json:"created"`
-	Modified    sql.NullInt64  `json:"modified"`
+	Latest      sql.NullInt64  `json:"latest"`
 }
 
 type Var struct {

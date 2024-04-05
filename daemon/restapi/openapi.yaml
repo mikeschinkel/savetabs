@@ -3,24 +3,22 @@ info:
   title: SaveTabs Daemon API
   version: 1.0.0
 paths:
-  /healthz:
+  /html/browse:
     get:
-      summary: Health Check
-      description: Check the health status of SaveTabs daemon.
+      summary: Return the HTML for the Browse body, e.g. the list of group types as an HTML list
       responses:
         '200':
-          description: OK
-        '503':
-          description: Service Unavailable
-  /readyz:
+          $ref: '#/components/responses/HtmlResponse'
+
+  /html/group-types/{typeName}/groups:
     get:
-      summary: Readiness Check
-      description: Check if SaveTabs daemon is ready to serve.
+      summary: Return the list of groups as HTML for a group type
+      parameters:
+        - $ref: '#/components/parameters/GroupTypeName'
       responses:
         '200':
-          description: OK
-        '503':
-          description: Service Unavailable
+          $ref: '#/components/responses/HtmlResponse'
+
   /resources/with-groups:
     post:
       summary: Adds multiple resources, each with group info
@@ -41,6 +39,25 @@ paths:
                   $ref: '#/components/schemas/IdObjects'
         default:
           $ref: '#/components/responses/UnexpectedError'
+
+  /healthz:
+    get:
+      summary: Health Check
+      description: Check the health status of SaveTabs daemon.
+      responses:
+        '200':
+          description: OK
+        '503':
+          description: Service Unavailable
+  /readyz:
+    get:
+      summary: Readiness Check
+      description: Check if SaveTabs daemon is ready to serve.
+      responses:
+        '200':
+          description: OK
+        '503':
+          description: Service Unavailable
 
 #  /groups:
 #    post:
@@ -98,17 +115,25 @@ paths:
 #        default:
 #          $ref: '#/components/responses/UnexpectedError'
 #
-jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
+#jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 #security:
 #  -
-servers:
-  -
-webhooks:
-externalDocs:
-tags:
-  -
+#servers:
+#  -
+#webhooks:
+#externalDocs:
+#tags:
+#  -
 components:
   parameters:
+    GroupTypeName:
+      name: typeName
+      in: path
+      description: Name of group type
+      required: true
+      schema:
+        type: string
+
     IdParameter:
       name: id
       in: path
@@ -120,6 +145,14 @@ components:
         format: int64
 
   responses:
+    HtmlResponse:
+      description: HTML or HTML snippet returned successfully
+      content:
+        text/html:
+          schema:
+            type: string
+            example: "<div>Hello, HTML!</div>"
+
     IdResponse:
       description: A generic response containing a primary key Id in JSON format
       content:

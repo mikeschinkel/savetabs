@@ -1,0 +1,11 @@
+<ul class="menu gap-1">
+{{range .GroupTypes}}
+  <li hx-get="{{$.Host}}{{.Url}}" ht-trigger="click" hx-target="#{{.Target}}" class="bg-base-200">
+    <details>
+      <summary class="font-bold text-2xl">{{.Name}}</summary>
+      <ul id="{{.Target}}"></ul>
+    </details>
+  </li>
+  {{end}}
+</ul>
+

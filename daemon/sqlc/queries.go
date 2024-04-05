@@ -17,6 +17,12 @@ func UpsertGroups(ctx context.Context, ds DataStore, groupsJSON string) (err err
 	})
 }
 
+func UpsertResourceGroups(ctx context.Context, ds DataStore, rgsJSON string) (err error) {
+	return upsertFromJSON(ctx, ds, rgsJSON, func(ctx context.Context, q *Queries, id int64) error {
+		return q.UpsertResourceGroupsFromVarJSON(ctx, id)
+	})
+}
+
 func UpsertKeyValues(ctx context.Context, ds DataStore, keyValuesJSON string) (err error) {
 	return upsertFromJSON(ctx, ds, keyValuesJSON, func(ctx context.Context, q *Queries, id int64) error {
 		return q.UpsertKeyValuesFromVarJSON(ctx, id)

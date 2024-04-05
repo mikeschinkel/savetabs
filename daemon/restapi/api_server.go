@@ -8,6 +8,8 @@ package restapi
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // ServerInterface represents all server handlers.
@@ -15,6 +17,12 @@ type ServerInterface interface {
 	// Health Check
 	// (GET /healthz)
 	GetHealthz(w http.ResponseWriter, r *http.Request)
+	// Return the HTML for the Browse body, e.g. the list of group types as an HTML list
+	// (GET /html/browse)
+	GetHtmlBrowse(w http.ResponseWriter, r *http.Request)
+	// Return the list of groups as HTML for a group type
+	// (GET /html/group-types/{typeName}/groups)
+	GetHtmlGroupTypesTypeNameGroups(w http.ResponseWriter, r *http.Request, typeName GroupTypeName)
 	// Readiness Check
 	// (GET /readyz)
 	GetReadyz(w http.ResponseWriter, r *http.Request)
@@ -38,6 +46,47 @@ func (siw *ServerInterfaceWrapper) GetHealthz(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHealthz(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetHtmlBrowse operation middleware
+func (siw *ServerInterfaceWrapper) GetHtmlBrowse(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetHtmlBrowse(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetHtmlGroupTypesTypeNameGroups operation middleware
+func (siw *ServerInterfaceWrapper) GetHtmlGroupTypesTypeNameGroups(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "typeName" -------------
+	var typeName GroupTypeName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "typeName", r.PathValue("typeName"), &typeName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "typeName", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetHtmlGroupTypesTypeNameGroups(w, r, typeName)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -192,6 +241,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
+	m.HandleFunc("GET "+options.BaseURL+"/html/browse", wrapper.GetHtmlBrowse)
+	m.HandleFunc("GET "+options.BaseURL+"/html/group-types/{typeName}/groups", wrapper.GetHtmlGroupTypesTypeNameGroups)
 	m.HandleFunc("GET "+options.BaseURL+"/readyz", wrapper.GetReadyz)
 	m.HandleFunc("POST "+options.BaseURL+"/resources/with-groups", wrapper.PostResourcesWithGroups)
 

@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -17,6 +16,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
 	"savetabs/sqlc"
+	"savetabs/ui"
 )
 
 type swagger = openapi3.T
@@ -29,6 +29,25 @@ type API struct {
 	Handler http.Handler
 	Server  *http.Server
 	Lock    sync.Mutex
+}
+
+func (a *API) GetHtmlBrowse(w http.ResponseWriter, r *http.Request) {
+	out, err := ui.BrowseHTML(r.Host)
+	if err != nil {
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	sendHTML(w, out)
+}
+
+func (a *API) GetHtmlGroupTypesTypeNameGroups(w http.ResponseWriter, r *http.Request, typeName GroupTypeName) {
+	ctx := context.Background()
+	out, err := ui.GroupsByGroupTypeHTML(ctx, typeName)
+	if err != nil {
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	sendHTML(w, out)
 }
 
 // Declare that *API implements ServerInterface
@@ -47,6 +66,8 @@ func NewAPI(port string, s *swagger) *API {
 	// Use our validation middleware to check all requests against the
 	// OpenAPI schema.
 	h := middleware.OapiRequestValidator(api.Swagger)(api.Mux)
+	// Use URL logging handler middleware
+	h = api.addURLLogging(h)
 	// Use middleware to address CORS security
 	h = api.addCORSHeaders(h)
 	// Add authentication
@@ -56,26 +77,6 @@ func NewAPI(port string, s *swagger) *API {
 		Addr:    net.JoinHostPort("0.0.0.0", api.Port),
 	}
 	return api
-}
-
-func sanitizeResourcesWithGroups(data resourcesWithGroups) (err error) {
-	for i, rg := range data {
-		if rg.Url == nil || *rg.Url == "" {
-			err = errors.Join(ErrUrlNotSpecified, fmt.Errorf("error found in resource index %d", i))
-			goto end
-		}
-		if rg.Id == nil {
-			data[i].Id = ptr[int64](0)
-		}
-		if rg.Group == nil || *rg.Group == "" {
-			data[i].Group = ptr("<none>")
-		}
-		if rg.GroupType == nil || *rg.GroupType == "" {
-			data[i].GroupType = ptr("invalid")
-		}
-	}
-end:
-	return err
 }
 
 func (a *API) PostResourcesWithGroups(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +92,7 @@ func (a *API) PostResourcesWithGroups(w http.ResponseWriter, r *http.Request) {
 		sendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	err = sanitizeResourcesWithGroups(data)
+	data, err = sanitizeResourcesWithGroups(data)
 	if err != nil {
 		sendError(w, http.StatusBadRequest, err.Error())
 		return
@@ -123,30 +124,6 @@ func (a *API) PostResourcesWithGroups(w http.ResponseWriter, r *http.Request) {
 func (a *API) PostGroups(w http.ResponseWriter, r *http.Request) {
 	//TODO implement me
 	panic("implement me")
-}
-
-// Middleware to add CORS headers to every response
-func (a *API) addCORSHeaders(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Allow requests from any origin
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		//w.Header().Set("Access-Control-Allow-Origin", "http://localhost:"+a.Port)
-
-		// Allow specific methods (e.g., GET, POST, OPTIONS)
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-
-		// Allow specific headers (e.g., Content-Type, Authorization)
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		// Handle preflight OPTIONS requests
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		// Call the next handler
-		handler.ServeHTTP(w, r)
-	})
 }
 
 func (a *API) ListenAndServe() (err error) {
