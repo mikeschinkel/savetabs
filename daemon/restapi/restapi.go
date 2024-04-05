@@ -42,7 +42,7 @@ func (a *API) GetHtmlBrowse(w http.ResponseWriter, r *http.Request) {
 
 func (a *API) GetHtmlGroupTypesTypeNameGroups(w http.ResponseWriter, r *http.Request, typeName GroupTypeName) {
 	ctx := context.Background()
-	out, err := ui.GroupsByGroupTypeHTML(ctx, typeName)
+	out, err := ui.GroupsByGroupTypeHTML(ctx, r.Host, typeName)
 	if err != nil {
 		sendError(w, http.StatusInternalServerError, err.Error())
 		return

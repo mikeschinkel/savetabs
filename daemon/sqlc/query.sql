@@ -26,8 +26,10 @@ SELECT * FROM group_type WHERE type = ? LIMIT 1;
 SELECT DISTINCT
    gt.type,
    gt.name,
-   CASE WHEN g.ID IS NULL THEN 0
-      ELSE COUNT(*) END AS resource_count,
+   gt.plural,
+   COUNT(DISTINCT g.id) AS group_count,
+   CAST(CASE WHEN g.ID IS NULL THEN 0
+      ELSE COUNT(*) END AS INTEGER) AS resource_count,
    gt.sort
 FROM group_type gt
    LEFT JOIN `group` g ON gt.type=g.type

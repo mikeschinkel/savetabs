@@ -27,6 +27,7 @@ type GroupType struct {
 	Type        interface{}    `json:"type"`
 	Sort        sql.NullInt64  `json:"sort"`
 	Name        sql.NullString `json:"name"`
+	Plural      sql.NullString `json:"plural"`
 	Description sql.NullString `json:"description"`
 }
 
@@ -36,6 +37,7 @@ type GroupsWithCount struct {
 	Name          sql.NullString `json:"name"`
 	Type          interface{}    `json:"type"`
 	TypeName      sql.NullString `json:"type_name"`
+	TypePlural    sql.NullString `json:"type_plural"`
 }
 
 type History struct {

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" type="text/css" href="styles/dist.css" />
+</head>
+<body>
+<h1>THIS FILE ONLY FOR TAILWIND CSS to INCLUDE selectors</h1>
+<ul class="menu gap-1">
+    <li hx-get="http://localhost:8642/html/group-types/tabgroup/groups" ht-trigger="click" hx-target="#group-type-g-groups" class="bg-base-200 font-bold">
+        <details>
+            <summary class="py-px "><span class="text-xl py-0.5">{{.Name}}</span> <span class="text-sm">— {{.ResourceCount}} links</span></summary>
+            <ul id="group-type-g-groups"></ul>
+        </details>
+    </li>
+</ul>
+
+</body>
+</html>

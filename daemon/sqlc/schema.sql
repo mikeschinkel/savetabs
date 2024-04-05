@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS group_type
    type        CHAR(1) PRIMARY KEY,
    sort        INTEGER,
    name        VARCHAR(32),
+   plural      VARCHAR(32),
    description VARCHAR(128)
 )
 ;
@@ -68,13 +69,13 @@ DELETE FROM sqlite_sequence WHERE name = 'group_type'
 
 INSERT
 INTO group_type
-   (sort, type, name, description)
+   (sort, type, name, plural, description)
 VALUES
-   (1, 'G', 'TabGroup', 'Browser''s name for the containing Tab Group'),
-   (2, 'T', 'Tag', 'Human-specified keywords for resource content'),
-   (3, 'C', 'Category', 'AI-generated top-level categorization'),
-   (4, 'K', 'Keyword', 'AI-generated notable tags for resource content'),
-   (5, 'I', 'Invalid', 'Unspecified or not a valid group type')
+   (1, 'G', 'TabGroup', 'TabGroups',  'Browser''s name for the containing Tab Group'),
+   (2, 'T', 'Tag',      'Tags',       'Human-specified keywords for resource content'),
+   (3, 'C', 'Category', 'Categories', 'AI-generated top-level categorization'),
+   (4, 'K', 'Keyword',  'Keywords',   'AI-generated notable tags for resource content'),
+   (5, 'I', 'Invalid',  'Invalids',   'Unspecified or not a valid group type')
 ;
 
 CREATE TABLE IF NOT EXISTS `group`
@@ -157,7 +158,8 @@ SELECT
    COUNT(*) AS resource_count,
    g.name,
    g.type,
-   gt.name AS type_name
+   gt.name AS type_name,
+   gt.plural AS type_plural
 FROM `group` g
   JOIN resource_group rg ON rg.group_id=g.id
   JOIN group_type gt ON gt.type=g.type

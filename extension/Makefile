@@ -11,3 +11,8 @@ watch:
 .PHONY: build
 build:
 	NODE_ENV=production tailwindcss -i $(SRC) -o $(OUT)
+
+.PHONY: install
+install:
+	npm install tailwindcss daisyui --save-dev
+

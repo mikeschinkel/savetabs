@@ -35,7 +35,7 @@ export function getTabGroupResources(tabGroup) {
             reject(chrome.runtime.lastError.message);
          } else {
             resolve(tabs
-               .filter(tab =>  !rejectUrl(tab.url,tab.groupId) )
+               .filter(tab =>  !rejectUrl(tab.url,tab.group) )
                .map(tab => {
                   return {
                      url: tab.url,
@@ -105,21 +105,21 @@ export function addRecentlySubmittedResources(resources) {
 }
 
 const chromeUrlsRegex = /^(chrome(-\w+)?):\/\//;
-function rejectUrl(url,groupId){
+function rejectUrl(url,group){
    if (url.match(chromeUrlsRegex)) {
       return true;
    }
-   return resourceSubmittedRecently(url, groupId);
+   return resourceSubmittedRecently(url, group);
 }
 
-function urlKey(url,groupId) {
-   return `${url}[${groupId}]`
+function urlKey(url,group) {
+   return `${url}|${group}`
 }
 
 let recentlySubmittedResources = {};
 // resourceSubmittedRecently checks to see if a URL + groupId has been submitted within the past hour.
-function resourceSubmittedRecently(url,groupId) {
-   let key = urlKey(url,groupId)
+function resourceSubmittedRecently(url,group) {
+   let key = urlKey(url,group)
    if (!recentlySubmittedResources.hasOwnProperty(key)) {
       return false;
    }

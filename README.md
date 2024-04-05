@@ -4,8 +4,14 @@ SaveTabs is a Chrome extension and local daemon used for keeping track of your t
 
 ## To Do
 
-### Extension To Do
-1. Design UI
+### Bugs to Fix
+1. Fix partial saving of Tab Group name
+
+### Features To Add
+1. API
+   1. ~~Implement Group Type list API~~
+   2. Implement Groups for Group Type API
+2. Design UI
    1. Popup
       1. ~~Check API status~~  
       2. ~~Implement basic UI~~  
@@ -18,17 +24,16 @@ SaveTabs is a Chrome extension and local daemon used for keeping track of your t
       2. Groups per Group Types as tree branches
       3. Resources per Group as leaves
    3. Settings
-
-### Daemon To Do
-1. ~~Implement Group Type list API~~
-2. Implement Groups for Group Type API
-3. Add configuration file, 
-4. Allow configuring
-   1. Submit frequency
-   2. Sqlite DB location 
-5. Add CLI command and switches
-   1. Specify DB location
-6. Add tests 
+3. Configuration
+   1. Add daemon config file, 
+   4. Allow configuring
+      1. Submit frequency
+      2. Sqlite DB location 
+   5. Add CLI command and switches
+      1. Specify DB location
+4. Tests
+   5. Add daemon tests
+   6. Add Chrome extension tests
 
 ### Project To Do
 1.Rename to Stash or Stockpile, or...?

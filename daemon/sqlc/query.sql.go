@@ -23,8 +23,10 @@ const listGroupsType = `-- name: ListGroupsType :many
 SELECT DISTINCT
    gt.type,
    gt.name,
-   CASE WHEN g.ID IS NULL THEN 0
-      ELSE COUNT(*) END AS resource_count,
+   gt.plural,
+   COUNT(DISTINCT g.id) AS group_count,
+   CAST(CASE WHEN g.ID IS NULL THEN 0
+      ELSE COUNT(*) END AS INTEGER) AS resource_count,
    gt.sort
 FROM group_type gt
    LEFT JOIN ` + "`" + `group` + "`" + ` g ON gt.type=g.type
@@ -40,7 +42,9 @@ ORDER BY
 type ListGroupsTypeRow struct {
 	Type          interface{}    `json:"type"`
 	Name          sql.NullString `json:"name"`
-	ResourceCount interface{}    `json:"resource_count"`
+	Plural        sql.NullString `json:"plural"`
+	GroupCount    int64          `json:"group_count"`
+	ResourceCount int64          `json:"resource_count"`
 	Sort          sql.NullInt64  `json:"sort"`
 }
 
@@ -56,6 +60,8 @@ func (q *Queries) ListGroupsType(ctx context.Context) ([]ListGroupsTypeRow, erro
 		if err := rows.Scan(
 			&i.Type,
 			&i.Name,
+			&i.Plural,
+			&i.GroupCount,
 			&i.ResourceCount,
 			&i.Sort,
 		); err != nil {
@@ -73,7 +79,7 @@ func (q *Queries) ListGroupsType(ctx context.Context) ([]ListGroupsTypeRow, erro
 }
 
 const listGroupsWithCounts = `-- name: ListGroupsWithCounts :many
-SELECT id, resource_count, name, type, type_name FROM groups_with_counts
+SELECT id, resource_count, name, type, type_name, type_plural FROM groups_with_counts
 `
 
 func (q *Queries) ListGroupsWithCounts(ctx context.Context) ([]GroupsWithCount, error) {
@@ -91,6 +97,7 @@ func (q *Queries) ListGroupsWithCounts(ctx context.Context) ([]GroupsWithCount, 
 			&i.Name,
 			&i.Type,
 			&i.TypeName,
+			&i.TypePlural,
 		); err != nil {
 			return nil, err
 		}
@@ -106,7 +113,7 @@ func (q *Queries) ListGroupsWithCounts(ctx context.Context) ([]GroupsWithCount, 
 }
 
 const listGroupsWithCountsByGroupType = `-- name: ListGroupsWithCountsByGroupType :many
-SELECT id, resource_count, name, type, type_name FROM groups_with_counts WHERE type = ?
+SELECT id, resource_count, name, type, type_name, type_plural FROM groups_with_counts WHERE type = ?
 `
 
 func (q *Queries) ListGroupsWithCountsByGroupType(ctx context.Context, type_ interface{}) ([]GroupsWithCount, error) {
@@ -124,6 +131,7 @@ func (q *Queries) ListGroupsWithCountsByGroupType(ctx context.Context, type_ int
 			&i.Name,
 			&i.Type,
 			&i.TypeName,
+			&i.TypePlural,
 		); err != nil {
 			return nil, err
 		}
@@ -228,7 +236,7 @@ func (q *Queries) LoadGroup(ctx context.Context, id int64) (Group, error) {
 }
 
 const loadGroupType = `-- name: LoadGroupType :one
-SELECT type, sort, name, description FROM group_type WHERE type = ? LIMIT 1
+SELECT type, sort, name, plural, description FROM group_type WHERE type = ? LIMIT 1
 `
 
 func (q *Queries) LoadGroupType(ctx context.Context, type_ interface{}) (GroupType, error) {
@@ -238,6 +246,7 @@ func (q *Queries) LoadGroupType(ctx context.Context, type_ interface{}) (GroupTy
 		&i.Type,
 		&i.Sort,
 		&i.Name,
+		&i.Plural,
 		&i.Description,
 	)
 	return i, err

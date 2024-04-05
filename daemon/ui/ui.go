@@ -22,7 +22,6 @@ var mutex sync.Mutex
 
 var dataStore sqlc.DataStore
 var queries *sqlc.Queries
-var groupTypeValues groupTypeMap
 
 func Initialize(ctx Context, ds sqlc.DataStore) (err error) {
 	dataStore = ds
@@ -36,6 +35,5 @@ func Initialize(ctx Context, ds sqlc.DataStore) (err error) {
 		template.MakeTrustedStringSlice("hx-target", "hx-trigger"),
 	)
 
-	groupTypeValues, err = initializeGroupTypes(ctx)
 	return err
 }

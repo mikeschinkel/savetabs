@@ -1,0 +1,126 @@
+package ui
+
+import (
+	"fmt"
+	"slices"
+	"strings"
+
+	"github.com/google/safehtml"
+	"savetabs/sqlc"
+)
+
+type groupType struct {
+	Type          string
+	Name          string
+	Plural        string
+	GroupCount    int64
+	ResourceCount int64
+	Groups        []group
+	Host          string
+	Sort          int8
+}
+
+func (gt groupType) Url() string {
+	return fmt.Sprintf(`/html/group-types/%s/groups`,
+		strings.ToLower(gt.Name),
+	)
+}
+func (gt groupType) Target() safehtml.Identifier {
+	return safehtml.IdentifierFromConstantPrefix(`group-type`,
+		strings.ToLower(gt.Type)+`-groups`)
+}
+
+func getGroupTypeMap(ctx Context) (gtm groupTypeMap, err error) {
+	var gts []sqlc.ListGroupsTypeRow
+
+	gts, err = queries.ListGroupsType(ctx)
+	if err != nil {
+		goto end
+	}
+	gtm = newGroupTypeMap(gts)
+end:
+	return gtm, err
+}
+
+func groupTypeFromName(ctx Context, name string) (t string, err error) {
+	var ok bool
+	var gtm groupTypeMap
+	var gt groupType
+
+	gtm, err = getGroupTypeMap(ctx)
+	if err != nil {
+		goto end
+	}
+	gt, ok = gtm[name]
+	if !ok {
+		t = "I"
+		goto end
+	}
+	t = gt.Type
+end:
+	return t, err
+}
+
+type groupTypeMap map[string]groupType
+
+func (gtm groupTypeMap) Map(fn func(gt groupType) groupType) groupTypeMap {
+	for i, x := range gtm {
+		gtm[i] = fn(x)
+	}
+	return gtm
+}
+
+func (gtm groupTypeMap) AsSortedSlice() (gts []groupType) {
+	gts = make([]groupType, len(gtm))
+	i := 0
+	for _, gt := range gtm {
+		gts[i] = gt
+		i++
+	}
+	slices.SortFunc(gts, func(a, b groupType) int {
+		switch {
+		case a.Sort > b.Sort:
+			return 1
+		case a.Sort < b.Sort:
+			return -1
+		}
+		return 0
+	})
+	return gts
+}
+
+func newGroupTypeMap(gtrs []sqlc.ListGroupsTypeRow) groupTypeMap {
+	cnt := len(gtrs)
+
+	// No need to show invalid as a group type if
+	// there are no resources of that type
+	invalid := -1
+	for i, gtr := range gtrs {
+		if gtr.ResourceCount != 0 {
+			continue
+		}
+		if gtr.Type.(string) != "I" {
+			continue
+		}
+		cnt--
+		invalid = i
+		break
+	}
+	gts := make(groupTypeMap, cnt)
+	for i, gtr := range gtrs {
+		if i == invalid {
+			continue
+		}
+		s := gtr.Name.String
+		gt := &groupType{
+			Type:          gtr.Type.(string),
+			Name:          s,
+			Plural:        gtr.Plural.String,
+			GroupCount:    gtr.GroupCount,
+			ResourceCount: gtr.ResourceCount,
+			Sort:          int8(gtr.Sort.Int64),
+		}
+		gts[strings.ToLower(s)] = *gt
+	}
+	return gts
+}

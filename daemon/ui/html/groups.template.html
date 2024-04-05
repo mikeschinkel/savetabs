@@ -1,0 +1,9 @@
+{{range .Groups}}
+<li hx-get="{{$.Host}}{{.Url}}" ht-trigger="click" hx-target="#{{.Target}}" class="bg-base-200">
+  <details>
+    <summary class="py-0.5"><span class="text-xl">{{.Name}}</span> <span class="text-sm">— {{.ResourceCount}} links</span></summary>
+    <ul id="{{.Target}}"></ul>
+  </details>
+</li>
+{{end}}
+

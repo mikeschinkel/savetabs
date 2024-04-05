@@ -2,9 +2,9 @@
   "name": "savetabs-chrome-extension",
   "version": "0.1.0",
   "description": "SaveTabs Chrome Extension ensures you never loose your Chrome tab history again",
-  "main": "index.js",
+  "main": "./html/scripts/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "chrome-extension",
