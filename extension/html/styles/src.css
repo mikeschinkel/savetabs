@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+error-icon, close-icon {
+  display: inline-flex; /* Ensures they can align properly within a flex container */
+  align-items: center;  /* Helps keep the SVG content centered if needed */
+  justify-content: center; /* Center the SVG horizontally inside the custom element */
+  width: 24px;
+  height: 24px;
+}
+close-icon {
+  cursor: pointer; /* Changes cursor to a pointer to indicate it's clickable */
+  border-radius: 0.5rem; /* Optional: adds slight rounding to the corners for a softer look */
+  background-color: #d3d3d3;  /* light gray background */
+  transition: background-color 0.3s ease; /* Smooth transition for background color */
+}
+
+close-icon:hover {
+  background-color: #a9a9a9; /* darker gray on hover */
+}

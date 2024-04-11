@@ -35,7 +35,7 @@ export function getTabGroupResources(tabGroup) {
             reject(chrome.runtime.lastError.message);
          } else {
             resolve(tabs
-               .filter(tab =>  !rejectUrl(tab.url,tab.group) )
+               .filter(tab =>  !rejectUrl(tab.url,tabGroup.title) )
                .map(tab => {
                   return {
                      url: tab.url,
@@ -100,7 +100,7 @@ export async function getAllResources() {
 export function addRecentlySubmittedResources(resources) {
    let d = new Date();
    resources.forEach(r => {
-      recentlySubmittedResources[urlKey(r.url,r.groupId)] = d;
+      recentlySubmittedResources[urlKey(r.url,r.group)] = d;
    })
 }
 
@@ -113,7 +113,7 @@ function rejectUrl(url,group){
 }
 
 function urlKey(url,group) {
-   return `${url}|${group}`
+   return hash(`${url}|${group}`)
 }
 
 let recentlySubmittedResources = {};
@@ -130,4 +130,14 @@ function resourceSubmittedRecently(url,group) {
    return hours < 1;
 }
 
+function hash(s) {
+   let hash = 0, i, chr;
+   if (s.length === 0) return hash;
+   for (i = 0; i < s.length; i++) {
+      chr = s.charCodeAt(i);
+      hash = ((hash << 5) - hash) + chr;
+      hash |= 0; // Convert to 32bit integer
+   }
+   return hash;
+}
 

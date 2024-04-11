@@ -2,6 +2,8 @@ package restapi
 
 import (
 	"errors"
+
+	"github.com/google/safehtml/template"
 )
 
 var (
@@ -15,3 +17,9 @@ var (
 	ErrResourceIsNil              = errors.New("resource is nil")
 	ErrUrlNotAbsolute             = errors.New("url is not absolute")
 )
+
+var errorTemplate *template.Template
+
+func SetErrorTemplate(t *template.Template) {
+	errorTemplate = t
+}

@@ -1,9 +1,6 @@
 {{range .Groups}}
-<li hx-get="{{$.Host}}{{.Url}}" ht-trigger="click" hx-target="#{{.Target}}" class="bg-base-200">
-  <details>
-    <summary class="py-0.5"><span class="text-xl">{{.Name}}</span> <span class="text-sm">— {{.ResourceCount}} links</span></summary>
-    <ul id="{{.Target}}"></ul>
-  </details>
+<li id="{{.Identifier}}" hx-get="{{$.Host}}{{.Url}}" hx-trigger="click consume" hx-target="#{{.Target}}" hx-sync="closest li:drop" class="bg-base-200 py-0.5"><span class="text-xl">{{.Name}}</span> <span class="text-sm">— {{.ResourceCount}} links</span>
+  <ul id="{{.Target}}"></ul>
 </li>
 {{end}}
 

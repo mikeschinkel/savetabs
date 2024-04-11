@@ -2,10 +2,13 @@ package restapi
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"net/url"
 	"slices"
 	"strings"
@@ -15,6 +18,48 @@ import (
 	"savetabs/shared"
 	"savetabs/sqlc"
 )
+
+func (a *API) PostResourcesWithGroups(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		// TODO: Find a better status result than "Bad Gateway"
+		sendError(w, r, http.StatusBadGateway, err.Error())
+		return
+	}
+	var data resourcesWithGroups
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		sendError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+	data, err = sanitizeResourcesWithGroups(data)
+	if err != nil {
+		sendError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+	ds := sqlc.GetDatastore()
+	db, ok := ds.DB().(*sqlc.NestedDBTX)
+	if !ok {
+		sendError(w, r, http.StatusInternalServerError, "DB not a NestedDBTX")
+		return
+	}
+	err = db.Exec(func(tx *sql.Tx) (err error) {
+		err = upsertResources(context.TODO(), ds, data)
+		switch {
+		case err == nil:
+			goto end
+		case errors.Is(err, ErrFailedToUnmarshal):
+			sendError(w, r, http.StatusBadRequest, err.Error())
+		case errors.Is(err, ErrFailedUpsertResources):
+			// TODO: Break out errors into different status for different reasons
+			fallthrough
+		default:
+			sendError(w, r, http.StatusInternalServerError, err.Error())
+		}
+	end:
+		return err
+	})
+}
 
 type resourcesWithGroups ResourcesWithGroups
 
@@ -39,6 +84,7 @@ type group struct {
 	Id   int64  `json:"id"`
 	Name string `json:"name"`
 	Type string `json:"type"`
+	Slug string `json:"slug"`
 }
 
 func (rr resourcesWithGroups) groups() []group {
@@ -67,6 +113,7 @@ func (rr resourcesWithGroups) groups() []group {
 			Id:   *g.GroupId,
 			Type: groupTypeFromName(*g.GroupType),
 			Name: *g.Group,
+			Slug: shared.Slugify(*g.Group),
 		})
 
 		keywords = augment.ParseKeywords(*g.Url)
@@ -74,6 +121,7 @@ func (rr resourcesWithGroups) groups() []group {
 			return group{
 				Type: "K",
 				Name: kw,
+				Slug: shared.Slugify(kw),
 			}
 		})...)
 	}
@@ -82,6 +130,7 @@ func (rr resourcesWithGroups) groups() []group {
 
 type resourceGroup struct {
 	GroupName   string `json:"group_name"`
+	GroupSlug   string `json:"group_slug"`
 	GroupType   string `json:"group_type"`
 	ResourceURL string `json:"resource_url"`
 }
@@ -120,6 +169,7 @@ func (rr resourcesWithGroups) resourceGroups() []resourceGroup {
 		rgs = append(rgs, resourceGroup{
 			ResourceURL: *rg.Url,
 			GroupName:   *rg.Group,
+			GroupSlug:   shared.Slugify(*rg.Group),
 			GroupType:   groupTypeFromName(*rg.GroupType),
 		})
 	}
@@ -178,25 +228,21 @@ func upsertResources(ctx context.Context, ds sqlc.DataStore, rr resourcesWithGro
 		me.Add(err, ErrFailedToExtractKeyValues)
 	}
 
-	log.Printf("Received %d resources from Chrome extension", len(rr))
 	err = sqlc.UpsertResources(ctx, ds, string(urlBytes))
 	if err != nil {
 		me.Add(err, ErrFailedUpsertResources)
 	}
 
-	log.Printf("Received %d resource-groups from Chrome extension", len(rgs))
 	err = sqlc.UpsertResourceGroups(ctx, ds, string(resourceGroupBytes))
 	if err != nil {
 		me.Add(err, ErrFailedUpsertResourceGroups)
 	}
 
-	log.Printf("Received %d groups from Chrome extension", len(gg))
 	err = sqlc.UpsertGroups(ctx, ds, string(groupBytes))
 	if err != nil {
 		me.Add(err, ErrFailedUpsertGroups)
 	}
 
-	log.Printf("Derived %d key/values from resources", len(kvs))
 	keyValueBytes, err = json.Marshal(kvs)
 	if err != nil {
 		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "key_value"))
@@ -205,6 +251,8 @@ func upsertResources(ctx context.Context, ds sqlc.DataStore, rr resourcesWithGro
 	if err != nil {
 		me.Add(err, ErrFailedUpsertKeyValues)
 	}
+	log.Printf("Received %d resources, %d resource-groups, %d groups, and %d key/values from Chrome extension",
+		len(rr), len(rgs), len(gg), len(kvs))
 	return me.Err()
 }
 

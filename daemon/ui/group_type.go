@@ -1,33 +1,50 @@
 package ui
 
 import (
+	"bytes"
 	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/google/safehtml"
+	"savetabs/shared"
 	"savetabs/sqlc"
 )
 
+var _ MenuItemable = (*groupType)(nil)
+
 type groupType struct {
-	Type          string
-	Name          string
-	Plural        string
-	GroupCount    int64
-	ResourceCount int64
-	Groups        []group
-	Host          string
-	Sort          int8
+	Type       string
+	Name       string
+	Plural     string
+	GroupCount int64
+	Groups     []group
+	Host       string
+	Sort       int8
+}
+
+// Slug uniquely identifies a Group Type
+func (gt groupType) Slug() safehtml.Identifier {
+	return safehtml.IdentifierFromConstantPrefix(`gt`,
+		shared.Slugify(gt.Name),
+	)
 }
 
 func (gt groupType) Url() string {
-	return fmt.Sprintf(`/html/group-types/%s/groups`,
-		strings.ToLower(gt.Name),
-	)
+	return fmt.Sprintf(`/html/group-types/%s/groups`, gt.Slug())
 }
+
 func (gt groupType) Target() safehtml.Identifier {
-	return safehtml.IdentifierFromConstantPrefix(`group-type`,
-		strings.ToLower(gt.Type)+`-groups`)
+	return safehtml.IdentifierFromConstantPrefix(`gtg`,
+		strings.ToLower(gt.Type))
+}
+
+// Identifier uniquely identifies a Group Type across all entities that might
+// appear in an HTML page.
+func (gt groupType) Identifier() safehtml.Identifier {
+	return safehtml.IdentifierFromConstantPrefix(`gt`,
+		strings.ToLower(gt.Type),
+	)
 }
 
 func getGroupTypeMap(ctx Context) (gtm groupTypeMap, err error) {
@@ -89,6 +106,16 @@ func (gtm groupTypeMap) AsSortedSlice() (gts []groupType) {
 	return gts
 }
 
+func newGroupTypeFromListGroupsTypeRow(gtr sqlc.ListGroupsTypeRow) groupType {
+	return groupType{
+		Type:       gtr.Type,
+		Name:       gtr.Name.String,
+		Plural:     gtr.Plural.String,
+		GroupCount: gtr.GroupCount,
+		Sort:       int8(gtr.Sort.Int64),
+	}
+}
+
 func newGroupTypeMap(gtrs []sqlc.ListGroupsTypeRow) groupTypeMap {
 	cnt := len(gtrs)
 
@@ -99,7 +126,7 @@ func newGroupTypeMap(gtrs []sqlc.ListGroupsTypeRow) groupTypeMap {
 		if gtr.ResourceCount != 0 {
 			continue
 		}
-		if gtr.Type.(string) != "I" {
+		if gtr.Type != "I" {
 			continue
 		}
 		cnt--
@@ -111,16 +138,35 @@ func newGroupTypeMap(gtrs []sqlc.ListGroupsTypeRow) groupTypeMap {
 		if i == invalid {
 			continue
 		}
-		s := gtr.Name.String
-		gt := &groupType{
-			Type:          gtr.Type.(string),
-			Name:          s,
-			Plural:        gtr.Plural.String,
-			GroupCount:    gtr.GroupCount,
-			ResourceCount: gtr.ResourceCount,
-			Sort:          int8(gtr.Sort.Int64),
-		}
-		gts[strings.ToLower(s)] = *gt
+		gts[strings.ToLower(gtr.Name.String)] = newGroupTypeFromListGroupsTypeRow(gtr)
 	}
 	return gts
+}
+
+func GroupTypeGroupsHTML(ctx Context, host, groupTypeName string) (html []byte, err error) {
+	var gt groupType
+	var out bytes.Buffer
+	var gg []sqlc.Group
+	var gs []group
+
+	t, err := groupTypeFromName(ctx, groupTypeName)
+	if err != nil {
+		goto end
+	}
+	gg, err = queries.ListGroupsByType(ctx, strings.ToUpper(t))
+	if err != nil {
+		goto end
+	}
+	gs = constructGroups(gg)
+	gt = groupType{
+		Host:   makeURL(host),
+		Groups: gs,
+	}
+	err = groupsTemplate.Execute(&out, gt)
+	if err != nil {
+		goto end
+	}
+	html = out.Bytes()
+end:
+	return html, err
 }

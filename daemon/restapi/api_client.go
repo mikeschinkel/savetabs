@@ -95,8 +95,17 @@ type ClientInterface interface {
 	// GetHtmlBrowse request
 	GetHtmlBrowse(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetHtmlGroupTypesTypeNameGroups request
-	GetHtmlGroupTypesTypeNameGroups(ctx context.Context, typeName GroupTypeName, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetHtmlGroupTypesGroupTypeNameGroups request
+	GetHtmlGroupTypesGroupTypeNameGroups(ctx context.Context, groupTypeName GroupTypeName, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetHtmlGroupsGroupTypeGroupSlug request
+	GetHtmlGroupsGroupTypeGroupSlug(ctx context.Context, groupType GroupType, groupSlug GroupSlug, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetHtmlMenu request
+	GetHtmlMenu(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetHtmlMenuMenuItem request
+	GetHtmlMenuMenuItem(ctx context.Context, menuItem MenuItem, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetReadyz request
 	GetReadyz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -131,8 +140,44 @@ func (c *Client) GetHtmlBrowse(ctx context.Context, reqEditors ...RequestEditorF
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetHtmlGroupTypesTypeNameGroups(ctx context.Context, typeName GroupTypeName, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetHtmlGroupTypesTypeNameGroupsRequest(c.Server, typeName)
+func (c *Client) GetHtmlGroupTypesGroupTypeNameGroups(ctx context.Context, groupTypeName GroupTypeName, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHtmlGroupTypesGroupTypeNameGroupsRequest(c.Server, groupTypeName)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetHtmlGroupsGroupTypeGroupSlug(ctx context.Context, groupType GroupType, groupSlug GroupSlug, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHtmlGroupsGroupTypeGroupSlugRequest(c.Server, groupType, groupSlug)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetHtmlMenu(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHtmlMenuRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetHtmlMenuMenuItem(ctx context.Context, menuItem MenuItem, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHtmlMenuMenuItemRequest(c.Server, menuItem)
 	if err != nil {
 		return nil, err
 	}
@@ -233,13 +278,13 @@ func NewGetHtmlBrowseRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetHtmlGroupTypesTypeNameGroupsRequest generates requests for GetHtmlGroupTypesTypeNameGroups
-func NewGetHtmlGroupTypesTypeNameGroupsRequest(server string, typeName GroupTypeName) (*http.Request, error) {
+// NewGetHtmlGroupTypesGroupTypeNameGroupsRequest generates requests for GetHtmlGroupTypesGroupTypeNameGroups
+func NewGetHtmlGroupTypesGroupTypeNameGroupsRequest(server string, groupTypeName GroupTypeName) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "typeName", runtime.ParamLocationPath, typeName)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "groupTypeName", runtime.ParamLocationPath, groupTypeName)
 	if err != nil {
 		return nil, err
 	}
@@ -250,6 +295,108 @@ func NewGetHtmlGroupTypesTypeNameGroupsRequest(server string, typeName GroupType
 	}
 
 	operationPath := fmt.Sprintf("/html/group-types/%s/groups", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetHtmlGroupsGroupTypeGroupSlugRequest generates requests for GetHtmlGroupsGroupTypeGroupSlug
+func NewGetHtmlGroupsGroupTypeGroupSlugRequest(server string, groupType GroupType, groupSlug GroupSlug) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "groupType", runtime.ParamLocationPath, groupType)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "groupSlug", runtime.ParamLocationPath, groupSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/html/groups/%s/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetHtmlMenuRequest generates requests for GetHtmlMenu
+func NewGetHtmlMenuRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/html/menu")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetHtmlMenuMenuItemRequest generates requests for GetHtmlMenuMenuItem
+func NewGetHtmlMenuMenuItemRequest(server string, menuItem MenuItem) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "menuItem", runtime.ParamLocationPath, menuItem)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/html/menu/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -383,8 +530,17 @@ type ClientWithResponsesInterface interface {
 	// GetHtmlBrowseWithResponse request
 	GetHtmlBrowseWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHtmlBrowseResponse, error)
 
-	// GetHtmlGroupTypesTypeNameGroupsWithResponse request
-	GetHtmlGroupTypesTypeNameGroupsWithResponse(ctx context.Context, typeName GroupTypeName, reqEditors ...RequestEditorFn) (*GetHtmlGroupTypesTypeNameGroupsResponse, error)
+	// GetHtmlGroupTypesGroupTypeNameGroupsWithResponse request
+	GetHtmlGroupTypesGroupTypeNameGroupsWithResponse(ctx context.Context, groupTypeName GroupTypeName, reqEditors ...RequestEditorFn) (*GetHtmlGroupTypesGroupTypeNameGroupsResponse, error)
+
+	// GetHtmlGroupsGroupTypeGroupSlugWithResponse request
+	GetHtmlGroupsGroupTypeGroupSlugWithResponse(ctx context.Context, groupType GroupType, groupSlug GroupSlug, reqEditors ...RequestEditorFn) (*GetHtmlGroupsGroupTypeGroupSlugResponse, error)
+
+	// GetHtmlMenuWithResponse request
+	GetHtmlMenuWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHtmlMenuResponse, error)
+
+	// GetHtmlMenuMenuItemWithResponse request
+	GetHtmlMenuMenuItemWithResponse(ctx context.Context, menuItem MenuItem, reqEditors ...RequestEditorFn) (*GetHtmlMenuMenuItemResponse, error)
 
 	// GetReadyzWithResponse request
 	GetReadyzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetReadyzResponse, error)
@@ -437,13 +593,13 @@ func (r GetHtmlBrowseResponse) StatusCode() int {
 	return 0
 }
 
-type GetHtmlGroupTypesTypeNameGroupsResponse struct {
+type GetHtmlGroupTypesGroupTypeNameGroupsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetHtmlGroupTypesTypeNameGroupsResponse) Status() string {
+func (r GetHtmlGroupTypesGroupTypeNameGroupsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -451,7 +607,70 @@ func (r GetHtmlGroupTypesTypeNameGroupsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetHtmlGroupTypesTypeNameGroupsResponse) StatusCode() int {
+func (r GetHtmlGroupTypesGroupTypeNameGroupsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetHtmlGroupsGroupTypeGroupSlugResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetHtmlGroupsGroupTypeGroupSlugResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetHtmlGroupsGroupTypeGroupSlugResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetHtmlMenuResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetHtmlMenuResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetHtmlMenuResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetHtmlMenuMenuItemResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetHtmlMenuMenuItemResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetHtmlMenuMenuItemResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -520,13 +739,40 @@ func (c *ClientWithResponses) GetHtmlBrowseWithResponse(ctx context.Context, req
 	return ParseGetHtmlBrowseResponse(rsp)
 }
 
-// GetHtmlGroupTypesTypeNameGroupsWithResponse request returning *GetHtmlGroupTypesTypeNameGroupsResponse
-func (c *ClientWithResponses) GetHtmlGroupTypesTypeNameGroupsWithResponse(ctx context.Context, typeName GroupTypeName, reqEditors ...RequestEditorFn) (*GetHtmlGroupTypesTypeNameGroupsResponse, error) {
-	rsp, err := c.GetHtmlGroupTypesTypeNameGroups(ctx, typeName, reqEditors...)
+// GetHtmlGroupTypesGroupTypeNameGroupsWithResponse request returning *GetHtmlGroupTypesGroupTypeNameGroupsResponse
+func (c *ClientWithResponses) GetHtmlGroupTypesGroupTypeNameGroupsWithResponse(ctx context.Context, groupTypeName GroupTypeName, reqEditors ...RequestEditorFn) (*GetHtmlGroupTypesGroupTypeNameGroupsResponse, error) {
+	rsp, err := c.GetHtmlGroupTypesGroupTypeNameGroups(ctx, groupTypeName, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetHtmlGroupTypesTypeNameGroupsResponse(rsp)
+	return ParseGetHtmlGroupTypesGroupTypeNameGroupsResponse(rsp)
+}
+
+// GetHtmlGroupsGroupTypeGroupSlugWithResponse request returning *GetHtmlGroupsGroupTypeGroupSlugResponse
+func (c *ClientWithResponses) GetHtmlGroupsGroupTypeGroupSlugWithResponse(ctx context.Context, groupType GroupType, groupSlug GroupSlug, reqEditors ...RequestEditorFn) (*GetHtmlGroupsGroupTypeGroupSlugResponse, error) {
+	rsp, err := c.GetHtmlGroupsGroupTypeGroupSlug(ctx, groupType, groupSlug, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetHtmlGroupsGroupTypeGroupSlugResponse(rsp)
+}
+
+// GetHtmlMenuWithResponse request returning *GetHtmlMenuResponse
+func (c *ClientWithResponses) GetHtmlMenuWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHtmlMenuResponse, error) {
+	rsp, err := c.GetHtmlMenu(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetHtmlMenuResponse(rsp)
+}
+
+// GetHtmlMenuMenuItemWithResponse request returning *GetHtmlMenuMenuItemResponse
+func (c *ClientWithResponses) GetHtmlMenuMenuItemWithResponse(ctx context.Context, menuItem MenuItem, reqEditors ...RequestEditorFn) (*GetHtmlMenuMenuItemResponse, error) {
+	rsp, err := c.GetHtmlMenuMenuItem(ctx, menuItem, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetHtmlMenuMenuItemResponse(rsp)
 }
 
 // GetReadyzWithResponse request returning *GetReadyzResponse
@@ -587,15 +833,63 @@ func ParseGetHtmlBrowseResponse(rsp *http.Response) (*GetHtmlBrowseResponse, err
 	return response, nil
 }
 
-// ParseGetHtmlGroupTypesTypeNameGroupsResponse parses an HTTP response from a GetHtmlGroupTypesTypeNameGroupsWithResponse call
-func ParseGetHtmlGroupTypesTypeNameGroupsResponse(rsp *http.Response) (*GetHtmlGroupTypesTypeNameGroupsResponse, error) {
+// ParseGetHtmlGroupTypesGroupTypeNameGroupsResponse parses an HTTP response from a GetHtmlGroupTypesGroupTypeNameGroupsWithResponse call
+func ParseGetHtmlGroupTypesGroupTypeNameGroupsResponse(rsp *http.Response) (*GetHtmlGroupTypesGroupTypeNameGroupsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetHtmlGroupTypesTypeNameGroupsResponse{
+	response := &GetHtmlGroupTypesGroupTypeNameGroupsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetHtmlGroupsGroupTypeGroupSlugResponse parses an HTTP response from a GetHtmlGroupsGroupTypeGroupSlugWithResponse call
+func ParseGetHtmlGroupsGroupTypeGroupSlugResponse(rsp *http.Response) (*GetHtmlGroupsGroupTypeGroupSlugResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetHtmlGroupsGroupTypeGroupSlugResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetHtmlMenuResponse parses an HTTP response from a GetHtmlMenuWithResponse call
+func ParseGetHtmlMenuResponse(rsp *http.Response) (*GetHtmlMenuResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetHtmlMenuResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetHtmlMenuMenuItemResponse parses an HTTP response from a GetHtmlMenuMenuItemWithResponse call
+func ParseGetHtmlMenuMenuItemResponse(rsp *http.Response) (*GetHtmlMenuMenuItemResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetHtmlMenuMenuItemResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

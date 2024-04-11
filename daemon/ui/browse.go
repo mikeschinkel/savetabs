@@ -5,7 +5,7 @@ import (
 	"context"
 )
 
-var browseTemplate = getTemplate("browse")
+var browseTemplate = GetTemplate("browse")
 
 type browse struct {
 	Host       string
@@ -22,7 +22,7 @@ func BrowseHTML(host string) (html []byte, err error) {
 	}
 	gts = newGroupTypeMap(gg).AsSortedSlice()
 	err = browseTemplate.Execute(&out, browse{
-		Host:       `http://` + host,
+		Host:       makeURL(host),
 		GroupTypes: gts,
 	})
 	if err != nil {

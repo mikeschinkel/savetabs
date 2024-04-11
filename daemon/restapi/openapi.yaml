@@ -3,6 +3,22 @@ info:
   title: SaveTabs Daemon API
   version: 1.0.0
 paths:
+  /html/menu:
+    get:
+      summary: Return the HTML for the Menu
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlResponse'
+
+  /html/menu/{menuItem}:
+    get:
+      summary: Return the HTML for the Menu
+      parameters:
+      - $ref: '#/components/parameters/MenuItem'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlResponse'
+
   /html/browse:
     get:
       summary: Return the HTML for the Browse body, e.g. the list of group types as an HTML list
@@ -10,11 +26,21 @@ paths:
         '200':
           $ref: '#/components/responses/HtmlResponse'
 
-  /html/group-types/{typeName}/groups:
+  /html/group-types/{groupTypeName}/groups:
     get:
-      summary: Return the list of groups as HTML for a group type
+      summary: Return the list of groups for a group type as HTML
       parameters:
         - $ref: '#/components/parameters/GroupTypeName'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlResponse'
+
+  /html/groups/{groupType}/{groupSlug}:
+    get:
+      summary: Return the list of resources for a group as HTML
+      parameters:
+        - $ref: '#/components/parameters/GroupType'
+        - $ref: '#/components/parameters/GroupSlug'
       responses:
         '200':
           $ref: '#/components/responses/HtmlResponse'
@@ -126,10 +152,34 @@ paths:
 #  -
 components:
   parameters:
+    MenuItem:
+      name: menuItem
+      in: path
+      description: Item label for menu option
+      required: true
+      schema:
+        type: string
+
     GroupTypeName:
-      name: typeName
+      name: groupTypeName
       in: path
       description: Name of group type
+      required: true
+      schema:
+        type: string
+
+    GroupType:
+      name: groupType
+      in: path
+      description: One character group type, e.g. 'G', 'C', 'K', 'T', etc.
+      required: true
+      schema:
+        type: string
+
+    GroupSlug:
+      name: groupSlug
+      in: path
+      description: Slug for the group, i.e. lowercased name with only alphanum and dashes
       required: true
       schema:
         type: string

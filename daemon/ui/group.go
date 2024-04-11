@@ -3,13 +3,15 @@ package ui
 import (
 	"bytes"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/google/safehtml"
 	"savetabs/shared"
 	"savetabs/sqlc"
 )
 
-var groupsTemplate = getTemplate("groups")
+var groupsTemplate = GetTemplate("groups")
 
 type group struct {
 	Id            int64
@@ -17,10 +19,12 @@ type group struct {
 	Type          string
 	TypeName      string
 	ResourceCount int64
+	Resources     []resource
+	Host          string
 }
 
 func (g group) Slug() string {
-	return shared.Slugify(g.Name)
+	return strings.ToLower(g.Type) + "/" + shared.Slugify(g.Name)
 }
 
 func (g group) Url() string {
@@ -28,48 +32,66 @@ func (g group) Url() string {
 }
 
 func (g group) Target() safehtml.Identifier {
-	return safehtml.IdentifierFromConstantPrefix(`group-resources`, g.Slug())
+	return safehtml.IdentifierFromConstantPrefix(`group-resources`,
+		strconv.FormatInt(g.Id, 10),
+	)
 }
 
-func GroupsByGroupTypeHTML(ctx Context, host, typeName string) (html []byte, err error) {
-	var gt groupType
-	var out bytes.Buffer
-	var gg []sqlc.GroupsWithCount
-	var gs []group
+func (g group) Identifier() safehtml.Identifier {
+	return safehtml.IdentifierFromConstantPrefix(`group`,
+		strconv.FormatInt(g.Id, 10),
+	)
+}
 
-	t, err := groupTypeFromName(ctx, typeName)
+func newGroupFromSqlcGroup(gr sqlc.Group) group {
+	return group{
+		Id:       gr.ID,
+		Name:     gr.Name,
+		Type:     gr.Type,
+		TypeName: gr.Name,
+	}
+}
+
+func constructGroups(grs []sqlc.Group) []group {
+	gg := make([]group, len(grs))
+	for i, gr := range grs {
+		gg[i] = newGroupFromSqlcGroup(gr)
+	}
+	return gg
+}
+
+func GroupHTML(ctx Context, host, gt, gs string) (html []byte, err error) {
+	var out bytes.Buffer
+
+	//var gt groupType
+	var rfgs []sqlc.ListResourcesForGroupRow
+	//var gs []group
+	//
+	rfgs, err = queries.ListResourcesForGroup(ctx, sqlc.ListResourcesForGroupParams{
+		GroupType: strings.ToUpper(gt),
+		GroupSlug: gs,
+	})
 	if err != nil {
 		goto end
 	}
-	gg, err = queries.ListGroupsWithCountsByGroupType(ctx, t)
-	if err != nil {
+	if len(rfgs) == 0 {
 		goto end
 	}
-	gs = constructGroups(gg)
-	gt = groupType{
-		Host:   "http://" + host,
-		Groups: gs,
-	}
-	err = groupsTemplate.Execute(&out, gt)
+
+	err = resourcesTemplate.Execute(&out, group{
+		Host:          makeURL(host),
+		Id:            rfgs[0].GroupID,
+		Name:          rfgs[0].GroupName,
+		Type:          rfgs[0].GroupType,
+		TypeName:      rfgs[0].TypeName,
+		ResourceCount: int64(len(rfgs)),
+		Resources:     constructResources(rfgs),
+	})
 	if err != nil {
 		goto end
 	}
 	html = out.Bytes()
+	goto end
 end:
 	return html, err
-}
-
-func constructGroups(grs []sqlc.GroupsWithCount) []group {
-	gg := make([]group, len(grs))
-	for i, gr := range grs {
-		g := &group{
-			Id:            gr.ID,
-			Name:          gr.Name.String,
-			Type:          gr.Type.(string),
-			TypeName:      gr.TypeName.String,
-			ResourceCount: gr.ResourceCount,
-		}
-		gg[i] = *g
-	}
-	return gg
 }

@@ -19,6 +19,42 @@ func (q *Queries) DeleteVar(ctx context.Context, id int64) error {
 	return err
 }
 
+const listGroupsByType = `-- name: ListGroupsByType :many
+SELECT id, name, type, slug, created_time, latest_time, created, latest FROM ` + "`" + `group` + "`" + ` WHERE type = ?
+`
+
+func (q *Queries) ListGroupsByType(ctx context.Context, type_ string) ([]Group, error) {
+	rows, err := q.db.QueryContext(ctx, listGroupsByType, type_)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Group
+	for rows.Next() {
+		var i Group
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Type,
+			&i.Slug,
+			&i.CreatedTime,
+			&i.LatestTime,
+			&i.Created,
+			&i.Latest,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listGroupsType = `-- name: ListGroupsType :many
 SELECT DISTINCT
    gt.type,
@@ -26,7 +62,7 @@ SELECT DISTINCT
    gt.plural,
    COUNT(DISTINCT g.id) AS group_count,
    CAST(CASE WHEN g.ID IS NULL THEN 0
-      ELSE COUNT(*) END AS INTEGER) AS resource_count,
+      ELSE COUNT(DISTINCT rg.resource_id) END AS INTEGER) AS resource_count,
    gt.sort
 FROM group_type gt
    LEFT JOIN ` + "`" + `group` + "`" + ` g ON gt.type=g.type
@@ -40,7 +76,7 @@ ORDER BY
 `
 
 type ListGroupsTypeRow struct {
-	Type          interface{}    `json:"type"`
+	Type          string         `json:"type"`
 	Name          sql.NullString `json:"name"`
 	Plural        sql.NullString `json:"plural"`
 	GroupCount    int64          `json:"group_count"`
@@ -79,57 +115,24 @@ func (q *Queries) ListGroupsType(ctx context.Context) ([]ListGroupsTypeRow, erro
 }
 
 const listGroupsWithCounts = `-- name: ListGroupsWithCounts :many
-SELECT id, resource_count, name, type, type_name, type_plural FROM groups_with_counts
+SELECT id, resource_count, name, type, slug, type_name, type_plural FROM groups_with_counts_view
 `
 
-func (q *Queries) ListGroupsWithCounts(ctx context.Context) ([]GroupsWithCount, error) {
+func (q *Queries) ListGroupsWithCounts(ctx context.Context) ([]GroupsWithCountsView, error) {
 	rows, err := q.db.QueryContext(ctx, listGroupsWithCounts)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GroupsWithCount
+	var items []GroupsWithCountsView
 	for rows.Next() {
-		var i GroupsWithCount
+		var i GroupsWithCountsView
 		if err := rows.Scan(
 			&i.ID,
 			&i.ResourceCount,
 			&i.Name,
 			&i.Type,
-			&i.TypeName,
-			&i.TypePlural,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listGroupsWithCountsByGroupType = `-- name: ListGroupsWithCountsByGroupType :many
-SELECT id, resource_count, name, type, type_name, type_plural FROM groups_with_counts WHERE type = ?
-`
-
-func (q *Queries) ListGroupsWithCountsByGroupType(ctx context.Context, type_ interface{}) ([]GroupsWithCount, error) {
-	rows, err := q.db.QueryContext(ctx, listGroupsWithCountsByGroupType, type_)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GroupsWithCount
-	for rows.Next() {
-		var i GroupsWithCount
-		if err := rows.Scan(
-			&i.ID,
-			&i.ResourceCount,
-			&i.Name,
-			&i.Type,
+			&i.Slug,
 			&i.TypeName,
 			&i.TypePlural,
 		); err != nil {
@@ -216,8 +219,96 @@ func (q *Queries) ListResources(ctx context.Context) ([]Resource, error) {
 	return items, nil
 }
 
+const listResourcesForGroup = `-- name: ListResourcesForGroup :many
+SELECT DISTINCT
+   id,
+   resource_id,
+   url,
+   group_id,
+   cast(group_name AS VARCHAR(32)) AS group_name,
+   cast(group_slug AS VARCHAR(32)) AS group_slug,
+   cast(group_type AS VARCHAR(1))  AS group_type,
+   cast(type_name AS VARCHAR(32))  AS type_name,
+   domain,
+   group_ids,
+   group_types,
+   group_names,
+   quoted_group_types,
+   quoted_group_slugs,
+   quoted_group_names
+FROM
+   resources_view
+WHERE true
+   AND group_type = ?
+   AND group_slug = ?
+ORDER BY
+   url
+`
+
+type ListResourcesForGroupParams struct {
+	GroupType string `json:"group_type"`
+	GroupSlug string `json:"group_slug"`
+}
+
+type ListResourcesForGroupRow struct {
+	ID               sql.NullInt64  `json:"id"`
+	ResourceID       sql.NullInt64  `json:"resource_id"`
+	Url              sql.NullString `json:"url"`
+	GroupID          int64          `json:"group_id"`
+	GroupName        string         `json:"group_name"`
+	GroupSlug        string         `json:"group_slug"`
+	GroupType        string         `json:"group_type"`
+	TypeName         string         `json:"type_name"`
+	Domain           sql.NullString `json:"domain"`
+	GroupIds         sql.NullString `json:"group_ids"`
+	GroupTypes       sql.NullString `json:"group_types"`
+	GroupNames       sql.NullString `json:"group_names"`
+	QuotedGroupTypes interface{}    `json:"quoted_group_types"`
+	QuotedGroupSlugs interface{}    `json:"quoted_group_slugs"`
+	QuotedGroupNames interface{}    `json:"quoted_group_names"`
+}
+
+func (q *Queries) ListResourcesForGroup(ctx context.Context, arg ListResourcesForGroupParams) ([]ListResourcesForGroupRow, error) {
+	rows, err := q.db.QueryContext(ctx, listResourcesForGroup, arg.GroupType, arg.GroupSlug)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListResourcesForGroupRow
+	for rows.Next() {
+		var i ListResourcesForGroupRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResourceID,
+			&i.Url,
+			&i.GroupID,
+			&i.GroupName,
+			&i.GroupSlug,
+			&i.GroupType,
+			&i.TypeName,
+			&i.Domain,
+			&i.GroupIds,
+			&i.GroupTypes,
+			&i.GroupNames,
+			&i.QuotedGroupTypes,
+			&i.QuotedGroupSlugs,
+			&i.QuotedGroupNames,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const loadGroup = `-- name: LoadGroup :one
-SELECT id, name, type, created_time, latest_time, created, latest FROM ` + "`" + `group` + "`" + ` WHERE id = ? LIMIT 1
+SELECT id, name, type, slug, created_time, latest_time, created, latest FROM ` + "`" + `group` + "`" + ` WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) LoadGroup(ctx context.Context, id int64) (Group, error) {
@@ -227,6 +318,7 @@ func (q *Queries) LoadGroup(ctx context.Context, id int64) (Group, error) {
 		&i.ID,
 		&i.Name,
 		&i.Type,
+		&i.Slug,
 		&i.CreatedTime,
 		&i.LatestTime,
 		&i.Created,
@@ -235,19 +327,22 @@ func (q *Queries) LoadGroup(ctx context.Context, id int64) (Group, error) {
 	return i, err
 }
 
-const loadGroupType = `-- name: LoadGroupType :one
-SELECT type, sort, name, plural, description FROM group_type WHERE type = ? LIMIT 1
+const loadGroupsBySlug = `-- name: LoadGroupsBySlug :one
+SELECT id, name, type, slug, created_time, latest_time, created, latest FROM ` + "`" + `group` + "`" + ` WHERE slug = ? LIMIT 1
 `
 
-func (q *Queries) LoadGroupType(ctx context.Context, type_ interface{}) (GroupType, error) {
-	row := q.db.QueryRowContext(ctx, loadGroupType, type_)
-	var i GroupType
+func (q *Queries) LoadGroupsBySlug(ctx context.Context, slug string) (Group, error) {
+	row := q.db.QueryRowContext(ctx, loadGroupsBySlug, slug)
+	var i Group
 	err := row.Scan(
-		&i.Type,
-		&i.Sort,
+		&i.ID,
 		&i.Name,
-		&i.Plural,
-		&i.Description,
+		&i.Type,
+		&i.Slug,
+		&i.CreatedTime,
+		&i.LatestTime,
+		&i.Created,
+		&i.Latest,
 	)
 	return i, err
 }
@@ -271,10 +366,11 @@ func (q *Queries) LoadResource(ctx context.Context, id int64) (Resource, error) 
 }
 
 const upsertGroupsFromVarJSON = `-- name: UpsertGroupsFromVarJSON :exec
-INSERT INTO ` + "`" + `group` + "`" + ` (name,type)
+INSERT INTO ` + "`" + `group` + "`" + ` (name,type,slug)
 SELECT
    json_extract(r.value,'$.name') AS name,
-   json_extract(r.value,'$.type') AS type
+   json_extract(r.value,'$.type') AS type,
+   json_extract(r.value,'$.slug') AS slug
 FROM var
    JOIN json_each( var.value ) r ON var.key='json'
 WHERE var.id = ?

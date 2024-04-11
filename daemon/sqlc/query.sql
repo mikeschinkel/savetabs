@@ -1,17 +1,21 @@
 -- name: LoadGroup :one
 SELECT * FROM `group` WHERE id = ? LIMIT 1;
 
--- name: ListGroupsWithCounts :many
-SELECT * FROM groups_with_counts;
+-- name: ListGroupsByType :many
+SELECT * FROM `group` WHERE type = ?;
 
--- name: ListGroupsWithCountsByGroupType :many
-SELECT * FROM groups_with_counts WHERE type = ?;
+-- name: LoadGroupsBySlug :one
+SELECT * FROM `group` WHERE slug = ? LIMIT 1;
+
+-- name: ListGroupsWithCounts :many
+SELECT * FROM groups_with_counts_view;
 
 -- name: UpsertGroupsFromVarJSON :exec
-INSERT INTO `group` (name,type)
+INSERT INTO `group` (name,type,slug)
 SELECT
    json_extract(r.value,'$.name') AS name,
-   json_extract(r.value,'$.type') AS type
+   json_extract(r.value,'$.type') AS type,
+   json_extract(r.value,'$.slug') AS slug
 FROM var
    JOIN json_each( var.value ) r ON var.key='json'
 WHERE var.id = ?
@@ -19,7 +23,6 @@ ON CONFLICT (name,type)
    DO UPDATE
    SET latest = strftime('%s','now');
 
--- name: LoadGroupType :one
 SELECT * FROM group_type WHERE type = ? LIMIT 1;
 
 -- name: ListGroupsType :many
@@ -29,7 +32,7 @@ SELECT DISTINCT
    gt.plural,
    COUNT(DISTINCT g.id) AS group_count,
    CAST(CASE WHEN g.ID IS NULL THEN 0
-      ELSE COUNT(*) END AS INTEGER) AS resource_count,
+      ELSE COUNT(DISTINCT rg.resource_id) END AS INTEGER) AS resource_count,
    gt.sort
 FROM group_type gt
    LEFT JOIN `group` g ON gt.type=g.type
@@ -47,6 +50,33 @@ SELECT * FROM resource WHERE id = ? LIMIT 1;
 -- name: ListResources :many
 SELECT * FROM resource ORDER BY visited DESC;
 
+-- name: ListResourcesForGroup :many
+SELECT DISTINCT
+   id,
+   resource_id,
+   url,
+   group_id,
+   cast(group_name AS VARCHAR(32)) AS group_name,
+   cast(group_slug AS VARCHAR(32)) AS group_slug,
+   cast(group_type AS VARCHAR(1))  AS group_type,
+   cast(type_name AS VARCHAR(32))  AS type_name,
+   domain,
+   group_ids,
+   group_types,
+   group_names,
+   quoted_group_types,
+   quoted_group_slugs,
+   quoted_group_names
+FROM
+   resources_view
+WHERE true
+   AND group_type = ?
+   AND group_slug = ?
+ORDER BY
+   url;
+
+
+
 -- name: UpsertResourcesFromVarJSON :exec
 INSERT INTO resource (url)
 SELECT r.value AS url
@@ -63,7 +93,7 @@ SELECT g.id, r.id
 FROM var
    JOIN json_each( var.value ) j ON var.key='json'
    JOIN resource r ON r.url=json_extract(j.value,'$.resource_url')
-   JOIN `group` g ON 1=1
+   JOIN `group` g ON true
       AND g.name=json_extract(j.value,'$.group_name')
       AND g.type=json_extract(j.value,'$.group_type')
 WHERE var.id = ?

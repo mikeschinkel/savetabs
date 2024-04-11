@@ -9,6 +9,10 @@ sql:
       package: "sqlc"
       out: "../sqlc"
       overrides:
+      - db_type: "CHAR(1)"
+        go_type: "string"
+      - db_type: "VARCHAR(32)"
+        go_type: "string"
       - column: resource.created
         go_struct_tag: json:"-"
       - column: resource.modified

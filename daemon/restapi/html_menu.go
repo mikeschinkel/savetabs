@@ -1,0 +1,14 @@
+package restapi
+
+import (
+	"context"
+	"net/http"
+
+	"savetabs/ui"
+)
+
+func (a *API) GetHtmlMenu(w http.ResponseWriter, r *http.Request) {
+	sendWith(context.Background(), w, r, func(ctx Context) ([]byte, error) {
+		return ui.MenuHTML(r.Host)
+	})
+}

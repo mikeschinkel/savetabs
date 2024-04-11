@@ -63,6 +63,7 @@ func runServer(port *string) (err error) {
 		os.Exit(2)
 	}
 
+	restapi.SetErrorTemplate(ui.GetTemplate("error"))
 	api = restapi.NewAPI(*port, swagger)
 	err = api.ListenAndServe()
 end:

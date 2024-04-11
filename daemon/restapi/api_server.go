@@ -20,9 +20,18 @@ type ServerInterface interface {
 	// Return the HTML for the Browse body, e.g. the list of group types as an HTML list
 	// (GET /html/browse)
 	GetHtmlBrowse(w http.ResponseWriter, r *http.Request)
-	// Return the list of groups as HTML for a group type
-	// (GET /html/group-types/{typeName}/groups)
-	GetHtmlGroupTypesTypeNameGroups(w http.ResponseWriter, r *http.Request, typeName GroupTypeName)
+	// Return the list of groups for a group type as HTML
+	// (GET /html/group-types/{groupTypeName}/groups)
+	GetHtmlGroupTypesGroupTypeNameGroups(w http.ResponseWriter, r *http.Request, groupTypeName GroupTypeName)
+	// Return the list of resources for a group as HTML
+	// (GET /html/groups/{groupType}/{groupSlug})
+	GetHtmlGroupsGroupTypeGroupSlug(w http.ResponseWriter, r *http.Request, groupType GroupType, groupSlug GroupSlug)
+	// Return the HTML for the Menu
+	// (GET /html/menu)
+	GetHtmlMenu(w http.ResponseWriter, r *http.Request)
+	// Return the HTML for the Menu
+	// (GET /html/menu/{menuItem})
+	GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request, menuItem MenuItem)
 	// Readiness Check
 	// (GET /readyz)
 	GetReadyz(w http.ResponseWriter, r *http.Request)
@@ -70,23 +79,99 @@ func (siw *ServerInterfaceWrapper) GetHtmlBrowse(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// GetHtmlGroupTypesTypeNameGroups operation middleware
-func (siw *ServerInterfaceWrapper) GetHtmlGroupTypesTypeNameGroups(w http.ResponseWriter, r *http.Request) {
+// GetHtmlGroupTypesGroupTypeNameGroups operation middleware
+func (siw *ServerInterfaceWrapper) GetHtmlGroupTypesGroupTypeNameGroups(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
-	// ------------- Path parameter "typeName" -------------
-	var typeName GroupTypeName
+	// ------------- Path parameter "groupTypeName" -------------
+	var groupTypeName GroupTypeName
 
-	err = runtime.BindStyledParameterWithOptions("simple", "typeName", r.PathValue("typeName"), &typeName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "groupTypeName", r.PathValue("groupTypeName"), &groupTypeName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "typeName", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "groupTypeName", Err: err})
 		return
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetHtmlGroupTypesTypeNameGroups(w, r, typeName)
+		siw.Handler.GetHtmlGroupTypesGroupTypeNameGroups(w, r, groupTypeName)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetHtmlGroupsGroupTypeGroupSlug operation middleware
+func (siw *ServerInterfaceWrapper) GetHtmlGroupsGroupTypeGroupSlug(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "groupType" -------------
+	var groupType GroupType
+
+	err = runtime.BindStyledParameterWithOptions("simple", "groupType", r.PathValue("groupType"), &groupType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "groupType", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "groupSlug" -------------
+	var groupSlug GroupSlug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "groupSlug", r.PathValue("groupSlug"), &groupSlug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "groupSlug", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetHtmlGroupsGroupTypeGroupSlug(w, r, groupType, groupSlug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetHtmlMenu operation middleware
+func (siw *ServerInterfaceWrapper) GetHtmlMenu(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetHtmlMenu(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetHtmlMenuMenuItem operation middleware
+func (siw *ServerInterfaceWrapper) GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "menuItem" -------------
+	var menuItem MenuItem
+
+	err = runtime.BindStyledParameterWithOptions("simple", "menuItem", r.PathValue("menuItem"), &menuItem, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "menuItem", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetHtmlMenuMenuItem(w, r, menuItem)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -242,7 +327,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
 	m.HandleFunc("GET "+options.BaseURL+"/html/browse", wrapper.GetHtmlBrowse)
-	m.HandleFunc("GET "+options.BaseURL+"/html/group-types/{typeName}/groups", wrapper.GetHtmlGroupTypesTypeNameGroups)
+	m.HandleFunc("GET "+options.BaseURL+"/html/group-types/{groupTypeName}/groups", wrapper.GetHtmlGroupTypesGroupTypeNameGroups)
+	m.HandleFunc("GET "+options.BaseURL+"/html/groups/{groupType}/{groupSlug}", wrapper.GetHtmlGroupsGroupTypeGroupSlug)
+	m.HandleFunc("GET "+options.BaseURL+"/html/menu", wrapper.GetHtmlMenu)
+	m.HandleFunc("GET "+options.BaseURL+"/html/menu/{menuItem}", wrapper.GetHtmlMenuMenuItem)
 	m.HandleFunc("GET "+options.BaseURL+"/readyz", wrapper.GetReadyz)
 	m.HandleFunc("POST "+options.BaseURL+"/resources/with-groups", wrapper.PostResourcesWithGroups)
 

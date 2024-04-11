@@ -5,18 +5,31 @@
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <title>Browse SaveTabs</title>
    <link rel="stylesheet" type="text/css" href="styles/dist.css" />
-   <script src="scripts/htmx-1.9.11.min.js" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
+   <script src="scripts/htmx@1.9.11.min.js"         integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
+   <script src="scripts/_hyperscript@0.9.12.min.js" integrity="sha384-+Uth1QzYJsTjnS5SXVN3fFO4I32Y571xIuv53WJ2SA7y5/36tKU1VCutONAmg5eH" crossorigin="anonymous"></script>
+   <script src="scripts/alpinejs@3.13.8.min.js"     integrity="sha384-MGt/yQlIAvCVZEB4PNx8b9JxEfqFXemRJcpH6AIHAxDt1bRfYFeOnv3HJMW0LVD3" crossorigin="anonymous" defer></script>
 </head>
 <body>
-<nav class="navbar bg-base-100">
+<div id="status-panel"></div>
+<nav class="navbar bg-base-200">
    <img src="assets/savetabs-48.png"  alt="SaveTabs Icon"/>
-   <h1 class="text-xl font-bold  m-6">Browse your Tabs By Group</h1>
+   <h1 class="text-xl font-bold  m-6">Browse your Tabs</h1>
 </nav>
-<section id="browse-ui" class="extension-ui container mx-auto px-8 max-w-full"
-         hx-get="http://localhost:8642/html/browse" hx-trigger="load" hx-target="this">
-   <!-- ... -->
-</section>
+<div class="drawer lg:drawer-open">
+   <div class="drawer-content align-top flex flex-col items-center justify-start">
+      <section id="browse-ui" class="extension-ui container mx-auto px-4 py-2 max-w-full">
+         <!-- ... -->
+      </section>
+      <label for="left-sidebar" class="btn btn-primary drawer-button lg:hidden">Open drawer</label>
+   </div>
+   <input id="left-sidebar" type="checkbox" class="drawer-toggle" />
+   <div class="drawer-side" hx-get="http://localhost:8642/html/menu" hx-trigger="load" hx-target="#html-menu">
+      <label for="left-sidebar" aria-label="close sidebar" class="drawer-overlay"></label>
+      <section id="html-menu" class="h-full">
+         <!-- ... -->
+      </section>
+   </div>
+</div>
 <script type="module" crossorigin src="scripts/browse.js"></script>
 </body>
 </html>
-

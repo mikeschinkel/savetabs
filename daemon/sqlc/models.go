@@ -15,8 +15,9 @@ type Action struct {
 
 type Group struct {
 	ID          int64          `json:"id"`
-	Name        sql.NullString `json:"name"`
-	Type        interface{}    `json:"type"`
+	Name        string         `json:"name"`
+	Type        string         `json:"type"`
+	Slug        string         `json:"slug"`
 	CreatedTime sql.NullString `json:"created_time"`
 	LatestTime  sql.NullString `json:"latest_time"`
 	Created     sql.NullInt64  `json:"-"`
@@ -24,18 +25,19 @@ type Group struct {
 }
 
 type GroupType struct {
-	Type        interface{}    `json:"type"`
+	Type        string         `json:"type"`
 	Sort        sql.NullInt64  `json:"sort"`
 	Name        sql.NullString `json:"name"`
 	Plural      sql.NullString `json:"plural"`
 	Description sql.NullString `json:"description"`
 }
 
-type GroupsWithCount struct {
+type GroupsWithCountsView struct {
 	ID            int64          `json:"id"`
 	ResourceCount int64          `json:"resource_count"`
-	Name          sql.NullString `json:"name"`
-	Type          interface{}    `json:"type"`
+	Name          string         `json:"name"`
+	Type          string         `json:"type"`
+	Slug          string         `json:"slug"`
 	TypeName      sql.NullString `json:"type_name"`
 	TypePlural    sql.NullString `json:"type_plural"`
 }
@@ -75,6 +77,35 @@ type ResourceGroup struct {
 	LatestTime  sql.NullString `json:"latest_time"`
 	Created     sql.NullInt64  `json:"created"`
 	Latest      sql.NullInt64  `json:"latest"`
+}
+
+type ResourceGroupIdsView struct {
+	ResourceID       sql.NullInt64 `json:"resource_id"`
+	GroupIds         string        `json:"group_ids"`
+	GroupTypes       string        `json:"group_types"`
+	GroupSlugs       string        `json:"group_slugs"`
+	GroupNames       string        `json:"group_names"`
+	QuotedGroupTypes interface{}   `json:"quoted_group_types"`
+	QuotedGroupNames interface{}   `json:"quoted_group_names"`
+	QuotedGroupSlugs interface{}   `json:"quoted_group_slugs"`
+}
+
+type ResourcesView struct {
+	ID               sql.NullInt64  `json:"id"`
+	ResourceID       sql.NullInt64  `json:"resource_id"`
+	Url              sql.NullString `json:"url"`
+	GroupID          int64          `json:"group_id"`
+	GroupName        string         `json:"group_name"`
+	GroupSlug        string         `json:"group_slug"`
+	GroupType        string         `json:"group_type"`
+	TypeName         sql.NullString `json:"type_name"`
+	Domain           sql.NullString `json:"domain"`
+	GroupIds         sql.NullString `json:"group_ids"`
+	GroupTypes       sql.NullString `json:"group_types"`
+	GroupNames       sql.NullString `json:"group_names"`
+	QuotedGroupTypes interface{}    `json:"quoted_group_types"`
+	QuotedGroupSlugs interface{}    `json:"quoted_group_slugs"`
+	QuotedGroupNames interface{}    `json:"quoted_group_names"`
 }
 
 type Var struct {

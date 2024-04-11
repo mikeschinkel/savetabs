@@ -26,6 +26,7 @@ func (a *API) addCORSHeaders(handler http.Handler) http.Handler {
 			"hx-request",
 			"hx-target",
 			"hx-trigger",
+			"hx-sync",
 			"hx-current-url",
 		}, ", "))
 

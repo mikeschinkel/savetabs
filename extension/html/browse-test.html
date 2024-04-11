@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:x-on="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse SaveTabs</title>
+    <link rel="stylesheet" type="text/css" href="styles/dist.css"/>
+    <script src="scripts/htmx@1.9.11.min.js"
+            integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0"
+            crossorigin="anonymous"></script>
+    <script src="scripts/_hyperscript@0.9.12.min.js"
+            integrity="sha384-+Uth1QzYJsTjnS5SXVN3fFO4I32Y571xIuv53WJ2SA7y5/36tKU1VCutONAmg5eH"
+            crossorigin="anonymous"></script>
+    <script src="scripts/alpinejs@3.13.8.min.js"
+            integrity="sha384-MGt/yQlIAvCVZEB4PNx8b9JxEfqFXemRJcpH6AIHAxDt1bRfYFeOnv3HJMW0LVD3" crossorigin="anonymous"
+            defer></script>
+</head>
+<body>
+<nav class="navbar bg-base-100">
+    <img src="assets/savetabs-48.png" alt="SaveTabs Icon"/>
+    <h1 class="text-xl font-bold  m-6">TEST</h1>
+</nav>
+<section id="browse-ui" class="extension-ui container mx-auto px-8 max-w-full">
+    <ul class="types-of-groups">
+        <li x-data="{c1: false}">
+            <span x-on:click="c1= !c1">Categories</span>
+            <ul id="gt-categories" x-show="c1 && window.isBranchCollapsed('gt-categories')" class="groups">
+                <li class="urls" x-data="{c1_1: false}">
+                   <span x-on:click="c1_1= !c1_1">Tech</span>
+                    <ul id="group-tech" x-show="c1_1 && isBranchCollapsed('group-tech')" class="groups">
+                        <li><a target="_blank" x-on:click.stop="" href="https://example.com/css1">Tech 1</a></li>
+                        <li><a target="_blank" x-on:click.stop="" href="https://example.com/css2">Tech 2</a></li>
+                    </ul>
+                </li>
+                <li class="urls" x-data="{c1_2: false}">
+                    <span x-on:click="c1_2= !c1_2">Finance</span>
+                    <ul id="group-finance" x-show="c1_2 && isBranchCollapsed('group-finance')" class="groups">
+                        <li><a target="_blank" x-on:click.stop="" href="https://example.com/finance1">Finance 1</a></li>
+                        <li><a target="_blank" x-on:click.stop="" href="https://example.com/finance2">Finance 2</a></li>
+                    </ul>
+                </li>
+
+            </ul>
+        </li>
+        <!--         <li id="gt-tags" x-on:click="wasClicked['Tags']= !wasClicked['Tags']">-->
+        <!--            Tags-->
+        <!--            <ul id="group-css" x-show="wasClicked['Tags'] && window.isBranchCollapsed('group-css')" class="groups">-->
+        <!--               <li>-->
+        <!--                  CSS-->
+        <!--                  <ul x-show="wasClicked['CSS']= !wasClicked['CSS']" class="urls">-->
+        <!--                     <li><a target="_blank" x-on:click.stop="" href="https://example.com/css1">CSS Resource 1</a></li>-->
+        <!--                     <li><a target="_blank" x-on:click.stop="" href="https://example.com/css2">CSS Resource 2</a></li>-->
+        <!--                  </ul>-->
+        <!--               </li>-->
+        <!--               &lt;!&ndash; Additional groups like GoLang, Career, etc., can be added here &ndash;&gt;-->
+        <!--            </ul>-->
+        <!--            <ul id="group-sql" x-on:click="wasClicked['Tags']= !wasClicked['Tags']">-->
+        <!--               &lt;!&ndash; Group: CSS &ndash;&gt;-->
+        <!--               <li>-->
+        <!--                  CSS-->
+        <!--                  <ul x-show="wasClicked['SQL']= !wasClicked['SQL']" class="urls">-->
+        <!--                     <li><a target="_blank" x-on:click.stop="" href="https://example.com/sql1">SQL Resource 1</a></li>-->
+        <!--                     <li><a target="_blank" x-on:click.stop="" href="https://example.com/sql2">SQL Resource 2</a></li>-->
+        <!--                  </ul>-->
+        <!--               </li>-->
+        <!--               &lt;!&ndash; Additional groups like GoLang, Career, etc., can be added here &ndash;&gt;-->
+        <!--            </ul>-->
+        <!--         </li>-->
+        <!-- Repeat structure for other Types of Groups like Tags, Tab Groups, etc. -->
+    </ul>
+</section>
+<script type="module" crossorigin src="scripts/browse.js"></script>
+</body>
+</html>
+

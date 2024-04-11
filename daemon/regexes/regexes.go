@@ -4,8 +4,8 @@ import (
 	"regexp"
 )
 
-// MatchWhitespace matches all whitespace
-var MatchWhitespace = regexp.MustCompile(`\s+`)
+// MatchDashes matches all dashes ('-')
+var MatchDashes = regexp.MustCompile(`-+`)
 
 // MatchNonSlugCharacters matches only non-slug[*] characters.
 // [*] Slug characters are letters (A-Z, a-z), numbers (0-9), and dashes ('-').
@@ -14,4 +14,4 @@ var MatchWhitespace = regexp.MustCompile(`\s+`)
 // - A-Za-z includes all uppercase and lowercase letters.
 // - 0-9 includes all digits.
 // - - is a literal dash, included in the character set.
-var MatchNonSlugCharacters = regexp.MustCompile("[^A-Za-z0-9-]+")
+var MatchNonSlugCharacters = regexp.MustCompile("[^A-Za-z0-9-/]+")
