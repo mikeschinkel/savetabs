@@ -10,13 +10,13 @@
    <script src="scripts/alpinejs@3.13.8.min.js"     integrity="sha384-MGt/yQlIAvCVZEB4PNx8b9JxEfqFXemRJcpH6AIHAxDt1bRfYFeOnv3HJMW0LVD3" crossorigin="anonymous" defer></script>
 </head>
 <body>
-<div id="status-panel"></div>
 <nav class="navbar bg-base-200">
    <img src="assets/savetabs-48.png"  alt="SaveTabs Icon"/>
    <h1 class="text-xl font-bold  m-6">Browse your Tabs</h1>
 </nav>
 <div class="drawer lg:drawer-open">
-   <div class="drawer-content align-top flex flex-col items-center justify-start">
+   <div class="drawer-content align-top flex flex-col items-center justify-start w-full">
+      <div id="status-panel" class="w-full px-2.5"></div>
       <section id="browse-ui" class="extension-ui container mx-auto px-4 py-2 max-w-full">
          <!-- ... -->
       </section>

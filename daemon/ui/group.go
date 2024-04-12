@@ -43,15 +43,6 @@ func (g group) Identifier() safehtml.Identifier {
 	)
 }
 
-func newGroupFromSqlcGroup(gr sqlc.Group) group {
-	return group{
-		Id:       gr.ID,
-		Name:     gr.Name,
-		Type:     gr.Type,
-		TypeName: gr.Name,
-	}
-}
-
 func constructGroups(grs []sqlc.Group) []group {
 	gg := make([]group, len(grs))
 	for i, gr := range grs {

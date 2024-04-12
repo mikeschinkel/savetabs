@@ -27,11 +27,6 @@ type API struct {
 	Lock    sync.Mutex
 }
 
-func (a *API) GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request, menuItem MenuItem) {
-	//TODO implement me
-	sendError(w, r, http.StatusInternalServerError, "implement me")
-}
-
 func NewAPI(port string, s *swagger) *API {
 	api := &API{
 		Port:    port,

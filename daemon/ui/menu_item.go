@@ -1,6 +1,12 @@
 package ui
 
 import (
+	"bytes"
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+
 	"github.com/google/safehtml"
 	"savetabs/sqlc"
 )
@@ -18,22 +24,30 @@ type menuItem struct {
 	Id     safehtml.Identifier
 	Source MenuItemable
 	Label  string
-	Icon   IconType
+	menuItemArgs
+}
+type menuItemArgs struct {
+	Icon         IconType
+	DetailsClass string
+	SummaryClass string
 }
 
 func newMenuItem(src MenuItemable, host, label string) menuItem {
-	return newMenuItemWithIcon(src, host, label, ExpandIcon)
+	return newMenuItemWithArgs(src, host, label, menuItemArgs{
+		SummaryClass: "py-4 my-0",
+		Icon:         ExpandIcon,
+	})
 }
 
-func newMenuItemWithIcon(src MenuItemable, host, label string, icon IconType) menuItem {
-	if icon == "" {
-		icon = "blank"
+func newMenuItemWithArgs(src MenuItemable, host, label string, args menuItemArgs) menuItem {
+	if args.Icon == "" {
+		args.Icon = "blank"
 	}
 	mi := menuItem{
-		apiURL: makeURL(host),
-		Source: src,
-		Label:  label,
-		Icon:   icon,
+		apiURL:       makeURL(host),
+		Source:       src,
+		Label:        label,
+		menuItemArgs: args,
 	}
 	mi.Id = mi.Identifier()
 	return mi
@@ -45,6 +59,15 @@ func (mi menuItem) Slug() safehtml.Identifier {
 
 func (mi menuItem) Identifier() safehtml.Identifier {
 	return safehtml.IdentifierFromConstantPrefix(`mi`, mi.Slug().String())
+}
+
+func newGroupFromSqlcGroup(g sqlc.Group) group {
+	return group{
+		Id:       g.ID,
+		Name:     g.Name,
+		Type:     g.Type,
+		TypeName: g.Name,
+	}
 }
 
 func menuItemsFromListGroupTypesRows(host string, gtrs []sqlc.ListGroupsTypeRow) []menuItem {
@@ -75,7 +98,9 @@ func menuItemsFromListGroupTypesRows(host string, gtrs []sqlc.ListGroupsTypeRow)
 		menuItems[i] = newMenuItem(src, host, gtr.Plural.String)
 	}
 	menuItems = append(menuItems,
-		newMenuItemWithIcon(allLinks{}, host, "All Links", BlankIcon),
+		newMenuItemWithArgs(allLinks{}, host, "All Links", menuItemArgs{
+			Icon: BlankIcon,
+		}),
 	)
 	return menuItems
 }
@@ -86,4 +111,64 @@ type allLinks struct{}
 
 func (a allLinks) Identifier() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant(`gt-all`)
+}
+
+func MenuItemHTML(host string, item string) (html []byte, err error) {
+	var out bytes.Buffer
+	var items []menuItem
+
+	items, err = GetMenuItemsForType(context.Background(), host, item)
+	if err != nil {
+		goto end
+	}
+	err = menuTemplate.Execute(&out, menu{
+		apiURL:    makeURL(host),
+		MenuItems: items,
+	})
+	if err != nil {
+		goto end
+	}
+	html = out.Bytes()
+end:
+	return html, err
+}
+
+type ItemType string
+
+const (
+	GroupTypeItemType = "gt"
+)
+
+func GetMenuItemsForType(ctx Context, host, key string) (items []menuItem, err error) {
+	keys := strings.SplitAfterN(key, "-", 2)
+	if len(keys) != 2 {
+		err = errors.Join(ErrInvalidKeyFormat, fmt.Errorf(`key=%s`, key))
+		goto end
+	}
+	switch strings.TrimRight(keys[0], "-") {
+	case GroupTypeItemType: // Group Type
+		var gs []sqlc.Group
+		gs, err = queries.ListGroupsByType(ctx, strings.ToUpper(keys[1]))
+		if err != nil {
+			goto end
+		}
+		items = menuItemsFromGroups(host, gs)
+	}
+end:
+	return items, err
+}
+
+func menuItemsFromGroups(host string, gs []sqlc.Group) []menuItem {
+	var menuItems []menuItem
+
+	menuItems = make([]menuItem, len(gs))
+	for i, g := range gs {
+		src := newGroupFromSqlcGroup(g)
+		menuItems[i] = newMenuItemWithArgs(src, host, g.Name, menuItemArgs{
+			Icon:         ExpandIcon,
+			DetailsClass: "p-0 m-0",
+			SummaryClass: "px-0 py-8 m-0",
+		})
+	}
+	return menuItems
 }

@@ -1,10 +1,13 @@
-<ul class="menu p-4 min-h-full bg-base-200 text-base-content">
+<ul class="menu py-4 min-h-full bg-base-200 text-base-content">
 {{range .MenuItems}}
-  <li id="{{.Identifier}}" class="m-0.5 py-0">
-    <div class="p-2">
-      <img hx-get="{{$.HTMLMenuURL}}/{{.Slug}}" hx-trigger="click" hx-target="this" hx-swap="beforeend"
-             src="assets/{{.Icon}}-32.png" alt="Expand {{.Label}}" class="inline p-0 m-0 w-2.5" />{{.Label}}
-    </div>
+  <li id="{{.Identifier}}" class="m-0 p-0">
+    <details class="{{.DetailsClass}}">
+      <summary class="{{.SummaryClass}} rounded-sm">
+        <img hx-get="{{$.HTMLMenuURL}}/{{.Slug}}" hx-trigger="click" hx-target="#{{.Identifier}}-kids" hx-swap="outerHTML"
+               src="assets/{{.Icon}}-32.png" alt="Expand {{.Label}}" class="inline p-0 m-0 w-2.5" />{{.Label}}
+      </summary>
+      <ul id="{{.Identifier}}-kids"></ul>
+    </details>
   </li>
 {{end}}
 </ul>
