@@ -5,18 +5,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/google/safehtml"
 	"savetabs/sqlc"
 )
 
-type IconType string
+type IconState = safehtml.Identifier
 
-const (
-	BlankIcon    IconType = "blank"
-	ExpandIcon   IconType = "right-chevron"
-	CollapseIcon IconType = "down-chevron"
+var (
+	BlankIcon     IconState = safehtml.IdentifierFromConstant("blank")
+	ExpandedIcon  IconState = safehtml.IdentifierFromConstant("expanded")
+	CollapsedIcon IconState = safehtml.IdentifierFromConstant("collapsed")
 )
 
 type menuItem struct {
@@ -27,22 +28,21 @@ type menuItem struct {
 	menuItemArgs
 }
 type menuItemArgs struct {
-	Icon         IconType
+	IconState    IconState
 	DetailsClass string
 	SummaryClass string
 }
 
+const topLevelSummaryClass = "py-4 my-0"
+
 func newMenuItem(src MenuItemable, host, label string) menuItem {
 	return newMenuItemWithArgs(src, host, label, menuItemArgs{
-		SummaryClass: "py-4 my-0",
-		Icon:         ExpandIcon,
+		SummaryClass: topLevelSummaryClass,
+		IconState:    CollapsedIcon,
 	})
 }
 
 func newMenuItemWithArgs(src MenuItemable, host, label string, args menuItemArgs) menuItem {
-	if args.Icon == "" {
-		args.Icon = "blank"
-	}
 	mi := menuItem{
 		apiURL:       makeURL(host),
 		Source:       src,
@@ -51,6 +51,10 @@ func newMenuItemWithArgs(src MenuItemable, host, label string, args menuItemArgs
 	}
 	mi.Id = mi.Identifier()
 	return mi
+}
+
+func (mi menuItem) IconIsBlank() bool {
+	return mi.IconState == BlankIcon
 }
 
 func (mi menuItem) Slug() safehtml.Identifier {
@@ -99,7 +103,8 @@ func menuItemsFromListGroupTypesRows(host string, gtrs []sqlc.ListGroupsTypeRow)
 	}
 	menuItems = append(menuItems,
 		newMenuItemWithArgs(allLinks{}, host, "All Links", menuItemArgs{
-			Icon: BlankIcon,
+			SummaryClass: topLevelSummaryClass,
+			IconState:    BlankIcon,
 		}),
 	)
 	return menuItems
@@ -137,38 +142,59 @@ type ItemType string
 
 const (
 	GroupTypeItemType = "gt"
+	GroupItemType     = "grp"
 )
 
+var matchMenuItemKey = regexp.MustCompile(`^(gt|grp)-(.+)$`)
+
 func GetMenuItemsForType(ctx Context, host, key string) (items []menuItem, err error) {
-	keys := strings.SplitAfterN(key, "-", 2)
-	if len(keys) != 2 {
+	var keys []string
+	var gt sqlc.GroupType
+
+	if !matchMenuItemKey.MatchString(key) {
 		err = errors.Join(ErrInvalidKeyFormat, fmt.Errorf(`key=%s`, key))
 		goto end
 	}
-	switch strings.TrimRight(keys[0], "-") {
+	keys = matchMenuItemKey.FindStringSubmatch(key)
+	switch keys[1] {
 	case GroupTypeItemType: // Group Type
 		var gs []sqlc.Group
-		gs, err = queries.ListGroupsByType(ctx, strings.ToUpper(keys[1]))
+		gs, err = queries.ListGroupsByType(ctx, strings.ToUpper(keys[2]))
 		if err != nil {
 			goto end
 		}
-		items = menuItemsFromGroups(host, gs)
+		gt, err = queries.LoadGroupType(ctx, strings.ToUpper(keys[2]))
+		if err != nil {
+			goto end
+		}
+		err = nil
+		items = menuItemsFromGroups(host, gt.Plural.String, gs)
 	}
 end:
 	return items, err
 }
 
-func menuItemsFromGroups(host string, gs []sqlc.Group) []menuItem {
+func menuItemsFromGroups(host, gt string, gs []sqlc.Group) []menuItem {
 	var menuItems []menuItem
+	args := menuItemArgs{
+		IconState:    BlankIcon,
+		DetailsClass: "p-0 m-0",
+		SummaryClass: "p-0 m-0",
+	}
 
-	menuItems = make([]menuItem, len(gs))
+	menuItems = make([]menuItem, len(gs)+1)
+	menuItems[0] = newMenuItemWithArgs(noMenuItem{}, host, fmt.Sprintf("<No %s>", gt), args)
 	for i, g := range gs {
 		src := newGroupFromSqlcGroup(g)
-		menuItems[i] = newMenuItemWithArgs(src, host, g.Name, menuItemArgs{
-			Icon:         ExpandIcon,
-			DetailsClass: "p-0 m-0",
-			SummaryClass: "px-0 py-8 m-0",
-		})
+		menuItems[i+1] = newMenuItemWithArgs(src, host, g.Name, args)
 	}
 	return menuItems
+}
+
+var _ MenuItemable = (*noMenuItem)(nil)
+
+type noMenuItem struct{}
+
+func (noMenuItem) Identifier() safehtml.Identifier {
+	return safehtml.IdentifierFromConstant("none")
 }

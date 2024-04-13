@@ -24,12 +24,12 @@ func Initialize(ctx Context, ds sqlc.DataStore) (err error) {
 	dataStore = ds
 	queries = ds.Queries()
 
-	elements := template.MakeTrustedStringSlice("a", "li", "section", "img", "div")
+	elements := template.MakeTrustedStringSlice("a", "li", "section", "img", "div", "expand-icon", "span")
 	template.AddTrustedElementsAndAttributesForContext("url", elements,
 		template.MakeTrustedStringSlice("hx-get"),
 	)
 	template.AddTrustedElementsAndAttributesForContext("identifier", elements,
-		template.MakeTrustedStringSlice("hx-target", "hx-trigger", "hx-sync"),
+		template.MakeTrustedStringSlice("hx-target", "hx-trigger", "hx-sync", "x-data", "x-init"),
 	)
 
 	return err

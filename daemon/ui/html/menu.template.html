@@ -1,12 +1,20 @@
-<ul class="menu py-4 min-h-full bg-base-200 text-base-content">
+<ul class="menu p-0 mb-4 min-h-full bg-base-200 text-base-content x-data">
 {{range .MenuItems}}
   <li id="{{.Identifier}}" class="m-0 p-0">
-    <details class="{{.DetailsClass}}">
-      <summary class="{{.SummaryClass}} rounded-sm">
-        <img hx-get="{{$.HTMLMenuURL}}/{{.Slug}}" hx-trigger="click" hx-target="#{{.Identifier}}-kids" hx-swap="outerHTML"
-               src="assets/{{.Icon}}-32.png" alt="Expand {{.Label}}" class="inline p-0 m-0 w-2.5" />{{.Label}}
+    <details class="{{.DetailsClass}}" @click.prevent="preventSummaryExpand($event)">
+      <summary class="{{.SummaryClass}} rounded-sm list-none">
+        {{if .IconIsBlank }}
+          <span><blank-icon></blank-icon></span>
+        {{else}}
+          {{/* This code fails if I name the variable `state` instead of `cs`. Why? Who knows... */}}
+          <span x-data="collapsible('{{.IconState}}')">
+            <expand-icon x-show="collapsed()" @click="expand($event)" class="clickable" hx-get="{{$.HTMLMenuURL}}/{{.Slug}}" hx-trigger="click" hx-target="#{{.Identifier}}-kids"></expand-icon>
+            <collapse-icon x-show="expanded()" @click="collapse($event)" class="clickable"></collapse-icon>
+          </span>
+        {{end}}
+        <span>{{.Label}}</span>
       </summary>
-      <ul id="{{.Identifier}}-kids"></ul>
+      <div id="{{.Identifier}}-kids" class="p-0 m-0"></div>
     </details>
   </li>
 {{end}}

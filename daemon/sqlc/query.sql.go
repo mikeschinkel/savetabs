@@ -20,7 +20,7 @@ func (q *Queries) DeleteVar(ctx context.Context, id int64) error {
 }
 
 const listGroupsByType = `-- name: ListGroupsByType :many
-SELECT id, name, type, slug, created_time, latest_time, created, latest FROM ` + "`" + `group` + "`" + ` WHERE type = ?
+SELECT id, name, type, slug, created_time, latest_time, created, latest FROM ` + "`" + `group` + "`" + ` WHERE type = ? ORDER BY name
 `
 
 func (q *Queries) ListGroupsByType(ctx context.Context, type_ string) ([]Group, error) {
@@ -327,6 +327,23 @@ func (q *Queries) LoadGroup(ctx context.Context, id int64) (Group, error) {
 	return i, err
 }
 
+const loadGroupType = `-- name: LoadGroupType :one
+SELECT type, sort, name, plural, description FROM group_type WHERE type = ? LIMIT 1
+`
+
+func (q *Queries) LoadGroupType(ctx context.Context, type_ string) (GroupType, error) {
+	row := q.db.QueryRowContext(ctx, loadGroupType, type_)
+	var i GroupType
+	err := row.Scan(
+		&i.Type,
+		&i.Sort,
+		&i.Name,
+		&i.Plural,
+		&i.Description,
+	)
+	return i, err
+}
+
 const loadGroupsBySlug = `-- name: LoadGroupsBySlug :one
 SELECT id, name, type, slug, created_time, latest_time, created, latest FROM ` + "`" + `group` + "`" + ` WHERE slug = ? LIMIT 1
 `
@@ -410,7 +427,7 @@ SELECT g.id, r.id
 FROM var
    JOIN json_each( var.value ) j ON var.key='json'
    JOIN resource r ON r.url=json_extract(j.value,'$.resource_url')
-   JOIN ` + "`" + `group` + "`" + ` g ON 1=1
+   JOIN ` + "`" + `group` + "`" + ` g ON true
       AND g.name=json_extract(j.value,'$.group_name')
       AND g.type=json_extract(j.value,'$.group_type')
 WHERE var.id = ?

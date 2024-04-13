@@ -1,8 +1,11 @@
 -- name: LoadGroup :one
 SELECT * FROM `group` WHERE id = ? LIMIT 1;
 
+-- name: LoadGroupType :one
+SELECT * FROM group_type WHERE type = ? LIMIT 1;
+
 -- name: ListGroupsByType :many
-SELECT * FROM `group` WHERE type = ?;
+SELECT * FROM `group` WHERE type = ? ORDER BY name;
 
 -- name: LoadGroupsBySlug :one
 SELECT * FROM `group` WHERE slug = ? LIMIT 1;

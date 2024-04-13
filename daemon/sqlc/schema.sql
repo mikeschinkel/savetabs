@@ -189,7 +189,6 @@ GROUP BY
    gt.name
 ORDER BY
    gt.name,
-   IIF(g.name = '<none>', 0, 1),
    g.name
 ;
 

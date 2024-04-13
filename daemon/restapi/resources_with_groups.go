@@ -98,6 +98,9 @@ func (rr resourcesWithGroups) groups() []group {
 		if *g.Group == "" {
 			continue
 		}
+		if *g.Group == "<none>" {
+			continue
+		}
 		if g.GroupType == nil {
 			continue
 		}
@@ -108,20 +111,20 @@ func (rr resourcesWithGroups) groups() []group {
 		if seen {
 			continue
 		}
+		gt := groupTypeFromName(*g.GroupType)
 		appended[*g.GroupId] = struct{}{}
 		groups = append(groups, group{
 			Id:   *g.GroupId,
-			Type: groupTypeFromName(*g.GroupType),
+			Type: gt,
 			Name: *g.Group,
-			Slug: shared.Slugify(*g.Group),
+			Slug: fmt.Sprintf("%s/%s", strings.ToLower(gt), shared.Slugify(*g.Group)),
 		})
-
 		keywords = augment.ParseKeywords(*g.Url)
 		groups = append(groups, shared.MapSliceFunc(keywords, func(kw string) group {
 			return group{
 				Type: "K",
 				Name: kw,
-				Slug: shared.Slugify(kw),
+				Slug: fmt.Sprintf("k/%s", shared.Slugify(kw)),
 			}
 		})...)
 	}
@@ -361,7 +364,7 @@ func sanitizeResourcesWithGroups(data resourcesWithGroups) (_ resourcesWithGroup
 			data[i].Id = ptr[int64](0)
 		}
 		if rg.Group == nil || *rg.Group == "" {
-			data[i].Group = ptr("<none>")
+			data[i].Group = ptr("none")
 		}
 		if rg.GroupType == nil || *rg.GroupType == "" {
 			data[i].GroupType = ptr("invalid")

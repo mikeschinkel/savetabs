@@ -19,3 +19,15 @@ close-icon {
 close-icon:hover {
   background-color: #a9a9a9; /* darker gray on hover */
 }
+
+/* Remove the right-aligned chevron for expanding and collapsing menu items */
+.menu :where(li > details > summary):after {
+  display: none;
+}
+.menu :where(li > details[open] > summary):after {
+  display: none;
+}
+
+.menu :where(li:not(.menu-title) > *:not(ul, details, .menu-title, .btn)), .menu :where(li:not(.menu-title) > details > summary:not(.menu-title)) {
+  column-gap: 0.125rem;
+}
