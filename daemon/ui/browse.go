@@ -2,7 +2,6 @@ package ui
 
 import (
 	"bytes"
-	"context"
 )
 
 var browseTemplate = GetTemplate("browse")
@@ -12,11 +11,11 @@ type browse struct {
 	GroupTypes []groupType
 }
 
-func BrowseHTML(host string) (html []byte, err error) {
+func GetBrowseHTML(ctx Context, host string) (html []byte, err error) {
 	var out bytes.Buffer
 	var gts []groupType
 
-	gg, err := queries.ListGroupsType(context.Background())
+	gg, err := queries.ListGroupsType(ctx)
 	if err != nil {
 		goto end
 	}

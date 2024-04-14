@@ -26,6 +26,9 @@ type ServerInterface interface {
 	// Return the list of resources for a group as HTML
 	// (GET /html/groups/{groupType}/{groupSlug})
 	GetHtmlGroupsGroupTypeGroupSlug(w http.ResponseWriter, r *http.Request, groupType GroupType, groupSlug GroupSlug)
+	// Return the HTML for a paginated table of links with optional filtering criteria in query parameters
+	// (GET /html/links)
+	GetLinks(w http.ResponseWriter, r *http.Request, params GetLinksParams)
 	// Return the HTML for the Menu
 	// (GET /html/menu)
 	GetHtmlMenu(w http.ResponseWriter, r *http.Request)
@@ -131,6 +134,74 @@ func (siw *ServerInterfaceWrapper) GetHtmlGroupsGroupTypeGroupSlug(w http.Respon
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHtmlGroupsGroupTypeGroupSlug(w, r, groupType, groupSlug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetLinks operation middleware
+func (siw *ServerInterfaceWrapper) GetLinks(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetLinksParams
+
+	// ------------- Optional query parameter "g" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "g", r.URL.Query(), &params.G)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "g", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "c" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "c", r.URL.Query(), &params.C)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "c", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "t" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "t", r.URL.Query(), &params.T)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "t", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "k" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "k", r.URL.Query(), &params.K)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "k", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "b" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "b", r.URL.Query(), &params.B)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "b", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "m" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "m", r.URL.Query(), &params.M)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "m", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLinks(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -329,6 +400,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("GET "+options.BaseURL+"/html/browse", wrapper.GetHtmlBrowse)
 	m.HandleFunc("GET "+options.BaseURL+"/html/group-types/{groupTypeName}/groups", wrapper.GetHtmlGroupTypesGroupTypeNameGroups)
 	m.HandleFunc("GET "+options.BaseURL+"/html/groups/{groupType}/{groupSlug}", wrapper.GetHtmlGroupsGroupTypeGroupSlug)
+	m.HandleFunc("GET "+options.BaseURL+"/html/links", wrapper.GetLinks)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu", wrapper.GetHtmlMenu)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu/{menuItem}", wrapper.GetHtmlMenuMenuItem)
 	m.HandleFunc("GET "+options.BaseURL+"/readyz", wrapper.GetReadyz)

@@ -8,6 +8,7 @@ package sqlc
 import (
 	"context"
 	"database/sql"
+	"strings"
 )
 
 const deleteVar = `-- name: DeleteVar :exec
@@ -17,6 +18,52 @@ DELETE FROM var WHERE id = ?
 func (q *Queries) DeleteVar(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, deleteVar, id)
 	return err
+}
+
+const listFilteredResources = `-- name: ListFilteredResources :many
+SELECT id, url, created_time, visited_time, created, visited
+FROM resource
+WHERE id IN (/*SLICE:ids*/?)
+`
+
+func (q *Queries) ListFilteredResources(ctx context.Context, ids []int64) ([]Resource, error) {
+	query := listFilteredResources
+	var queryParams []interface{}
+	if len(ids) > 0 {
+		for _, v := range ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Resource
+	for rows.Next() {
+		var i Resource
+		if err := rows.Scan(
+			&i.ID,
+			&i.Url,
+			&i.CreatedTime,
+			&i.VisitedTime,
+			&i.Created,
+			&i.Visited,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listGroupsByType = `-- name: ListGroupsByType :many
@@ -150,7 +197,7 @@ func (q *Queries) ListGroupsWithCounts(ctx context.Context) ([]GroupsWithCountsV
 }
 
 const listKeyValues = `-- name: ListKeyValues :many
-SELECT id, resource_id, "key", value, created_time, modified_time, created, modified FROM key_value ORDER BY resource_id,key DESC
+SELECT id, resource_id, "key", value, kv_pair, created_time, modified_time, created, modified FROM key_value ORDER BY resource_id,key DESC
 `
 
 func (q *Queries) ListKeyValues(ctx context.Context) ([]KeyValue, error) {
@@ -167,6 +214,7 @@ func (q *Queries) ListKeyValues(ctx context.Context) ([]KeyValue, error) {
 			&i.ResourceID,
 			&i.Key,
 			&i.Value,
+			&i.KvPair,
 			&i.CreatedTime,
 			&i.ModifiedTime,
 			&i.Created,
@@ -175,6 +223,85 @@ func (q *Queries) ListKeyValues(ctx context.Context) ([]KeyValue, error) {
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listResourceIdsByGroupSlugs = `-- name: ListResourceIdsByGroupSlugs :many
+SELECT CAST(rg.resource_id AS INTEGER) AS resource_id
+FROM resource_group rg
+JOIN ` + "`" + `group` + "`" + ` g ON g.id=rg.group_id
+WHERE g.slug IN (/*SLICE:slugs*/?)
+`
+
+func (q *Queries) ListResourceIdsByGroupSlugs(ctx context.Context, slugs []string) ([]int64, error) {
+	query := listResourceIdsByGroupSlugs
+	var queryParams []interface{}
+	if len(slugs) > 0 {
+		for _, v := range slugs {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:slugs*/?", strings.Repeat(",?", len(slugs))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:slugs*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var resource_id int64
+		if err := rows.Scan(&resource_id); err != nil {
+			return nil, err
+		}
+		items = append(items, resource_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listResourceIdsByKeyValues = `-- name: ListResourceIdsByKeyValues :many
+SELECT CAST(resource_id AS INTEGER) AS resource_id
+FROM key_value
+WHERE kv_pair IN (/*SLICE:pairs*/?)
+`
+
+func (q *Queries) ListResourceIdsByKeyValues(ctx context.Context, pairs []string) ([]int64, error) {
+	query := listResourceIdsByKeyValues
+	var queryParams []interface{}
+	if len(pairs) > 0 {
+		for _, v := range pairs {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:pairs*/?", strings.Repeat(",?", len(pairs))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:pairs*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var resource_id int64
+		if err := rows.Scan(&resource_id); err != nil {
+			return nil, err
+		}
+		items = append(items, resource_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

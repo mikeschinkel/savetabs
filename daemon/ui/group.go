@@ -51,7 +51,7 @@ func constructGroups(grs []sqlc.Group) []group {
 	return gg
 }
 
-func GroupHTML(ctx Context, host, gt, gs string) (html []byte, err error) {
+func GetGroupHTML(ctx Context, host, gt, gs string) (html []byte, err error) {
 	var out bytes.Buffer
 
 	//var gt groupType

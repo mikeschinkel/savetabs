@@ -42,6 +42,12 @@ type ResourceWithGroup struct {
 // ResourcesWithGroups defines model for ResourcesWithGroups.
 type ResourcesWithGroups = []ResourceWithGroup
 
+// BookmarkFilter defines model for BookmarkFilter.
+type BookmarkFilter = []string
+
+// CategoryFilter defines model for CategoryFilter.
+type CategoryFilter = []string
+
 // GroupSlug defines model for GroupSlug.
 type GroupSlug = string
 
@@ -51,11 +57,44 @@ type GroupType = string
 // GroupTypeName defines model for GroupTypeName.
 type GroupTypeName = string
 
+// KeyValueFilter defines model for KeyValueFilter.
+type KeyValueFilter map[string]string
+
+// KeywordFilter defines model for KeywordFilter.
+type KeywordFilter = []string
+
 // MenuItem defines model for MenuItem.
 type MenuItem = string
 
+// TabGroupFilter defines model for TabGroupFilter.
+type TabGroupFilter = []string
+
+// TagFilter defines model for TagFilter.
+type TagFilter = []string
+
 // UnexpectedError defines model for UnexpectedError.
 type UnexpectedError = Error
+
+// GetLinksParams defines parameters for GetLinks.
+type GetLinksParams struct {
+	// G TabGroup links by tags
+	G *TabGroupFilter `form:"g,omitempty" json:"g,omitempty"`
+
+	// C Category links by categories
+	C *CategoryFilter `form:"c,omitempty" json:"c,omitempty"`
+
+	// T Tag links by tags
+	T *TagFilter `form:"t,omitempty" json:"t,omitempty"`
+
+	// K Keyword filter for Links
+	K *KeywordFilter `form:"k,omitempty" json:"k,omitempty"`
+
+	// B Bookmark filter for Links
+	B *BookmarkFilter `form:"b,omitempty" json:"b,omitempty"`
+
+	// M Key/Value metadata filter for Links
+	M *KeyValueFilter `form:"m,omitempty" json:"m,omitempty"`
+}
 
 // PostResourcesWithGroupsJSONRequestBody defines body for PostResourcesWithGroups for application/json ContentType.
 type PostResourcesWithGroupsJSONRequestBody = ResourcesWithGroups

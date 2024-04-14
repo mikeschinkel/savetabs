@@ -143,7 +143,7 @@ func newGroupTypeMap(gtrs []sqlc.ListGroupsTypeRow) groupTypeMap {
 	return gts
 }
 
-func GroupTypeGroupsHTML(ctx Context, host, groupTypeName string) (html []byte, err error) {
+func GetGroupTypeGroupsHTML(ctx Context, host, groupTypeName string) (html []byte, err error) {
 	var gt groupType
 	var out bytes.Buffer
 	var gg []sqlc.Group

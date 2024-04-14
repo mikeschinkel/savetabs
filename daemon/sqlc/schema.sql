@@ -27,15 +27,22 @@ CREATE TABLE IF NOT EXISTS history
 CREATE TABLE IF NOT EXISTS key_value
 (
    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-   resource_id   INTEGER,
-   key           VARCHAR(32),
-   value         TEXT,
+   resource_id   INTEGER      NOT NULL,
+   key           VARCHAR(32)  NOT NULL,
+   value         VARCHAR(512) NOT NULL,
+   kv_pair       VARCHAR(544) NOT NULL GENERATED ALWAYS AS (key || '=' || value) VIRTUAL,
    created_time  TEXT GENERATED ALWAYS AS (DATETIME(created, 'unixepoch')) VIRTUAL,
    modified_time TEXT GENERATED ALWAYS AS (DATETIME(modified, 'unixepoch')) VIRTUAL,
    created       INTEGER DEFAULT (STRFTIME('%s', 'now')),
    modified      INTEGER DEFAULT (STRFTIME('%s', 'now')),
    UNIQUE (resource_id, key)
 )
+;
+
+DROP INDEX IF EXISTS idx_key_value__kv_pair
+;
+
+CREATE INDEX idx_key_value__kv_pair ON key_value (kv_pair)
 ;
 
 CREATE TRIGGER IF NOT EXISTS update_key_value_modified
@@ -66,7 +73,7 @@ CREATE TABLE IF NOT EXISTS group_type
 ;
 
 
-DELETE FROM group_type WHERE true
+DELETE FROM group_type WHERE TRUE
 ;
 
 DELETE FROM sqlite_sequence WHERE name = 'group_type'
@@ -76,11 +83,12 @@ INSERT
    INTO group_type
    (sort, type, name, plural, description)
 VALUES
-   (1, 'G', 'TabGroup', 'TabGroups', 'Browser''s name for the containing Tab Group'),
-   (2, 'T', 'Tag', 'Tags', 'Human-specified keywords for resource content'),
-   (3, 'C', 'Category', 'Categories', 'AI-generated top-level categorization'),
-   (4, 'K', 'Keyword', 'Keywords', 'AI-generated notable tags for resource content'),
-   (5, 'I', 'Invalid', 'Invalids', 'Unspecified or not a valid group type')
+   (1, 'G', 'TabGroup', 'TabGroups',  'Browser''s name for containing Tab Group'      ),
+   (2, 'C', 'Category', 'Categories', 'AI-generated top-level categorization'         ),
+   (3, 'T', 'Tag',      'Tags',       'Human-specified keywords for resource content' ),
+   (4, 'K', 'Keyword',  'Keywords',   'AI-generated notable tags for resource content'),
+   (5, 'B', 'Bookmark', 'Bookmarks',  'Browser''s name for saved links'               ),
+   (6, 'I', 'Invalid',  'Invalids',   'Unspecified or not a valid group type'         )
 ;
 
 CREATE TABLE IF NOT EXISTS `group`
@@ -135,7 +143,8 @@ BEGIN
    UPDATE resource_group
    SET
       latest = STRFTIME('%s', 'now')
-   WHERE true
+   WHERE
+      TRUE
       AND group_id = old.group_id
       AND resource_id = old.resource_id;
 END
@@ -171,12 +180,12 @@ DROP VIEW IF EXISTS groups_with_counts_view
 CREATE VIEW groups_with_counts_view AS
 SELECT
    g.id,
-   COUNT(DISTINCT rg.resource_id)  AS resource_count,
+   COUNT(DISTINCT rg.resource_id) AS resource_count,
    g.name,
    g.type,
    g.slug,
-   gt.name   AS type_name,
-   gt.plural AS type_plural
+   gt.name                        AS type_name,
+   gt.plural                      AS type_plural
 FROM
    `group` g
       JOIN group_type gt

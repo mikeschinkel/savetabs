@@ -101,6 +101,9 @@ type ClientInterface interface {
 	// GetHtmlGroupsGroupTypeGroupSlug request
 	GetHtmlGroupsGroupTypeGroupSlug(ctx context.Context, groupType GroupType, groupSlug GroupSlug, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetLinks request
+	GetLinks(ctx context.Context, params *GetLinksParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetHtmlMenu request
 	GetHtmlMenu(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -154,6 +157,18 @@ func (c *Client) GetHtmlGroupTypesGroupTypeNameGroups(ctx context.Context, group
 
 func (c *Client) GetHtmlGroupsGroupTypeGroupSlug(ctx context.Context, groupType GroupType, groupSlug GroupSlug, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetHtmlGroupsGroupTypeGroupSlugRequest(c.Server, groupType, groupSlug)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetLinks(ctx context.Context, params *GetLinksParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLinksRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -353,6 +368,135 @@ func NewGetHtmlGroupsGroupTypeGroupSlugRequest(server string, groupType GroupTyp
 	return req, nil
 }
 
+// NewGetLinksRequest generates requests for GetLinks
+func NewGetLinksRequest(server string, params *GetLinksParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/html/links")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.G != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "g", runtime.ParamLocationQuery, *params.G); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.C != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "c", runtime.ParamLocationQuery, *params.C); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.T != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "t", runtime.ParamLocationQuery, *params.T); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.K != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "k", runtime.ParamLocationQuery, *params.K); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.B != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "b", runtime.ParamLocationQuery, *params.B); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.M != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "m", runtime.ParamLocationQuery, *params.M); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetHtmlMenuRequest generates requests for GetHtmlMenu
 func NewGetHtmlMenuRequest(server string) (*http.Request, error) {
 	var err error
@@ -536,6 +680,9 @@ type ClientWithResponsesInterface interface {
 	// GetHtmlGroupsGroupTypeGroupSlugWithResponse request
 	GetHtmlGroupsGroupTypeGroupSlugWithResponse(ctx context.Context, groupType GroupType, groupSlug GroupSlug, reqEditors ...RequestEditorFn) (*GetHtmlGroupsGroupTypeGroupSlugResponse, error)
 
+	// GetLinksWithResponse request
+	GetLinksWithResponse(ctx context.Context, params *GetLinksParams, reqEditors ...RequestEditorFn) (*GetLinksResponse, error)
+
 	// GetHtmlMenuWithResponse request
 	GetHtmlMenuWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHtmlMenuResponse, error)
 
@@ -629,6 +776,27 @@ func (r GetHtmlGroupsGroupTypeGroupSlugResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetHtmlGroupsGroupTypeGroupSlugResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetLinksResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetLinksResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetLinksResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -757,6 +925,15 @@ func (c *ClientWithResponses) GetHtmlGroupsGroupTypeGroupSlugWithResponse(ctx co
 	return ParseGetHtmlGroupsGroupTypeGroupSlugResponse(rsp)
 }
 
+// GetLinksWithResponse request returning *GetLinksResponse
+func (c *ClientWithResponses) GetLinksWithResponse(ctx context.Context, params *GetLinksParams, reqEditors ...RequestEditorFn) (*GetLinksResponse, error) {
+	rsp, err := c.GetLinks(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLinksResponse(rsp)
+}
+
 // GetHtmlMenuWithResponse request returning *GetHtmlMenuResponse
 func (c *ClientWithResponses) GetHtmlMenuWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHtmlMenuResponse, error) {
 	rsp, err := c.GetHtmlMenu(ctx, reqEditors...)
@@ -858,6 +1035,22 @@ func ParseGetHtmlGroupsGroupTypeGroupSlugResponse(rsp *http.Response) (*GetHtmlG
 	}
 
 	response := &GetHtmlGroupsGroupTypeGroupSlugResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetLinksResponse parses an HTTP response from a GetLinksWithResponse call
+func ParseGetLinksResponse(rsp *http.Response) (*GetLinksResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLinksResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

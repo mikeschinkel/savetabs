@@ -2,7 +2,6 @@ package ui
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 )
 
@@ -15,13 +14,17 @@ func (m menu) HTMLMenuURL() string {
 	return fmt.Sprintf("%s/html/menu", m.apiURL)
 }
 
+func (m menu) HTMLLinksURL() string {
+	return fmt.Sprintf("%s/html/links", m.apiURL)
+}
+
 var menuTemplate = GetTemplate("menu")
 
-func MenuHTML(host string) (html []byte, err error) {
+func GetMenuHTML(ctx Context, host string) (html []byte, err error) {
 	var out bytes.Buffer
 	var items []menuItem
 
-	gts, err := queries.ListGroupsType(context.Background())
+	gts, err := queries.ListGroupsType(ctx)
 	if err != nil {
 		goto end
 	}

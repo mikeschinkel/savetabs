@@ -3,6 +3,21 @@ info:
   title: SaveTabs Daemon API
   version: 1.0.0
 paths:
+  /html/links:
+    get:
+      summary: Return the HTML for a paginated table of links with optional filtering criteria in query parameters
+      operationId: getLinks
+      parameters:
+      - $ref: '#/components/parameters/TabGroupFilter'
+      - $ref: '#/components/parameters/CategoryFilter'
+      - $ref: '#/components/parameters/TagFilter'
+      - $ref: '#/components/parameters/KeywordFilter'
+      - $ref: '#/components/parameters/BookmarkFilter'
+      - $ref: '#/components/parameters/KeyValueFilter'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlResponse'
+
   /html/menu:
     get:
       summary: Return the HTML for the Menu
@@ -152,6 +167,66 @@ paths:
 #  -
 components:
   parameters:
+    TabGroupFilter:
+      in: query
+      name: g
+      schema:
+        type: array
+        items:
+          type: string
+      description: TabGroup links by tags
+      style: form
+      explode: true
+    CategoryFilter:
+      in: query
+      name: c
+      schema:
+        type: array
+        items:
+          type: string
+      description: Category links by categories
+      style: form
+      explode: true
+    TagFilter:
+      in: query
+      name: t
+      schema:
+        type: array
+        items:
+          type: string
+      description: Tag links by tags
+      style: form
+      explode: true
+    KeywordFilter:
+      in: query
+      name: k
+      schema:
+        type: array
+        items:
+          type: string
+      description: Keyword filter for Links
+      style: form
+      explode: true
+    BookmarkFilter:
+      in: query
+      name: b
+      schema:
+        type: array
+        items:
+          type: string
+      description: Bookmark filter for Links
+      style: form
+      explode: true
+    KeyValueFilter:
+      in: query
+      name: m
+      schema:
+        type: object
+        additionalProperties:
+          type: string
+      style: form
+      explode: true
+      description: Key/Value metadata filter for Links
     MenuItem:
       name: menuItem
       in: path
@@ -222,6 +297,15 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
+    Link:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        title:
+          type: string
+
     Id:
       type: integer
       format: int64

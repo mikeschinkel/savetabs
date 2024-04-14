@@ -6,31 +6,44 @@ function getApiBrowseUiHtmlUrl() {
    return `${getApiServerUrl()}/html/browse`
 }
 
+function getErrorNodeFromXHR(xhr) {
+   const errorWrapper = document.createElement('div');
+   let errorMsg = xhr.responseText;
+   if (errorMsg.trim() === "") {
+      errorWrapper.innerHTML = `<div class="alert alert-error">Daemon API at ${getApiServerUrl()} appears unavailable.</div>`;
+      return errorWrapper
+   }
+   errorWrapper.innerHTML = errorMsg
+   if (errorWrapper.children.length === 0) {
+      const div = document.createElement('<div>')
+      div.innerText = errorMsg
+      errorWrapper.innerHTML = div.innerHTML
+   }
+   return errorWrapper.firstChild
+}
+
+function getStatusPanel() {
+   let sp = document.getElementById('status-panel');
+   if (sp===null){
+      sp = document.createElement('div');
+      document.body.appendChild(document.createElement('span'));
+      document.body.insertBefore(sp, document.body.firstChild);
+   }
+   return sp;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
    document.addEventListener('htmx:afterRequest', function (event) {
       if (event.detail.successful) {
          return
       }
-      const xhr = event.detail.xhr
-      const statusPanel = document.getElementById('status-panel');
-      const errorNode = document.createElement('div');
-      errorNode.innerHTML = xhr.responseText;
-      const isEmpty = errorNode.innerHTML.trim() === "";
-      const noKids = errorNode.children.length === 0;
-      if (isEmpty) {
-         const div = document.createElement('div')
-         div.innerText = `<div class="alert alert-error">Daemon API at ${getApiServerUrl()} appears unavailable.</div>`
-         errorNode.innerHTML = div.textContent;
-      } else if (noKids) {
-         const span = document.createElement('span')
-         span.innerText = errorNode.innerText
-         errorNode.innerHTML = span.innerText
-      }
-      const firstChild = statusPanel.firstChild;
-      if (firstChild !== null) {
-         statusPanel.insertBefore(errorNode.firstChild, firstChild);
+      const errorNode = getErrorNodeFromXHR(event.detail.xhr);
+      const statusPanel = getStatusPanel();
+      const targetElem = statusPanel.firstChild;
+      if (targetElem !== null) {
+         statusPanel.insertBefore(errorNode, targetElem);
       } else {
-         statusPanel.appendChild(errorNode.firstChild);
+         statusPanel.appendChild(errorNode);
       }
    });
    document.addEventListener('htmx:targetError', function (event) {

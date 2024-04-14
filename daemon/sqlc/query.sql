@@ -51,7 +51,23 @@ ORDER BY
 SELECT * FROM resource WHERE id = ? LIMIT 1;
 
 -- name: ListResources :many
-SELECT * FROM resource ORDER BY visited DESC;
+SELECT * FROM resource ORDER BY url LIMIT 100;
+
+-- name: ListFilteredResources :many
+SELECT *
+FROM resource
+WHERE id IN (sqlc.slice('ids'));
+
+-- name: ListResourceIdsByGroupSlugs :many
+SELECT CAST(rg.resource_id AS INTEGER) AS resource_id
+FROM resource_group rg
+JOIN `group` g ON g.id=rg.group_id
+WHERE g.slug IN (sqlc.slice('slugs'));
+
+-- name: ListResourceIdsByKeyValues :many
+SELECT CAST(resource_id AS INTEGER) AS resource_id
+FROM key_value
+WHERE kv_pair IN (sqlc.slice('pairs'));
 
 -- name: ListResourcesForGroup :many
 SELECT DISTINCT

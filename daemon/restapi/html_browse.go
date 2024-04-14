@@ -9,6 +9,6 @@ import (
 
 func (a *API) GetHtmlBrowse(w http.ResponseWriter, r *http.Request) {
 	sendWith(context.Background(), w, r, func(ctx Context) ([]byte, error) {
-		return ui.BrowseHTML(r.Host)
+		return ui.GetBrowseHTML(ctx, r.Host)
 	})
 }

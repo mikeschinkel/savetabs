@@ -52,9 +52,10 @@ type History struct {
 
 type KeyValue struct {
 	ID           int64          `json:"id"`
-	ResourceID   sql.NullInt64  `json:"resource_id"`
-	Key          sql.NullString `json:"key"`
-	Value        sql.NullString `json:"value"`
+	ResourceID   int64          `json:"resource_id"`
+	Key          string         `json:"key"`
+	Value        string         `json:"value"`
+	KvPair       string         `json:"kv_pair"`
 	CreatedTime  sql.NullString `json:"created_time"`
 	ModifiedTime sql.NullString `json:"modified_time"`
 	Created      sql.NullInt64  `json:"created"`

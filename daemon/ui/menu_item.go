@@ -2,7 +2,6 @@ package ui
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -59,6 +58,10 @@ func (mi menuItem) IconIsBlank() bool {
 
 func (mi menuItem) Slug() safehtml.Identifier {
 	return mi.Source.Identifier()
+}
+
+func (mi menuItem) LinksCriteria() string {
+	return ""
 }
 
 func (mi menuItem) Identifier() safehtml.Identifier {
@@ -118,11 +121,11 @@ func (a allLinks) Identifier() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant(`gt-all`)
 }
 
-func MenuItemHTML(host string, item string) (html []byte, err error) {
+func GetMenuItemHTML(ctx Context, host, item string) (html []byte, err error) {
 	var out bytes.Buffer
 	var items []menuItem
 
-	items, err = GetMenuItemsForType(context.Background(), host, item)
+	items, err = GetMenuItemsForType(ctx, host, item)
 	if err != nil {
 		goto end
 	}
