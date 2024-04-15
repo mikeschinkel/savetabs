@@ -13,7 +13,7 @@ paths:
       - $ref: '#/components/parameters/TagFilter'
       - $ref: '#/components/parameters/KeywordFilter'
       - $ref: '#/components/parameters/BookmarkFilter'
-      - $ref: '#/components/parameters/KeyValueFilter'
+      - $ref: '#/components/parameters/MetadataFilter'
       responses:
         '200':
           $ref: '#/components/responses/HtmlResponse'
@@ -152,7 +152,7 @@ components:
       description: Bookmark filter for Links
       style: form
       explode: true
-    KeyValueFilter:
+    MetadataFilter:
       in: query
       name: m
       schema:

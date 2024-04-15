@@ -66,9 +66,9 @@ FROM link_group rg
 JOIN `group` g ON g.id=rg.group_id
 WHERE g.slug IN (sqlc.slice('slugs'));
 
--- name: ListLinkIdsByKeyValues :many
+-- name: ListLinkIdsByMetadata :many
 SELECT CAST(link_id AS INTEGER) AS link_id
-FROM key_value
+FROM metadata
 WHERE kv_pair IN (sqlc.slice('pairs'));
 
 -- name: ListLinksForGroup :many
@@ -129,11 +129,11 @@ ON CONFLICT (key) DO UPDATE SET value = excluded.value;
 -- name: DeleteVar :exec
 DELETE FROM var WHERE id = ?;
 
--- name: ListKeyValues :many
-SELECT * FROM key_value ORDER BY link_id,key DESC;
+-- name: ListMetadata :many
+SELECT * FROM metadata ORDER BY link_id,key DESC;
 
--- name: UpsertKeyValuesFromVarJSON :exec
-INSERT INTO key_value (link_id, key, value)
+-- name: UpsertMetadataFromVarJSON :exec
+INSERT INTO metadata (link_id, key, value)
 SELECT
    r.id,
    json_extract(kv.value,'$.key'),

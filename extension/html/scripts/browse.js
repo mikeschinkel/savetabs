@@ -1,6 +1,6 @@
 import {getApiServerUrl, getHttpOptions} from './api.js';
 
-console.log("API host:", getApiServerUrl())
+console.log("SaveTabs daemon:", getApiServerUrl())
 
 function getApiBrowseUiHtmlUrl() {
    return `${getApiServerUrl()}/html/browse`

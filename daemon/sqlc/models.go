@@ -50,18 +50,6 @@ type History struct {
 	ActionData []byte        `json:"action_data"`
 }
 
-type KeyValue struct {
-	ID           int64          `json:"id"`
-	LinkID       int64          `json:"link_id"`
-	Key          string         `json:"key"`
-	Value        string         `json:"value"`
-	KvPair       string         `json:"kv_pair"`
-	CreatedTime  sql.NullString `json:"created_time"`
-	ModifiedTime sql.NullString `json:"modified_time"`
-	Created      sql.NullInt64  `json:"created"`
-	Modified     sql.NullInt64  `json:"modified"`
-}
-
 type Link struct {
 	ID          int64          `json:"id"`
 	Url         sql.NullString `json:"url"`
@@ -108,6 +96,18 @@ type LinksView struct {
 	QuotedGroupTypes interface{}    `json:"quoted_group_types"`
 	QuotedGroupSlugs interface{}    `json:"quoted_group_slugs"`
 	QuotedGroupNames interface{}    `json:"quoted_group_names"`
+}
+
+type Metadatum struct {
+	ID           int64          `json:"id"`
+	LinkID       int64          `json:"link_id"`
+	Key          string         `json:"key"`
+	Value        string         `json:"value"`
+	KvPair       string         `json:"kv_pair"`
+	CreatedTime  sql.NullString `json:"created_time"`
+	ModifiedTime sql.NullString `json:"modified_time"`
+	Created      sql.NullInt64  `json:"created"`
+	Modified     sql.NullInt64  `json:"modified"`
 }
 
 type Var struct {

@@ -23,9 +23,9 @@ func UpsertLinkGroups(ctx context.Context, ds DataStore, rgsJSON string) (err er
 	})
 }
 
-func UpsertKeyValues(ctx context.Context, ds DataStore, keyValuesJSON string) (err error) {
-	return upsertFromJSON(ctx, ds, keyValuesJSON, func(ctx context.Context, q *Queries, id int64) error {
-		return q.UpsertKeyValuesFromVarJSON(ctx, id)
+func UpsertMetadata(ctx context.Context, ds DataStore, metadataJSON string) (err error) {
+	return upsertFromJSON(ctx, ds, metadataJSON, func(ctx context.Context, q *Queries, id int64) error {
+		return q.UpsertMetadataFromVarJSON(ctx, id)
 	})
 }
 

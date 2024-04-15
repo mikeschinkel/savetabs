@@ -196,43 +196,6 @@ func (q *Queries) ListGroupsWithCounts(ctx context.Context) ([]GroupsWithCountsV
 	return items, nil
 }
 
-const listKeyValues = `-- name: ListKeyValues :many
-SELECT id, link_id, "key", value, kv_pair, created_time, modified_time, created, modified FROM key_value ORDER BY link_id,key DESC
-`
-
-func (q *Queries) ListKeyValues(ctx context.Context) ([]KeyValue, error) {
-	rows, err := q.db.QueryContext(ctx, listKeyValues)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []KeyValue
-	for rows.Next() {
-		var i KeyValue
-		if err := rows.Scan(
-			&i.ID,
-			&i.LinkID,
-			&i.Key,
-			&i.Value,
-			&i.KvPair,
-			&i.CreatedTime,
-			&i.ModifiedTime,
-			&i.Created,
-			&i.Modified,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listLinkIdsByGroupSlugs = `-- name: ListLinkIdsByGroupSlugs :many
 SELECT CAST(rg.link_id AS INTEGER) AS link_id
 FROM link_group rg
@@ -273,14 +236,14 @@ func (q *Queries) ListLinkIdsByGroupSlugs(ctx context.Context, slugs []string) (
 	return items, nil
 }
 
-const listLinkIdsByKeyValues = `-- name: ListLinkIdsByKeyValues :many
+const listLinkIdsByMetadata = `-- name: ListLinkIdsByMetadata :many
 SELECT CAST(link_id AS INTEGER) AS link_id
-FROM key_value
+FROM metadata
 WHERE kv_pair IN (/*SLICE:pairs*/?)
 `
 
-func (q *Queries) ListLinkIdsByKeyValues(ctx context.Context, pairs []string) ([]int64, error) {
-	query := listLinkIdsByKeyValues
+func (q *Queries) ListLinkIdsByMetadata(ctx context.Context, pairs []string) ([]int64, error) {
+	query := listLinkIdsByMetadata
 	var queryParams []interface{}
 	if len(pairs) > 0 {
 		for _, v := range pairs {
@@ -434,6 +397,43 @@ func (q *Queries) ListLinksForGroup(ctx context.Context, arg ListLinksForGroupPa
 	return items, nil
 }
 
+const listMetadata = `-- name: ListMetadata :many
+SELECT id, link_id, "key", value, kv_pair, created_time, modified_time, created, modified FROM metadata ORDER BY link_id,key DESC
+`
+
+func (q *Queries) ListMetadata(ctx context.Context) ([]Metadatum, error) {
+	rows, err := q.db.QueryContext(ctx, listMetadata)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Metadatum
+	for rows.Next() {
+		var i Metadatum
+		if err := rows.Scan(
+			&i.ID,
+			&i.LinkID,
+			&i.Key,
+			&i.Value,
+			&i.KvPair,
+			&i.CreatedTime,
+			&i.ModifiedTime,
+			&i.Created,
+			&i.Modified,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const loadGroup = `-- name: LoadGroup :one
 
 SELECT id, name, type, slug, created_time, latest_time, created, latest FROM ` + "`" + `group` + "`" + ` WHERE id = ? LIMIT 1
@@ -530,26 +530,6 @@ func (q *Queries) UpsertGroupsFromVarJSON(ctx context.Context, id int64) error {
 	return err
 }
 
-const upsertKeyValuesFromVarJSON = `-- name: UpsertKeyValuesFromVarJSON :exec
-INSERT INTO key_value (link_id, key, value)
-SELECT
-   r.id,
-   json_extract(kv.value,'$.key'),
-   json_extract(kv.value,'$.value')
-FROM var
-   JOIN json_each( var.value ) kv ON var.key='json'
-   JOIN link r ON r.url=json_extract(kv.value,'$.url')
-WHERE var.id = ?
-   ON CONFLICT (link_id,key)
-   DO UPDATE
-      SET value = excluded.value
-`
-
-func (q *Queries) UpsertKeyValuesFromVarJSON(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, upsertKeyValuesFromVarJSON, id)
-	return err
-}
-
 const upsertLinkGroupsFromVarJSON = `-- name: UpsertLinkGroupsFromVarJSON :exec
 INSERT INTO link_group (group_id, link_id)
 SELECT g.id, r.id
@@ -583,6 +563,26 @@ ON CONFLICT (url)
 
 func (q *Queries) UpsertLinksFromVarJSON(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, upsertLinksFromVarJSON, id)
+	return err
+}
+
+const upsertMetadataFromVarJSON = `-- name: UpsertMetadataFromVarJSON :exec
+INSERT INTO metadata (link_id, key, value)
+SELECT
+   r.id,
+   json_extract(kv.value,'$.key'),
+   json_extract(kv.value,'$.value')
+FROM var
+   JOIN json_each( var.value ) kv ON var.key='json'
+   JOIN link r ON r.url=json_extract(kv.value,'$.url')
+WHERE var.id = ?
+   ON CONFLICT (link_id,key)
+   DO UPDATE
+      SET value = excluded.value
+`
+
+func (q *Queries) UpsertMetadataFromVarJSON(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, upsertMetadataFromVarJSON, id)
 	return err
 }
 

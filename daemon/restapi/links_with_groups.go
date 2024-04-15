@@ -201,11 +201,11 @@ func throttle() {
 
 func upsertLinks(ctx context.Context, ds sqlc.DataStore, rr linksWithGroups) error {
 	var groupBytes []byte
-	var keyValueBytes []byte
+	var metadataBytes []byte
 	var linkGroupBytes []byte
 	var gg []group
 	var rgs []linkGroup
-	var kvs []keyValue
+	var kvs []metadata
 	var me = newMultiErr()
 
 	log.Printf("Received new batch of links from Chrome extension at %s",
@@ -233,9 +233,9 @@ func upsertLinks(ctx context.Context, ds sqlc.DataStore, rr linksWithGroups) err
 	}
 
 	throttle()
-	kvs, err = rr.keyValuesFromURLs(urls)
+	kvs, err = rr.metadataFromURLs(urls)
 	if err != nil {
-		me.Add(err, ErrFailedToExtractKeyValues)
+		me.Add(err, ErrFailedToExtractMetadata)
 	}
 
 	throttle()
@@ -256,15 +256,15 @@ func upsertLinks(ctx context.Context, ds sqlc.DataStore, rr linksWithGroups) err
 		me.Add(err, ErrFailedUpsertGroups)
 	}
 
-	keyValueBytes, err = json.Marshal(kvs)
+	metadataBytes, err = json.Marshal(kvs)
 	if err != nil {
-		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "key_value"))
+		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "metadata"))
 	}
 
 	throttle()
-	err = sqlc.UpsertKeyValues(ctx, ds, string(keyValueBytes))
+	err = sqlc.UpsertMetadata(ctx, ds, string(metadataBytes))
 	if err != nil {
-		me.Add(err, ErrFailedUpsertKeyValues)
+		me.Add(err, ErrFailedUpsertMetadata)
 	}
 	log.Printf("Received %d links, %d link-groups, %d groups, and %d key/values from Chrome extension",
 		len(rr), len(rgs), len(gg), len(kvs))
@@ -272,33 +272,33 @@ func upsertLinks(ctx context.Context, ds sqlc.DataStore, rr linksWithGroups) err
 	return me.Err()
 }
 
-type keyValue struct {
+type metadata struct {
 	Url   *string `json:"url"`
 	Key   string  `json:"key"`
 	Value string  `json:"value"`
 }
 
-func appendKeyValueIfNotEmpty(kvs []keyValue, u *string, key, value string) []keyValue {
+func appendMetadataIfNotEmpty(kvs []metadata, u *string, key, value string) []metadata {
 	if key == "" {
 		return kvs
 	}
 	if value == "" {
 		return kvs
 	}
-	return append(kvs, keyValue{
+	return append(kvs, metadata{
 		Url:   u,
 		Key:   key,
 		Value: value,
 	})
 }
 
-func (rr linksWithGroups) keyValues() (kvs []keyValue, err error) {
-	return rr.keyValuesFromURLs(rr.urls())
+func (rr linksWithGroups) metadata() (kvs []metadata, err error) {
+	return rr.metadataFromURLs(rr.urls())
 }
 
-func (rr linksWithGroups) keyValuesFromURLs(urls []string) (kvs []keyValue, err error) {
+func (rr linksWithGroups) metadataFromURLs(urls []string) (kvs []metadata, err error) {
 	var urlObj *url.URL
-	kvs = make([]keyValue, 0)
+	kvs = make([]metadata, 0)
 	for _, u := range urls {
 		if u == "" {
 			continue
@@ -310,10 +310,10 @@ func (rr linksWithGroups) keyValuesFromURLs(urls []string) (kvs []keyValue, err 
 		if !urlObj.IsAbs() {
 			err = errors.Join(ErrUrlNotAbsolute, fmt.Errorf("url=%s", u))
 		}
-		kvs = appendKeyValueIfNotEmpty(kvs, &u, "scheme", urlObj.Scheme)
+		kvs = appendMetadataIfNotEmpty(kvs, &u, "scheme", urlObj.Scheme)
 		host := urlObj.Hostname()
 		tld, sld, sub := extractDomains(host)
-		kvs = append(kvs, []keyValue{
+		kvs = append(kvs, []metadata{
 			{
 				Url:   &u,
 				Key:   "tld",
@@ -330,10 +330,10 @@ func (rr linksWithGroups) keyValuesFromURLs(urls []string) (kvs []keyValue, err 
 				Value: host,
 			},
 		}...)
-		kvs = appendKeyValueIfNotEmpty(kvs, &u, "subdomain", sub)
-		kvs = appendKeyValueIfNotEmpty(kvs, &u, "path", urlObj.RawPath)
-		kvs = appendKeyValueIfNotEmpty(kvs, &u, "query", urlObj.RawQuery)
-		kvs = appendKeyValueIfNotEmpty(kvs, &u, "fragment", urlObj.RawFragment)
+		kvs = appendMetadataIfNotEmpty(kvs, &u, "subdomain", sub)
+		kvs = appendMetadataIfNotEmpty(kvs, &u, "path", urlObj.RawPath)
+		kvs = appendMetadataIfNotEmpty(kvs, &u, "query", urlObj.RawQuery)
+		kvs = appendMetadataIfNotEmpty(kvs, &u, "fragment", urlObj.RawFragment)
 	}
 end:
 	return kvs, err

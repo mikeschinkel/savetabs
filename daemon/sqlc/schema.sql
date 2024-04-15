@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS history
 )
 ;
 
-CREATE TABLE IF NOT EXISTS key_value
+CREATE TABLE IF NOT EXISTS metadata
 (
    id            INTEGER PRIMARY KEY AUTOINCREMENT,
    link_id       INTEGER      NOT NULL,
@@ -39,18 +39,18 @@ CREATE TABLE IF NOT EXISTS key_value
 )
 ;
 
-DROP INDEX IF EXISTS idx_key_value__kv_pair
+DROP INDEX IF EXISTS idx_metadata__kv_pair
 ;
 
-CREATE INDEX idx_key_value__kv_pair ON key_value (kv_pair)
+CREATE INDEX idx_metadata__kv_pair ON metadata (kv_pair)
 ;
 
-CREATE TRIGGER IF NOT EXISTS update_key_value_modified
+CREATE TRIGGER IF NOT EXISTS update_metadata_modified
    AFTER UPDATE
-   ON key_value
+   ON metadata
    FOR EACH ROW
 BEGIN
-   UPDATE key_value
+   UPDATE metadata
    SET
       modified = CASE
                     WHEN old.value = new.value THEN modified
@@ -263,7 +263,7 @@ FROM
          ON g.id = rg.group_id
       LEFT JOIN link r
          ON r.id = rg.link_id
-      LEFT JOIN key_value sld
+      LEFT JOIN metadata sld
          ON sld.key = 'sld' AND sld.link_id = r.id
       LEFT JOIN link_group_ids_view gs
          ON r.id = gs.link_id

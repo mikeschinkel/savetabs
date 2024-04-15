@@ -59,14 +59,14 @@ type GroupType = string
 // GroupTypeName defines model for GroupTypeName.
 type GroupTypeName = string
 
-// KeyValueFilter defines model for KeyValueFilter.
-type KeyValueFilter map[string]string
-
 // KeywordFilter defines model for KeywordFilter.
 type KeywordFilter = []string
 
 // MenuItem defines model for MenuItem.
 type MenuItem = string
+
+// MetadataFilter defines model for MetadataFilter.
+type MetadataFilter map[string]string
 
 // TabGroupFilter defines model for TabGroupFilter.
 type TabGroupFilter = []string
@@ -95,7 +95,7 @@ type GetLinksParams struct {
 	B *BookmarkFilter `form:"b,omitempty" json:"b,omitempty"`
 
 	// M Key/Value metadata filter for Links
-	M *KeyValueFilter `form:"m,omitempty" json:"m,omitempty"`
+	M *MetadataFilter `form:"m,omitempty" json:"m,omitempty"`
 }
 
 // PostLinksWithGroupsJSONRequestBody defines body for PostLinksWithGroups for application/json ContentType.

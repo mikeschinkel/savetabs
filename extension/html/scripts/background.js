@@ -64,5 +64,5 @@ function collectLinks() {
    // clearInterval(intervalHandle);
 }
 
-intervalHandle = setInterval(collectLinks, 5 * 1000);
+intervalHandle = setInterval(collectLinks, 60 * 1000);
 collectLinks()

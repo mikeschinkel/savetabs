@@ -54,7 +54,7 @@ func GetLinksHTML(ctx Context, host string, params SlugsForGetter) (html []byte,
 			continue
 		}
 		if ch == MetaType {
-			ids, err = queries.ListLinkIdsByKeyValues(ctx, slugs)
+			ids, err = queries.ListLinkIdsByMetadata(ctx, slugs)
 		} else {
 			ids, err = queries.ListLinkIdsByGroupSlugs(ctx, slugs)
 		}
