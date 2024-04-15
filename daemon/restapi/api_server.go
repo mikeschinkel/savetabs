@@ -23,7 +23,7 @@ type ServerInterface interface {
 	// Return the list of groups for a group type as HTML
 	// (GET /html/group-types/{groupTypeName}/groups)
 	GetHtmlGroupTypesGroupTypeNameGroups(w http.ResponseWriter, r *http.Request, groupTypeName GroupTypeName)
-	// Return the list of resources for a group as HTML
+	// Return the list of links for a group as HTML
 	// (GET /html/groups/{groupType}/{groupSlug})
 	GetHtmlGroupsGroupTypeGroupSlug(w http.ResponseWriter, r *http.Request, groupType GroupType, groupSlug GroupSlug)
 	// Return the HTML for a paginated table of links with optional filtering criteria in query parameters
@@ -35,12 +35,12 @@ type ServerInterface interface {
 	// Return the HTML for the Menu
 	// (GET /html/menu/{menuItem})
 	GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request, menuItem MenuItem)
+	// Adds multiple links, each with group info
+	// (POST /links/with-groups)
+	PostLinksWithGroups(w http.ResponseWriter, r *http.Request)
 	// Readiness Check
 	// (GET /readyz)
 	GetReadyz(w http.ResponseWriter, r *http.Request)
-	// Adds multiple resources, each with group info
-	// (POST /resources/with-groups)
-	PostResourcesWithGroups(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -252,12 +252,12 @@ func (siw *ServerInterfaceWrapper) GetHtmlMenuMenuItem(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// GetReadyz operation middleware
-func (siw *ServerInterfaceWrapper) GetReadyz(w http.ResponseWriter, r *http.Request) {
+// PostLinksWithGroups operation middleware
+func (siw *ServerInterfaceWrapper) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetReadyz(w, r)
+		siw.Handler.PostLinksWithGroups(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -267,12 +267,12 @@ func (siw *ServerInterfaceWrapper) GetReadyz(w http.ResponseWriter, r *http.Requ
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// PostResourcesWithGroups operation middleware
-func (siw *ServerInterfaceWrapper) PostResourcesWithGroups(w http.ResponseWriter, r *http.Request) {
+// GetReadyz operation middleware
+func (siw *ServerInterfaceWrapper) GetReadyz(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PostResourcesWithGroups(w, r)
+		siw.Handler.GetReadyz(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -403,8 +403,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("GET "+options.BaseURL+"/html/links", wrapper.GetLinks)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu", wrapper.GetHtmlMenu)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu/{menuItem}", wrapper.GetHtmlMenuMenuItem)
+	m.HandleFunc("POST "+options.BaseURL+"/links/with-groups", wrapper.PostLinksWithGroups)
 	m.HandleFunc("GET "+options.BaseURL+"/readyz", wrapper.GetReadyz)
-	m.HandleFunc("POST "+options.BaseURL+"/resources/with-groups", wrapper.PostResourcesWithGroups)
 
 	return m
 }

@@ -1,21 +1,21 @@
 import {getApiServerUrl,getHttpOptions} from './api.js';
-import {getAllResources,setChromeObject,addRecentlySubmittedResources} from './chromeUtils.js';
+import {getAllLinks,setChromeObject,addRecentlySubmittedLinks} from './chromeUtils.js';
 
 console.log("SaveTabs loaded");
 let intervalHandle;
 
 setChromeObject(chrome)
 
-function apiResourcesWithGroupsEndpoint() {
-   return `${getApiServerUrl()}/resources/with-groups`
+function apiLinksWithGroupsEndpoint() {
+   return `${getApiServerUrl()}/links/with-groups`
 }
 
-function postResourcesWithGroups(rwgs){
-   if (rwgs.length===0) {
+function postLinksWithGroups(lwgs){
+   if (lwgs.length===0) {
       return
    }
-   const options = getHttpOptions('POST',rwgs)
-   fetch(apiResourcesWithGroupsEndpoint(), options)
+   const options = getHttpOptions('POST',lwgs)
+   fetch(apiLinksWithGroupsEndpoint(), options)
       .then(async response => {
          console.dir(response)
          if (!response.ok) {
@@ -23,7 +23,7 @@ function postResourcesWithGroups(rwgs){
             return response.text().then(err => {
                // Handle any errors (including HTTP errors)
                let status = `${response.status} - ${response.statusText}`
-               console.log('Error: postResourcesWithGroups(): ', status, err);
+               console.log('Error: postLinksWithGroups(): ', status, err);
                throw new Error(`HTTP Error: ${status}. Details: ${JSON.stringify(err)}`);
             });
          }
@@ -31,38 +31,38 @@ function postResourcesWithGroups(rwgs){
          return text !== "" ? JSON.stringify(text) : {};
       })
       .then(data => {
-         addRecentlySubmittedResources(rwgs)
+         addRecentlySubmittedLinks(lwgs)
          console.log('Response from server:', data); // Handle the successful response
       })
       .catch(err => {
-         console.log('Error: postResourcesWithGroups(): ', err); // Handle any errors (including HTTP errors)
+         console.log('Error: postLinksWithGroups(): ', err); // Handle any errors (including HTTP errors)
       });
 }
 
-function collectResources() {
-   getAllResources()
-      .then(resources => {
-         if (resources === undefined) {
-            console.log('No new resources to post');
+function collectLinks() {
+   getAllLinks()
+      .then(links => {
+         if (links === undefined) {
+            console.log('No new links to post');
             return
          }
-         if (!Array.isArray(resources)) {
-            console.log('WARNING: resources not an array');
+         if (!Array.isArray(links)) {
+            console.log('WARNING: Links not an array');
             return
          }
-         if (resources.length === 0) {
-            console.log('No new resources to post');
+         if (links.length === 0) {
+            console.log('No new links to post');
             return
          }
-         console.log('Resources:', resources);
-         postResourcesWithGroups(resources)
+         console.log('Links:', links);
+         postLinksWithGroups(links)
       })
       .catch(error => {
          // Handle errors
-         console.log('Error: collectResources(): ', error);
+         console.log('Error: collectLinks(): ', error);
       });
    // clearInterval(intervalHandle);
 }
 
-intervalHandle = setInterval(collectResources, 5 * 1000);
-collectResources()
+intervalHandle = setInterval(collectLinks, 5 * 1000);
+collectLinks()

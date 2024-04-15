@@ -37,22 +37,30 @@ func NewAPI(port string, s *swagger) *API {
 
 	// We now register our api above as the handler for the interface
 	HandlerFromMux(api, api.Mux)
-	// Use our validation middleware to check all requests against the
-	// OpenAPI schema.
-	h := middleware.OapiRequestValidator(api.Swagger)(api.Mux)
-	// Use URL logging handler middleware
-	h = api.addURLLogging(h)
-	// Use middleware to address CORS security
+	// Report any panics
+	h := api.catchPanic(api.Mux)
+	// Authenticate request
+	h = api.requireAuth(h)
+	// Validation request against the OpenAPI schema.
+	h = middleware.OapiRequestValidatorWithOptions(api.Swagger, api.openApiOptions())(h)
+	// Add CORS security headers
 	h = api.addCORSHeaders(h)
-	// Add authentication
-	h = api.catchPanic(h)
-	// Add authentication
-	api.Handler = requireAuth(h)
+	// Log requests
+	api.Handler = api.addRequestLogging(h)
 	api.Server = &http.Server{
 		Handler: api.Handler,
 		Addr:    net.JoinHostPort("0.0.0.0", api.Port),
 	}
 	return api
+}
+
+func (a *API) openApiOptions() *middleware.Options {
+	return &middleware.Options{
+		ErrorHandler: func(w http.ResponseWriter, message string, statusCode int) {
+			log.Printf("HTTP ERROR[%d]: %s", statusCode, message)
+			http.Error(w, message, statusCode)
+		},
+	}
 }
 
 func (a *API) PostGroups(w http.ResponseWriter, r *http.Request) {

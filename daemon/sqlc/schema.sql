@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS history
 CREATE TABLE IF NOT EXISTS key_value
 (
    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-   resource_id   INTEGER      NOT NULL,
+   link_id       INTEGER      NOT NULL,
    key           VARCHAR(32)  NOT NULL,
    value         VARCHAR(512) NOT NULL,
    kv_pair       VARCHAR(544) NOT NULL GENERATED ALWAYS AS (key || '=' || value) VIRTUAL,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS key_value
    modified_time TEXT GENERATED ALWAYS AS (DATETIME(modified, 'unixepoch')) VIRTUAL,
    created       INTEGER DEFAULT (STRFTIME('%s', 'now')),
    modified      INTEGER DEFAULT (STRFTIME('%s', 'now')),
-   UNIQUE (resource_id, key)
+   UNIQUE (link_id, key)
 )
 ;
 
@@ -81,14 +81,14 @@ DELETE FROM sqlite_sequence WHERE name = 'group_type'
 
 INSERT
    INTO group_type
-   (sort, type, name, plural, description)
+   (sort, type, name,       plural,       description                                 )
 VALUES
-   (1, 'G', 'TabGroup', 'TabGroups',  'Browser''s name for containing Tab Group'      ),
-   (2, 'C', 'Category', 'Categories', 'AI-generated top-level categorization'         ),
-   (3, 'T', 'Tag',      'Tags',       'Human-specified keywords for resource content' ),
-   (4, 'K', 'Keyword',  'Keywords',   'AI-generated notable tags for resource content'),
-   (5, 'B', 'Bookmark', 'Bookmarks',  'Browser''s name for saved links'               ),
-   (6, 'I', 'Invalid',  'Invalids',   'Unspecified or not a valid group type'         )
+   (1,    'G',  'TabGroup', 'TabGroups',  'Browser''s name for containing Tab Group'  ),
+   (2,    'C',  'Category', 'Categories', 'AI-generated top-level categorization'     ),
+   (3,    'T',  'Tag',      'Tags',       'Human-specified keywords for link content' ),
+   (4,    'K',  'Keyword',  'Keywords',   'AI-generated notable tags for link content'),
+   (5,    'B',  'Bookmark', 'Bookmarks',  'Browser''s name for saved links'           ),
+   (6,    'I',  'Invalid',  'Invalids',   'Unspecified or not a valid group type'     )
 ;
 
 CREATE TABLE IF NOT EXISTS `group`
@@ -123,34 +123,35 @@ BEGIN
 END
 ;
 
-CREATE TABLE IF NOT EXISTS resource_group
+CREATE TABLE IF NOT EXISTS link_group
 (
-   group_id     INTEGER,
-   resource_id  INTEGER,
+   id           INTEGER PRIMARY KEY AUTOINCREMENT,
+   group_id     INTEGER NOT NULL,
+   link_id      INTEGER NOT NULL,
    created_time TEXT GENERATED ALWAYS AS (DATETIME(created, 'unixepoch')) VIRTUAL,
    latest_time  TEXT GENERATED ALWAYS AS (DATETIME(latest, 'unixepoch')) VIRTUAL,
    created      INTEGER DEFAULT (STRFTIME('%s', 'now')),
    latest       INTEGER DEFAULT (STRFTIME('%s', 'now')),
-   UNIQUE (group_id, resource_id)
+   UNIQUE (group_id, link_id)
 )
 ;
 
-CREATE TRIGGER IF NOT EXISTS update_resource_group_latest
+CREATE TRIGGER IF NOT EXISTS update_link_group_latest
    AFTER UPDATE
-   ON resource_group
+   ON link_group
    FOR EACH ROW
 BEGIN
-   UPDATE resource_group
+   UPDATE link_group
    SET
       latest = STRFTIME('%s', 'now')
    WHERE
       TRUE
       AND group_id = old.group_id
-      AND resource_id = old.resource_id;
+      AND link_id = old.link_id;
 END
 ;
 
-CREATE TABLE IF NOT EXISTS resource
+CREATE TABLE IF NOT EXISTS link
 (
    id           INTEGER PRIMARY KEY AUTOINCREMENT,
    url          VARCHAR(256) UNIQUE,
@@ -161,12 +162,12 @@ CREATE TABLE IF NOT EXISTS resource
 )
 ;
 
-CREATE TRIGGER IF NOT EXISTS update_resource_visited
+CREATE TRIGGER IF NOT EXISTS update_link_visited
    AFTER UPDATE
-   ON resource
+   ON link
    FOR EACH ROW
 BEGIN
-   UPDATE resource SET visited = STRFTIME('%s', 'now') WHERE id = old.id;
+   UPDATE link SET visited = STRFTIME('%s', 'now') WHERE id = old.id;
 END
 ;
 
@@ -180,17 +181,17 @@ DROP VIEW IF EXISTS groups_with_counts_view
 CREATE VIEW groups_with_counts_view AS
 SELECT
    g.id,
-   COUNT(DISTINCT rg.resource_id) AS resource_count,
+   COUNT(DISTINCT rg.link_id) AS link_count,
    g.name,
    g.type,
    g.slug,
-   gt.name                        AS type_name,
-   gt.plural                      AS type_plural
+   gt.name                    AS type_name,
+   gt.plural                  AS type_plural
 FROM
    `group` g
       JOIN group_type gt
          ON gt.type = g.type
-      LEFT JOIN resource_group rg
+      LEFT JOIN link_group rg
          ON rg.group_id = g.id
 GROUP BY
    g.id,
@@ -202,13 +203,13 @@ ORDER BY
 ;
 
 
-DROP VIEW IF EXISTS resource_group_ids_view
+DROP VIEW IF EXISTS link_group_ids_view
 ;
 
--- SELECT * FROM resource_group_ids_view;
-CREATE VIEW IF NOT EXISTS resource_group_ids_view AS
+-- SELECT * FROM link_group_ids_view;
+CREATE VIEW IF NOT EXISTS link_group_ids_view AS
 SELECT
-   resource_id,
+   link_id,
    group_ids,
    group_types,
    group_slugs,
@@ -219,28 +220,28 @@ SELECT
 FROM
    (
       SELECT DISTINCT
-         rg.resource_id,
+         rg.link_id,
          GROUP_CONCAT(DISTINCT g.id)                           AS group_ids,
          GROUP_CONCAT(DISTINCT g.type)                         AS group_types,
          GROUP_CONCAT(DISTINCT g.type || ':' || g.name)        AS group_names,
          GROUP_CONCAT(DISTINCT LOWER(g.type) || ':' || g.slug) AS group_slugs
       FROM
          `group` g
-            JOIN resource_group rg
+            JOIN link_group rg
                ON g.id = rg.group_id
       GROUP BY
-         rg.resource_id
+         rg.link_id
       ) x
 ;
 
-DROP VIEW IF EXISTS resources_view
+DROP VIEW IF EXISTS links_view
 ;
 
--- SELECT * FROM resources_view;
-CREATE VIEW IF NOT EXISTS resources_view AS
+-- SELECT * FROM links_view;
+CREATE VIEW IF NOT EXISTS links_view AS
 SELECT
    r.id,
-   r.id      AS resource_id,
+   r.id      AS link_id,
    r.url,
    g.id      AS group_id,
    g.name    AS group_name,
@@ -258,14 +259,14 @@ FROM
    `group` g
       JOIN group_type gt
          ON gt.type = g.type
-      LEFT JOIN resource_group rg
+      LEFT JOIN link_group rg
          ON g.id = rg.group_id
-      LEFT JOIN resource r
-         ON r.id = rg.resource_id
+      LEFT JOIN link r
+         ON r.id = rg.link_id
       LEFT JOIN key_value sld
-         ON sld.key = 'sld' AND sld.resource_id = r.id
-      LEFT JOIN resource_group_ids_view gs
-         ON r.id = gs.resource_id
+         ON sld.key = 'sld' AND sld.link_id = r.id
+      LEFT JOIN link_group_ids_view gs
+         ON r.id = gs.link_id
 ORDER BY
    g.name,
    r.url

@@ -120,10 +120,10 @@ func newGroupTypeMap(gtrs []sqlc.ListGroupsTypeRow) groupTypeMap {
 	cnt := len(gtrs)
 
 	// No need to show invalid as a group type if
-	// there are no resources of that type
+	// there are no links of that type
 	invalid := -1
 	for i, gtr := range gtrs {
-		if gtr.ResourceCount != 0 {
+		if gtr.LinkCount != 0 {
 			continue
 		}
 		if gtr.Type != "I" {

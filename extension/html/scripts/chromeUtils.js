@@ -28,7 +28,7 @@ export function setChromeObject(chromeObj) {
    chrome = chromeObj;
 }
 
-export function getTabGroupResources(tabGroup) {
+export function getTabGroupLinks(tabGroup) {
    return new Promise((resolve, reject) => {
       chrome.tabs.query({ groupId: tabGroup.id }, tabs => {
          if (chrome.runtime.lastError) {
@@ -50,14 +50,14 @@ export function getTabGroupResources(tabGroup) {
    });
 }
 
-export function getAllTabGroupsResources(tabGroups) {
+export function getAllTabGroupsLinks(tabGroups) {
     // Create a promise to retrieve tabs for each tab group
     const tabGroupPromises = tabGroups.map(tabGroup => {
-        return getTabGroupResources(tabGroup);
+        return getTabGroupLinks(tabGroup);
     });
 
     // Create a promise to retrieve tabs without a tab group
-    const noGroupPromise = getTabGroupResources({
+    const noGroupPromise = getTabGroupLinks({
        id: -1,
        title: '<none>',
     })
@@ -74,7 +74,6 @@ export function getAllTabGroupsResources(tabGroups) {
         });
 }
 
-
 export function getAllTabGroups() {
    return new Promise((resolve, reject) => {
       chrome.tabGroups.query({}, (tabGroups) => {
@@ -87,20 +86,20 @@ export function getAllTabGroups() {
    });
 }
 
-export async function getAllResources() {
+export async function getAllLinks() {
    try {
       const tabGroups = await getAllTabGroups();
-      return await getAllTabGroupsResources(tabGroups);
+      return await getAllTabGroupsLinks(tabGroups);
    } catch (error) {
-      console.log('Error: getAllResources(): ', error);
+      console.log('Error: getAllLinks(): ', error);
       throw error;
    }
 }
 
-export function addRecentlySubmittedResources(resources) {
+export function addRecentlySubmittedLinks(links) {
    let d = new Date();
-   resources.forEach(r => {
-      recentlySubmittedResources[urlKey(r.url,r.group)] = d;
+   links.forEach(r => {
+      recentlySubmittedLinks[urlKey(r.url,r.group)] = d;
    })
 }
 
@@ -109,22 +108,22 @@ function rejectUrl(url,group){
    if (url.match(chromeUrlsRegex)) {
       return true;
    }
-   return resourceSubmittedRecently(url, group);
+   return LinkSubmittedRecently(url, group);
 }
 
 function urlKey(url,group) {
    return hash(`${url}|${group}`)
 }
 
-let recentlySubmittedResources = {};
-// resourceSubmittedRecently checks to see if a URL + groupId has been submitted within the past hour.
-function resourceSubmittedRecently(url,group) {
+let recentlySubmittedLinks = {};
+// LinkSubmittedRecently checks to see if a URL + groupId has been submitted within the past hour.
+function LinkSubmittedRecently(url,group) {
    let key = urlKey(url,group)
-   if (!recentlySubmittedResources.hasOwnProperty(key)) {
+   if (!recentlySubmittedLinks.hasOwnProperty(key)) {
       return false;
    }
    let currentTime = new Date();
-   let lastSubmittedTime = recentlySubmittedResources[key];
+   let lastSubmittedTime = recentlySubmittedLinks[key];
    let milliseconds = currentTime - lastSubmittedTime;
    let hours = milliseconds / (1000 * 60 * 60);
    return hours < 1;

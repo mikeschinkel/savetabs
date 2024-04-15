@@ -1,7 +1,9 @@
 <ul class="">
 {{range .Links}}
   <li id="{{.Identifier}}">
-    <a class="link link-primary" target="_blank" href="{{.URL}}">{{.URL}}</a>
+    <span class="text-lg">
+      <a class="link link-primary" target="_blank" href="{{.URL}}" title="{{.Title}}" aria-label="{{.ARIALabel}}">{{.URL}}</a>
+    </span>
   </li>
 {{end}}
 </ul>

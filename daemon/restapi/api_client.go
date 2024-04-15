@@ -110,13 +110,13 @@ type ClientInterface interface {
 	// GetHtmlMenuMenuItem request
 	GetHtmlMenuMenuItem(ctx context.Context, menuItem MenuItem, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostLinksWithGroupsWithBody request with any body
+	PostLinksWithGroupsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostLinksWithGroups(ctx context.Context, body PostLinksWithGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetReadyz request
 	GetReadyz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// PostResourcesWithGroupsWithBody request with any body
-	PostResourcesWithGroupsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	PostResourcesWithGroups(ctx context.Context, body PostResourcesWithGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -203,32 +203,32 @@ func (c *Client) GetHtmlMenuMenuItem(ctx context.Context, menuItem MenuItem, req
 	return c.Client.Do(req)
 }
 
+func (c *Client) PostLinksWithGroupsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostLinksWithGroupsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostLinksWithGroups(ctx context.Context, body PostLinksWithGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostLinksWithGroupsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetReadyz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetReadyzRequest(c.Server)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) PostResourcesWithGroupsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostResourcesWithGroupsRequestWithBody(c.Server, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) PostResourcesWithGroups(ctx context.Context, body PostResourcesWithGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostResourcesWithGroupsRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -558,6 +558,46 @@ func NewGetHtmlMenuMenuItemRequest(server string, menuItem MenuItem) (*http.Requ
 	return req, nil
 }
 
+// NewPostLinksWithGroupsRequest calls the generic PostLinksWithGroups builder with application/json body
+func NewPostLinksWithGroupsRequest(server string, body PostLinksWithGroupsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostLinksWithGroupsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPostLinksWithGroupsRequestWithBody generates requests for PostLinksWithGroups with any type of body
+func NewPostLinksWithGroupsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/links/with-groups")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetReadyzRequest generates requests for GetReadyz
 func NewGetReadyzRequest(server string) (*http.Request, error) {
 	var err error
@@ -581,46 +621,6 @@ func NewGetReadyzRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return req, nil
-}
-
-// NewPostResourcesWithGroupsRequest calls the generic PostResourcesWithGroups builder with application/json body
-func NewPostResourcesWithGroupsRequest(server string, body PostResourcesWithGroupsJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewPostResourcesWithGroupsRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewPostResourcesWithGroupsRequestWithBody generates requests for PostResourcesWithGroups with any type of body
-func NewPostResourcesWithGroupsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/resources/with-groups")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -689,13 +689,13 @@ type ClientWithResponsesInterface interface {
 	// GetHtmlMenuMenuItemWithResponse request
 	GetHtmlMenuMenuItemWithResponse(ctx context.Context, menuItem MenuItem, reqEditors ...RequestEditorFn) (*GetHtmlMenuMenuItemResponse, error)
 
+	// PostLinksWithGroupsWithBodyWithResponse request with any body
+	PostLinksWithGroupsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostLinksWithGroupsResponse, error)
+
+	PostLinksWithGroupsWithResponse(ctx context.Context, body PostLinksWithGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostLinksWithGroupsResponse, error)
+
 	// GetReadyzWithResponse request
 	GetReadyzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetReadyzResponse, error)
-
-	// PostResourcesWithGroupsWithBodyWithResponse request with any body
-	PostResourcesWithGroupsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostResourcesWithGroupsResponse, error)
-
-	PostResourcesWithGroupsWithResponse(ctx context.Context, body PostResourcesWithGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostResourcesWithGroupsResponse, error)
 }
 
 type GetHealthzResponse struct {
@@ -845,6 +845,29 @@ func (r GetHtmlMenuMenuItemResponse) StatusCode() int {
 	return 0
 }
 
+type PostLinksWithGroupsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *[]IdObjects
+	JSONDefault  *UnexpectedError
+}
+
+// Status returns HTTPResponse.Status
+func (r PostLinksWithGroupsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostLinksWithGroupsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetReadyzResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -860,29 +883,6 @@ func (r GetReadyzResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetReadyzResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type PostResourcesWithGroupsResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON201      *[]IdObjects
-	JSONDefault  *UnexpectedError
-}
-
-// Status returns HTTPResponse.Status
-func (r PostResourcesWithGroupsResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r PostResourcesWithGroupsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -952,6 +952,23 @@ func (c *ClientWithResponses) GetHtmlMenuMenuItemWithResponse(ctx context.Contex
 	return ParseGetHtmlMenuMenuItemResponse(rsp)
 }
 
+// PostLinksWithGroupsWithBodyWithResponse request with arbitrary body returning *PostLinksWithGroupsResponse
+func (c *ClientWithResponses) PostLinksWithGroupsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostLinksWithGroupsResponse, error) {
+	rsp, err := c.PostLinksWithGroupsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostLinksWithGroupsResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostLinksWithGroupsWithResponse(ctx context.Context, body PostLinksWithGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostLinksWithGroupsResponse, error) {
+	rsp, err := c.PostLinksWithGroups(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostLinksWithGroupsResponse(rsp)
+}
+
 // GetReadyzWithResponse request returning *GetReadyzResponse
 func (c *ClientWithResponses) GetReadyzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetReadyzResponse, error) {
 	rsp, err := c.GetReadyz(ctx, reqEditors...)
@@ -959,23 +976,6 @@ func (c *ClientWithResponses) GetReadyzWithResponse(ctx context.Context, reqEdit
 		return nil, err
 	}
 	return ParseGetReadyzResponse(rsp)
-}
-
-// PostResourcesWithGroupsWithBodyWithResponse request with arbitrary body returning *PostResourcesWithGroupsResponse
-func (c *ClientWithResponses) PostResourcesWithGroupsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostResourcesWithGroupsResponse, error) {
-	rsp, err := c.PostResourcesWithGroupsWithBody(ctx, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePostResourcesWithGroupsResponse(rsp)
-}
-
-func (c *ClientWithResponses) PostResourcesWithGroupsWithResponse(ctx context.Context, body PostResourcesWithGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostResourcesWithGroupsResponse, error) {
-	rsp, err := c.PostResourcesWithGroups(ctx, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePostResourcesWithGroupsResponse(rsp)
 }
 
 // ParseGetHealthzResponse parses an HTTP response from a GetHealthzWithResponse call
@@ -1090,31 +1090,15 @@ func ParseGetHtmlMenuMenuItemResponse(rsp *http.Response) (*GetHtmlMenuMenuItemR
 	return response, nil
 }
 
-// ParseGetReadyzResponse parses an HTTP response from a GetReadyzWithResponse call
-func ParseGetReadyzResponse(rsp *http.Response) (*GetReadyzResponse, error) {
+// ParsePostLinksWithGroupsResponse parses an HTTP response from a PostLinksWithGroupsWithResponse call
+func ParsePostLinksWithGroupsResponse(rsp *http.Response) (*PostLinksWithGroupsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetReadyzResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	return response, nil
-}
-
-// ParsePostResourcesWithGroupsResponse parses an HTTP response from a PostResourcesWithGroupsWithResponse call
-func ParsePostResourcesWithGroupsResponse(rsp *http.Response) (*PostResourcesWithGroupsResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &PostResourcesWithGroupsResponse{
+	response := &PostLinksWithGroupsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1134,6 +1118,22 @@ func ParsePostResourcesWithGroupsResponse(rsp *http.Response) (*PostResourcesWit
 		}
 		response.JSONDefault = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseGetReadyzResponse parses an HTTP response from a GetReadyzWithResponse call
+func ParseGetReadyzResponse(rsp *http.Response) (*GetReadyzResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetReadyzResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
 	}
 
 	return response, nil

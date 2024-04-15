@@ -1,3 +1,5 @@
+-- noinspection SqlResolveForFile @ any/"sqlc"
+
 -- name: LoadGroup :one
 SELECT * FROM `group` WHERE id = ? LIMIT 1;
 
@@ -35,11 +37,11 @@ SELECT DISTINCT
    gt.plural,
    COUNT(DISTINCT g.id) AS group_count,
    CAST(CASE WHEN g.ID IS NULL THEN 0
-      ELSE COUNT(DISTINCT rg.resource_id) END AS INTEGER) AS resource_count,
+      ELSE COUNT(DISTINCT rg.link_id) END AS INTEGER) AS link_count,
    gt.sort
 FROM group_type gt
    LEFT JOIN `group` g ON gt.type=g.type
-   LEFT JOIN resource_group rg ON g.id=rg.group_id
+   LEFT JOIN link_group rg ON g.id=rg.group_id
 GROUP BY
    gt.sort,
    gt.type,
@@ -47,32 +49,32 @@ GROUP BY
 ORDER BY
    gt.sort;
 
--- name: LoadResource :one
-SELECT * FROM resource WHERE id = ? LIMIT 1;
+-- name: LoadLink :one
+SELECT * FROM link WHERE id = ? LIMIT 1;
 
--- name: ListResources :many
-SELECT * FROM resource ORDER BY url LIMIT 100;
+-- name: ListLinks :many
+SELECT * FROM link ORDER BY url LIMIT 100;
 
--- name: ListFilteredResources :many
+-- name: ListFilteredLinks :many
 SELECT *
-FROM resource
+FROM link
 WHERE id IN (sqlc.slice('ids'));
 
--- name: ListResourceIdsByGroupSlugs :many
-SELECT CAST(rg.resource_id AS INTEGER) AS resource_id
-FROM resource_group rg
+-- name: ListLinkIdsByGroupSlugs :many
+SELECT CAST(rg.link_id AS INTEGER) AS link_id
+FROM link_group rg
 JOIN `group` g ON g.id=rg.group_id
 WHERE g.slug IN (sqlc.slice('slugs'));
 
--- name: ListResourceIdsByKeyValues :many
-SELECT CAST(resource_id AS INTEGER) AS resource_id
+-- name: ListLinkIdsByKeyValues :many
+SELECT CAST(link_id AS INTEGER) AS link_id
 FROM key_value
 WHERE kv_pair IN (sqlc.slice('pairs'));
 
--- name: ListResourcesForGroup :many
+-- name: ListLinksForGroup :many
 SELECT DISTINCT
    id,
-   resource_id,
+   link_id,
    url,
    group_id,
    cast(group_name AS VARCHAR(32)) AS group_name,
@@ -87,7 +89,7 @@ SELECT DISTINCT
    quoted_group_slugs,
    quoted_group_names
 FROM
-   resources_view
+   links_view
 WHERE true
    AND group_type = ?
    AND group_slug = ?
@@ -96,8 +98,8 @@ ORDER BY
 
 
 
--- name: UpsertResourcesFromVarJSON :exec
-INSERT INTO resource (url)
+-- name: UpsertLinksFromVarJSON :exec
+INSERT INTO link (url)
 SELECT r.value AS url
 FROM var
    JOIN json_each( var.value ) r ON var.key='json'
@@ -106,17 +108,17 @@ ON CONFLICT (url)
    DO UPDATE
             SET visited = strftime('%s','now');
 
--- name: UpsertResourceGroupsFromVarJSON :exec
-INSERT INTO resource_group (group_id, resource_id)
+-- name: UpsertLinkGroupsFromVarJSON :exec
+INSERT INTO link_group (group_id, link_id)
 SELECT g.id, r.id
 FROM var
    JOIN json_each( var.value ) j ON var.key='json'
-   JOIN resource r ON r.url=json_extract(j.value,'$.resource_url')
+   JOIN link r ON r.url=json_extract(j.value,'$.link_url')
    JOIN `group` g ON true
       AND g.name=json_extract(j.value,'$.group_name')
       AND g.type=json_extract(j.value,'$.group_type')
 WHERE var.id = ?
-ON CONFLICT (group_id, resource_id)
+ON CONFLICT (group_id, link_id)
    DO UPDATE
             SET latest = strftime('%s','now');
 
@@ -128,19 +130,19 @@ ON CONFLICT (key) DO UPDATE SET value = excluded.value;
 DELETE FROM var WHERE id = ?;
 
 -- name: ListKeyValues :many
-SELECT * FROM key_value ORDER BY resource_id,key DESC;
+SELECT * FROM key_value ORDER BY link_id,key DESC;
 
 -- name: UpsertKeyValuesFromVarJSON :exec
-INSERT INTO key_value (resource_id, key, value)
+INSERT INTO key_value (link_id, key, value)
 SELECT
    r.id,
    json_extract(kv.value,'$.key'),
    json_extract(kv.value,'$.value')
 FROM var
    JOIN json_each( var.value ) kv ON var.key='json'
-   JOIN resource r ON r.url=json_extract(kv.value,'$.url')
+   JOIN link r ON r.url=json_extract(kv.value,'$.url')
 WHERE var.id = ?
-   ON CONFLICT (resource_id,key)
+   ON CONFLICT (link_id,key)
    DO UPDATE
       SET value = excluded.value;
 

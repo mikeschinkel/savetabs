@@ -86,7 +86,7 @@ func menuItemsFromListGroupTypesRows(host string, gtrs []sqlc.ListGroupsTypeRow)
 	// there are no resources of that type
 	invalid := -1
 	for i, gtr := range gtrs {
-		if gtr.ResourceCount != 0 {
+		if gtr.LinkCount != 0 {
 			continue
 		}
 		if gtr.Type != "I" {

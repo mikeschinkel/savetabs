@@ -13,9 +13,9 @@ sql:
         go_type: "string"
       - db_type: "VARCHAR(32)"
         go_type: "string"
-      - column: resource.created
+      - column: link.created
         go_struct_tag: json:"-"
-      - column: resource.modified
+      - column: link.modified
         go_struct_tag: json:"-"
       - column: "`group`.created"
         go_struct_tag: json:"-"

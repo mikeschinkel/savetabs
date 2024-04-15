@@ -19,20 +19,20 @@ import (
 	"savetabs/sqlc"
 )
 
-func (a *API) PostResourcesWithGroups(w http.ResponseWriter, r *http.Request) {
+func (a *API) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		// TODO: Find a better status result than "Bad Gateway"
 		sendError(w, r, http.StatusBadGateway, err.Error())
 		return
 	}
-	var data resourcesWithGroups
+	var data linksWithGroups
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		sendError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
-	data, err = sanitizeResourcesWithGroups(data)
+	data, err = sanitizeLinksWithGroups(data)
 	if err != nil {
 		sendError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -44,13 +44,13 @@ func (a *API) PostResourcesWithGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = db.Exec(func(tx *sql.Tx) (err error) {
-		err = upsertResources(context.TODO(), ds, data)
+		err = upsertLinks(context.TODO(), ds, data)
 		switch {
 		case err == nil:
 			goto end
 		case errors.Is(err, ErrFailedToUnmarshal):
 			sendError(w, r, http.StatusBadRequest, err.Error())
-		case errors.Is(err, ErrFailedUpsertResources):
+		case errors.Is(err, ErrFailedUpsertLinks):
 			// TODO: Break out errors into different status for different reasons
 			fallthrough
 		default:
@@ -61,9 +61,9 @@ func (a *API) PostResourcesWithGroups(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-type resourcesWithGroups ResourcesWithGroups
+type linksWithGroups LinksWithGroups
 
-func (rr resourcesWithGroups) urls() []string {
+func (rr linksWithGroups) urls() []string {
 	var appended = make(map[string]struct{})
 	var urls = make([]string, 0)
 	for _, r := range rr {
@@ -87,7 +87,7 @@ type group struct {
 	Slug string `json:"slug"`
 }
 
-func (rr resourcesWithGroups) groups() []group {
+func (rr linksWithGroups) groups() []group {
 	var appended = make(map[int64]struct{})
 	var groups = make([]group, 0)
 	var keywords []string
@@ -131,16 +131,16 @@ func (rr resourcesWithGroups) groups() []group {
 	return groups
 }
 
-type resourceGroup struct {
-	GroupName   string `json:"group_name"`
-	GroupSlug   string `json:"group_slug"`
-	GroupType   string `json:"group_type"`
-	ResourceURL string `json:"resource_url"`
+type linkGroup struct {
+	GroupName string `json:"group_name"`
+	GroupSlug string `json:"group_slug"`
+	GroupType string `json:"group_type"`
+	LinkURL   string `json:"link_url"`
 }
 
-func (rr resourcesWithGroups) resourceGroups() []resourceGroup {
+func (rr linksWithGroups) linkGroups() []linkGroup {
 	var appended = make(map[int64]map[string]struct{})
-	var rgs = make([]resourceGroup, 0)
+	var rgs = make([]linkGroup, 0)
 	for _, rg := range rr {
 		if rg.Group == nil {
 			continue
@@ -169,11 +169,11 @@ func (rr resourcesWithGroups) resourceGroups() []resourceGroup {
 			continue
 		}
 		appended[*rg.GroupId][*rg.Url] = struct{}{}
-		rgs = append(rgs, resourceGroup{
-			ResourceURL: *rg.Url,
-			GroupName:   *rg.Group,
-			GroupSlug:   shared.Slugify(*rg.Group),
-			GroupType:   groupTypeFromName(*rg.GroupType),
+		rgs = append(rgs, linkGroup{
+			LinkURL:   *rg.Url,
+			GroupName: *rg.Group,
+			GroupSlug: shared.Slugify(*rg.Group),
+			GroupType: groupTypeFromName(*rg.GroupType),
 		})
 	}
 	return rgs
@@ -195,52 +195,62 @@ func groupTypeFromName(n string) (t string) {
 	return t
 }
 
-func upsertResources(ctx context.Context, ds sqlc.DataStore, rr resourcesWithGroups) error {
+func throttle() {
+	time.Sleep(time.Second)
+}
+
+func upsertLinks(ctx context.Context, ds sqlc.DataStore, rr linksWithGroups) error {
 	var groupBytes []byte
 	var keyValueBytes []byte
-	var resourceGroupBytes []byte
+	var linkGroupBytes []byte
 	var gg []group
-	var rgs []resourceGroup
+	var rgs []linkGroup
 	var kvs []keyValue
 	var me = newMultiErr()
 
-	log.Printf("Received new batch of resources from Chrome extension at %s",
+	log.Printf("Received new batch of links from Chrome extension at %s",
 		time.Now().Format(time.DateTime))
 
 	urls := rr.urls()
 
 	urlBytes, err := json.Marshal(urls)
 	if err != nil {
-		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "resource"))
+		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "link"))
 	}
 
+	throttle()
 	gg = rr.groups()
 	groupBytes, err = json.Marshal(gg)
 	if err != nil {
 		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "group"))
 	}
 
-	rgs = rr.resourceGroups()
-	resourceGroupBytes, err = json.Marshal(rgs)
+	throttle()
+	rgs = rr.linkGroups()
+	linkGroupBytes, err = json.Marshal(rgs)
 	if err != nil {
-		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "resource_group"))
+		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "link_group"))
 	}
 
+	throttle()
 	kvs, err = rr.keyValuesFromURLs(urls)
 	if err != nil {
 		me.Add(err, ErrFailedToExtractKeyValues)
 	}
 
-	err = sqlc.UpsertResources(ctx, ds, string(urlBytes))
+	throttle()
+	err = sqlc.UpsertLinks(ctx, ds, string(urlBytes))
 	if err != nil {
-		me.Add(err, ErrFailedUpsertResources)
+		me.Add(err, ErrFailedUpsertLinks)
 	}
 
-	err = sqlc.UpsertResourceGroups(ctx, ds, string(resourceGroupBytes))
+	throttle()
+	err = sqlc.UpsertLinkGroups(ctx, ds, string(linkGroupBytes))
 	if err != nil {
-		me.Add(err, ErrFailedUpsertResourceGroups)
+		me.Add(err, ErrFailedUpsertLinkGroups)
 	}
 
+	throttle()
 	err = sqlc.UpsertGroups(ctx, ds, string(groupBytes))
 	if err != nil {
 		me.Add(err, ErrFailedUpsertGroups)
@@ -250,12 +260,15 @@ func upsertResources(ctx context.Context, ds sqlc.DataStore, rr resourcesWithGro
 	if err != nil {
 		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "key_value"))
 	}
+
+	throttle()
 	err = sqlc.UpsertKeyValues(ctx, ds, string(keyValueBytes))
 	if err != nil {
 		me.Add(err, ErrFailedUpsertKeyValues)
 	}
-	log.Printf("Received %d resources, %d resource-groups, %d groups, and %d key/values from Chrome extension",
+	log.Printf("Received %d links, %d link-groups, %d groups, and %d key/values from Chrome extension",
 		len(rr), len(rgs), len(gg), len(kvs))
+
 	return me.Err()
 }
 
@@ -279,11 +292,11 @@ func appendKeyValueIfNotEmpty(kvs []keyValue, u *string, key, value string) []ke
 	})
 }
 
-func (rr resourcesWithGroups) keyValues() (kvs []keyValue, err error) {
+func (rr linksWithGroups) keyValues() (kvs []keyValue, err error) {
 	return rr.keyValuesFromURLs(rr.urls())
 }
 
-func (rr resourcesWithGroups) keyValuesFromURLs(urls []string) (kvs []keyValue, err error) {
+func (rr linksWithGroups) keyValuesFromURLs(urls []string) (kvs []keyValue, err error) {
 	var urlObj *url.URL
 	kvs = make([]keyValue, 0)
 	for _, u := range urls {
@@ -347,14 +360,14 @@ end:
 	return tld, sld, sub
 }
 
-func sanitizeResourcesWithGroups(data resourcesWithGroups) (_ resourcesWithGroups, err error) {
+func sanitizeLinksWithGroups(data linksWithGroups) (_ linksWithGroups, err error) {
 	for i := 0; i < len(data); i++ {
 		rg := data[i]
 		if rg.Url == nil || *rg.Url == "" {
 			if err == nil {
-				err = errors.Join(ErrUrlNotSpecified, fmt.Errorf("error found in resource index %d", i))
+				err = errors.Join(ErrUrlNotSpecified, fmt.Errorf("error found in link index %d", i))
 			} else {
-				err = errors.Join(err, fmt.Errorf("error found in resource index %d", i))
+				err = errors.Join(err, fmt.Errorf("error found in link index %d", i))
 			}
 			data = slices.Delete(data, i, i)
 			i--

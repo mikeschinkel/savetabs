@@ -2,7 +2,7 @@
   <configuration default="false" name="GO savetabsd" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="daemon" />
     <working_directory value="$PROJECT_DIR$/" />
-    <go_parameters value="-o bin/savetabsd" />
+    <go_parameters value="-o ../../bin/savetabsd" />
     <EXTENSION ID="net.ashald.envfile">
       <option name="IS_ENABLED" value="false" />
       <option name="IS_SUBST" value="false" />
@@ -17,7 +17,9 @@
     <package value="savetabsd" />
     <directory value="$PROJECT_DIR$" />
     <filePath value="$PROJECT_DIR$/cmd/savetabsd/main.go" />
-    <output_directory value="$PROJECT_DIR$/bin" />
-    <method v="2" />
+    <output_directory value="$PROJECT_DIR$/../bin" />
+    <method v="2">
+      <option name="GoBeforeRunTask" command="generate ./..." />
+    </method>
   </configuration>
 </component>

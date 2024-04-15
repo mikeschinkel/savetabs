@@ -4,7 +4,7 @@
 <ul class="menu w-full">
 {{range .GroupTypes}}
   <li id="{{.Identifier}}" hx-get="{{$.Host}}{{.Url}}" hx-trigger="click once" hx-target="#{{.Target}}" class="my-1 p-1 bg-base-200">
-      <span class="font-bold text-2xl">{{.Plural}}</span> <span class="text-sm">— {{.GroupCount}} {{.Plural}} with {{.ResourceCount}} links</span>
+      <span class="font-bold text-2xl">{{.Plural}}</span> <span class="text-sm">— {{.GroupCount}} {{.Plural}} with {{.LinkCount}} links</span>
       <ul id="{{.Target}}"></ul>
   </li>
 {{end}}

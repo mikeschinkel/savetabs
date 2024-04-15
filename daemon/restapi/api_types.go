@@ -24,23 +24,25 @@ type IdObject struct {
 // IdObjects defines model for IdObjects.
 type IdObjects = []IdObject
 
-// Resource defines model for Resource.
-type Resource struct {
-	Id  *int64  `json:"id,omitempty"`
-	Url *string `json:"url,omitempty"`
+// Link defines model for Link.
+type Link struct {
+	Id    *int64  `json:"id,omitempty"`
+	Title *string `json:"title,omitempty"`
+	Url   *string `json:"url,omitempty"`
 }
 
-// ResourceWithGroup defines model for ResourceWithGroup.
-type ResourceWithGroup struct {
+// LinkWithGroup defines model for LinkWithGroup.
+type LinkWithGroup struct {
 	Group     *string `json:"group,omitempty"`
 	GroupId   *int64  `json:"groupId,omitempty"`
 	GroupType *string `json:"groupType,omitempty"`
 	Id        *int64  `json:"id,omitempty"`
+	Title     *string `json:"title,omitempty"`
 	Url       *string `json:"url,omitempty"`
 }
 
-// ResourcesWithGroups defines model for ResourcesWithGroups.
-type ResourcesWithGroups = []ResourceWithGroup
+// LinksWithGroups defines model for LinksWithGroups.
+type LinksWithGroups = []LinkWithGroup
 
 // BookmarkFilter defines model for BookmarkFilter.
 type BookmarkFilter = []string
@@ -96,5 +98,5 @@ type GetLinksParams struct {
 	M *KeyValueFilter `form:"m,omitempty" json:"m,omitempty"`
 }
 
-// PostResourcesWithGroupsJSONRequestBody defines body for PostResourcesWithGroups for application/json ContentType.
-type PostResourcesWithGroupsJSONRequestBody = ResourcesWithGroups
+// PostLinksWithGroupsJSONRequestBody defines body for PostLinksWithGroups for application/json ContentType.
+type PostLinksWithGroupsJSONRequestBody = LinksWithGroups

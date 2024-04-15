@@ -11,10 +11,10 @@ import (
 
 const DBFile = "../data/savetabs.db"
 
-type resourceGroup struct {
-	GroupName   string `json:"group_name"`
-	GroupType   string `json:"group_type"`
-	ResourceURL string `json:"resource_url"`
+type linkGroup struct {
+	GroupName string `json:"group_name"`
+	GroupType string `json:"group_type"`
+	LinkURL   string `json:"link_url"`
 }
 type group struct {
 	Id   int64  `json:"id"`
@@ -29,7 +29,7 @@ func TestKeywordsFromURL(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	q := ds.Queries()
-	rr, err := q.ListResources(ctx)
+	rr, err := q.ListLinks(ctx)
 
 	var ggg []group
 	var rgs []resourceGroup

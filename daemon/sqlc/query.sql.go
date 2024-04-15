@@ -20,14 +20,14 @@ func (q *Queries) DeleteVar(ctx context.Context, id int64) error {
 	return err
 }
 
-const listFilteredResources = `-- name: ListFilteredResources :many
+const listFilteredLinks = `-- name: ListFilteredLinks :many
 SELECT id, url, created_time, visited_time, created, visited
-FROM resource
+FROM link
 WHERE id IN (/*SLICE:ids*/?)
 `
 
-func (q *Queries) ListFilteredResources(ctx context.Context, ids []int64) ([]Resource, error) {
-	query := listFilteredResources
+func (q *Queries) ListFilteredLinks(ctx context.Context, ids []int64) ([]Link, error) {
+	query := listFilteredLinks
 	var queryParams []interface{}
 	if len(ids) > 0 {
 		for _, v := range ids {
@@ -42,9 +42,9 @@ func (q *Queries) ListFilteredResources(ctx context.Context, ids []int64) ([]Res
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Resource
+	var items []Link
 	for rows.Next() {
-		var i Resource
+		var i Link
 		if err := rows.Scan(
 			&i.ID,
 			&i.Url,
@@ -109,11 +109,11 @@ SELECT DISTINCT
    gt.plural,
    COUNT(DISTINCT g.id) AS group_count,
    CAST(CASE WHEN g.ID IS NULL THEN 0
-      ELSE COUNT(DISTINCT rg.resource_id) END AS INTEGER) AS resource_count,
+      ELSE COUNT(DISTINCT rg.link_id) END AS INTEGER) AS link_count,
    gt.sort
 FROM group_type gt
    LEFT JOIN ` + "`" + `group` + "`" + ` g ON gt.type=g.type
-   LEFT JOIN resource_group rg ON g.id=rg.group_id
+   LEFT JOIN link_group rg ON g.id=rg.group_id
 GROUP BY
    gt.sort,
    gt.type,
@@ -123,12 +123,12 @@ ORDER BY
 `
 
 type ListGroupsTypeRow struct {
-	Type          string         `json:"type"`
-	Name          sql.NullString `json:"name"`
-	Plural        sql.NullString `json:"plural"`
-	GroupCount    int64          `json:"group_count"`
-	ResourceCount int64          `json:"resource_count"`
-	Sort          sql.NullInt64  `json:"sort"`
+	Type       string         `json:"type"`
+	Name       sql.NullString `json:"name"`
+	Plural     sql.NullString `json:"plural"`
+	GroupCount int64          `json:"group_count"`
+	LinkCount  int64          `json:"link_count"`
+	Sort       sql.NullInt64  `json:"sort"`
 }
 
 func (q *Queries) ListGroupsType(ctx context.Context) ([]ListGroupsTypeRow, error) {
@@ -145,7 +145,7 @@ func (q *Queries) ListGroupsType(ctx context.Context) ([]ListGroupsTypeRow, erro
 			&i.Name,
 			&i.Plural,
 			&i.GroupCount,
-			&i.ResourceCount,
+			&i.LinkCount,
 			&i.Sort,
 		); err != nil {
 			return nil, err
@@ -162,7 +162,7 @@ func (q *Queries) ListGroupsType(ctx context.Context) ([]ListGroupsTypeRow, erro
 }
 
 const listGroupsWithCounts = `-- name: ListGroupsWithCounts :many
-SELECT id, resource_count, name, type, slug, type_name, type_plural FROM groups_with_counts_view
+SELECT id, link_count, name, type, slug, type_name, type_plural FROM groups_with_counts_view
 `
 
 func (q *Queries) ListGroupsWithCounts(ctx context.Context) ([]GroupsWithCountsView, error) {
@@ -176,7 +176,7 @@ func (q *Queries) ListGroupsWithCounts(ctx context.Context) ([]GroupsWithCountsV
 		var i GroupsWithCountsView
 		if err := rows.Scan(
 			&i.ID,
-			&i.ResourceCount,
+			&i.LinkCount,
 			&i.Name,
 			&i.Type,
 			&i.Slug,
@@ -197,7 +197,7 @@ func (q *Queries) ListGroupsWithCounts(ctx context.Context) ([]GroupsWithCountsV
 }
 
 const listKeyValues = `-- name: ListKeyValues :many
-SELECT id, resource_id, "key", value, kv_pair, created_time, modified_time, created, modified FROM key_value ORDER BY resource_id,key DESC
+SELECT id, link_id, "key", value, kv_pair, created_time, modified_time, created, modified FROM key_value ORDER BY link_id,key DESC
 `
 
 func (q *Queries) ListKeyValues(ctx context.Context) ([]KeyValue, error) {
@@ -211,7 +211,7 @@ func (q *Queries) ListKeyValues(ctx context.Context) ([]KeyValue, error) {
 		var i KeyValue
 		if err := rows.Scan(
 			&i.ID,
-			&i.ResourceID,
+			&i.LinkID,
 			&i.Key,
 			&i.Value,
 			&i.KvPair,
@@ -233,15 +233,15 @@ func (q *Queries) ListKeyValues(ctx context.Context) ([]KeyValue, error) {
 	return items, nil
 }
 
-const listResourceIdsByGroupSlugs = `-- name: ListResourceIdsByGroupSlugs :many
-SELECT CAST(rg.resource_id AS INTEGER) AS resource_id
-FROM resource_group rg
+const listLinkIdsByGroupSlugs = `-- name: ListLinkIdsByGroupSlugs :many
+SELECT CAST(rg.link_id AS INTEGER) AS link_id
+FROM link_group rg
 JOIN ` + "`" + `group` + "`" + ` g ON g.id=rg.group_id
 WHERE g.slug IN (/*SLICE:slugs*/?)
 `
 
-func (q *Queries) ListResourceIdsByGroupSlugs(ctx context.Context, slugs []string) ([]int64, error) {
-	query := listResourceIdsByGroupSlugs
+func (q *Queries) ListLinkIdsByGroupSlugs(ctx context.Context, slugs []string) ([]int64, error) {
+	query := listLinkIdsByGroupSlugs
 	var queryParams []interface{}
 	if len(slugs) > 0 {
 		for _, v := range slugs {
@@ -258,11 +258,11 @@ func (q *Queries) ListResourceIdsByGroupSlugs(ctx context.Context, slugs []strin
 	defer rows.Close()
 	var items []int64
 	for rows.Next() {
-		var resource_id int64
-		if err := rows.Scan(&resource_id); err != nil {
+		var link_id int64
+		if err := rows.Scan(&link_id); err != nil {
 			return nil, err
 		}
-		items = append(items, resource_id)
+		items = append(items, link_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -273,14 +273,14 @@ func (q *Queries) ListResourceIdsByGroupSlugs(ctx context.Context, slugs []strin
 	return items, nil
 }
 
-const listResourceIdsByKeyValues = `-- name: ListResourceIdsByKeyValues :many
-SELECT CAST(resource_id AS INTEGER) AS resource_id
+const listLinkIdsByKeyValues = `-- name: ListLinkIdsByKeyValues :many
+SELECT CAST(link_id AS INTEGER) AS link_id
 FROM key_value
 WHERE kv_pair IN (/*SLICE:pairs*/?)
 `
 
-func (q *Queries) ListResourceIdsByKeyValues(ctx context.Context, pairs []string) ([]int64, error) {
-	query := listResourceIdsByKeyValues
+func (q *Queries) ListLinkIdsByKeyValues(ctx context.Context, pairs []string) ([]int64, error) {
+	query := listLinkIdsByKeyValues
 	var queryParams []interface{}
 	if len(pairs) > 0 {
 		for _, v := range pairs {
@@ -297,11 +297,11 @@ func (q *Queries) ListResourceIdsByKeyValues(ctx context.Context, pairs []string
 	defer rows.Close()
 	var items []int64
 	for rows.Next() {
-		var resource_id int64
-		if err := rows.Scan(&resource_id); err != nil {
+		var link_id int64
+		if err := rows.Scan(&link_id); err != nil {
 			return nil, err
 		}
-		items = append(items, resource_id)
+		items = append(items, link_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -312,19 +312,19 @@ func (q *Queries) ListResourceIdsByKeyValues(ctx context.Context, pairs []string
 	return items, nil
 }
 
-const listResources = `-- name: ListResources :many
-SELECT id, url, created_time, visited_time, created, visited FROM resource ORDER BY visited DESC
+const listLinks = `-- name: ListLinks :many
+SELECT id, url, created_time, visited_time, created, visited FROM link ORDER BY url LIMIT 100
 `
 
-func (q *Queries) ListResources(ctx context.Context) ([]Resource, error) {
-	rows, err := q.db.QueryContext(ctx, listResources)
+func (q *Queries) ListLinks(ctx context.Context) ([]Link, error) {
+	rows, err := q.db.QueryContext(ctx, listLinks)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Resource
+	var items []Link
 	for rows.Next() {
-		var i Resource
+		var i Link
 		if err := rows.Scan(
 			&i.ID,
 			&i.Url,
@@ -346,10 +346,10 @@ func (q *Queries) ListResources(ctx context.Context) ([]Resource, error) {
 	return items, nil
 }
 
-const listResourcesForGroup = `-- name: ListResourcesForGroup :many
+const listLinksForGroup = `-- name: ListLinksForGroup :many
 SELECT DISTINCT
    id,
-   resource_id,
+   link_id,
    url,
    group_id,
    cast(group_name AS VARCHAR(32)) AS group_name,
@@ -364,7 +364,7 @@ SELECT DISTINCT
    quoted_group_slugs,
    quoted_group_names
 FROM
-   resources_view
+   links_view
 WHERE true
    AND group_type = ?
    AND group_slug = ?
@@ -372,14 +372,14 @@ ORDER BY
    url
 `
 
-type ListResourcesForGroupParams struct {
+type ListLinksForGroupParams struct {
 	GroupType string `json:"group_type"`
 	GroupSlug string `json:"group_slug"`
 }
 
-type ListResourcesForGroupRow struct {
+type ListLinksForGroupRow struct {
 	ID               sql.NullInt64  `json:"id"`
-	ResourceID       sql.NullInt64  `json:"resource_id"`
+	LinkID           sql.NullInt64  `json:"link_id"`
 	Url              sql.NullString `json:"url"`
 	GroupID          int64          `json:"group_id"`
 	GroupName        string         `json:"group_name"`
@@ -395,18 +395,18 @@ type ListResourcesForGroupRow struct {
 	QuotedGroupNames interface{}    `json:"quoted_group_names"`
 }
 
-func (q *Queries) ListResourcesForGroup(ctx context.Context, arg ListResourcesForGroupParams) ([]ListResourcesForGroupRow, error) {
-	rows, err := q.db.QueryContext(ctx, listResourcesForGroup, arg.GroupType, arg.GroupSlug)
+func (q *Queries) ListLinksForGroup(ctx context.Context, arg ListLinksForGroupParams) ([]ListLinksForGroupRow, error) {
+	rows, err := q.db.QueryContext(ctx, listLinksForGroup, arg.GroupType, arg.GroupSlug)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListResourcesForGroupRow
+	var items []ListLinksForGroupRow
 	for rows.Next() {
-		var i ListResourcesForGroupRow
+		var i ListLinksForGroupRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.ResourceID,
+			&i.LinkID,
 			&i.Url,
 			&i.GroupID,
 			&i.GroupName,
@@ -435,9 +435,11 @@ func (q *Queries) ListResourcesForGroup(ctx context.Context, arg ListResourcesFo
 }
 
 const loadGroup = `-- name: LoadGroup :one
+
 SELECT id, name, type, slug, created_time, latest_time, created, latest FROM ` + "`" + `group` + "`" + ` WHERE id = ? LIMIT 1
 `
 
+// noinspection SqlResolveForFile @ any/"sqlc"
 func (q *Queries) LoadGroup(ctx context.Context, id int64) (Group, error) {
 	row := q.db.QueryRowContext(ctx, loadGroup, id)
 	var i Group
@@ -491,13 +493,13 @@ func (q *Queries) LoadGroupsBySlug(ctx context.Context, slug string) (Group, err
 	return i, err
 }
 
-const loadResource = `-- name: LoadResource :one
-SELECT id, url, created_time, visited_time, created, visited FROM resource WHERE id = ? LIMIT 1
+const loadLink = `-- name: LoadLink :one
+SELECT id, url, created_time, visited_time, created, visited FROM link WHERE id = ? LIMIT 1
 `
 
-func (q *Queries) LoadResource(ctx context.Context, id int64) (Resource, error) {
-	row := q.db.QueryRowContext(ctx, loadResource, id)
-	var i Resource
+func (q *Queries) LoadLink(ctx context.Context, id int64) (Link, error) {
+	row := q.db.QueryRowContext(ctx, loadLink, id)
+	var i Link
 	err := row.Scan(
 		&i.ID,
 		&i.Url,
@@ -529,16 +531,16 @@ func (q *Queries) UpsertGroupsFromVarJSON(ctx context.Context, id int64) error {
 }
 
 const upsertKeyValuesFromVarJSON = `-- name: UpsertKeyValuesFromVarJSON :exec
-INSERT INTO key_value (resource_id, key, value)
+INSERT INTO key_value (link_id, key, value)
 SELECT
    r.id,
    json_extract(kv.value,'$.key'),
    json_extract(kv.value,'$.value')
 FROM var
    JOIN json_each( var.value ) kv ON var.key='json'
-   JOIN resource r ON r.url=json_extract(kv.value,'$.url')
+   JOIN link r ON r.url=json_extract(kv.value,'$.url')
 WHERE var.id = ?
-   ON CONFLICT (resource_id,key)
+   ON CONFLICT (link_id,key)
    DO UPDATE
       SET value = excluded.value
 `
@@ -548,28 +550,28 @@ func (q *Queries) UpsertKeyValuesFromVarJSON(ctx context.Context, id int64) erro
 	return err
 }
 
-const upsertResourceGroupsFromVarJSON = `-- name: UpsertResourceGroupsFromVarJSON :exec
-INSERT INTO resource_group (group_id, resource_id)
+const upsertLinkGroupsFromVarJSON = `-- name: UpsertLinkGroupsFromVarJSON :exec
+INSERT INTO link_group (group_id, link_id)
 SELECT g.id, r.id
 FROM var
    JOIN json_each( var.value ) j ON var.key='json'
-   JOIN resource r ON r.url=json_extract(j.value,'$.resource_url')
+   JOIN link r ON r.url=json_extract(j.value,'$.link_url')
    JOIN ` + "`" + `group` + "`" + ` g ON true
       AND g.name=json_extract(j.value,'$.group_name')
       AND g.type=json_extract(j.value,'$.group_type')
 WHERE var.id = ?
-ON CONFLICT (group_id, resource_id)
+ON CONFLICT (group_id, link_id)
    DO UPDATE
             SET latest = strftime('%s','now')
 `
 
-func (q *Queries) UpsertResourceGroupsFromVarJSON(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, upsertResourceGroupsFromVarJSON, id)
+func (q *Queries) UpsertLinkGroupsFromVarJSON(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, upsertLinkGroupsFromVarJSON, id)
 	return err
 }
 
-const upsertResourcesFromVarJSON = `-- name: UpsertResourcesFromVarJSON :exec
-INSERT INTO resource (url)
+const upsertLinksFromVarJSON = `-- name: UpsertLinksFromVarJSON :exec
+INSERT INTO link (url)
 SELECT r.value AS url
 FROM var
    JOIN json_each( var.value ) r ON var.key='json'
@@ -579,8 +581,8 @@ ON CONFLICT (url)
             SET visited = strftime('%s','now')
 `
 
-func (q *Queries) UpsertResourcesFromVarJSON(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, upsertResourcesFromVarJSON, id)
+func (q *Queries) UpsertLinksFromVarJSON(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, upsertLinksFromVarJSON, id)
 	return err
 }
 

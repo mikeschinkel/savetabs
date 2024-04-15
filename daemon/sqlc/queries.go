@@ -5,9 +5,9 @@ import (
 	"database/sql"
 )
 
-func UpsertResources(ctx context.Context, ds DataStore, resourcesJSON string) (err error) {
-	return upsertFromJSON(ctx, ds, resourcesJSON, func(ctx context.Context, q *Queries, id int64) error {
-		return q.UpsertResourcesFromVarJSON(ctx, id)
+func UpsertLinks(ctx context.Context, ds DataStore, linksJSON string) (err error) {
+	return upsertFromJSON(ctx, ds, linksJSON, func(ctx context.Context, q *Queries, id int64) error {
+		return q.UpsertLinksFromVarJSON(ctx, id)
 	})
 }
 
@@ -17,9 +17,9 @@ func UpsertGroups(ctx context.Context, ds DataStore, groupsJSON string) (err err
 	})
 }
 
-func UpsertResourceGroups(ctx context.Context, ds DataStore, rgsJSON string) (err error) {
+func UpsertLinkGroups(ctx context.Context, ds DataStore, rgsJSON string) (err error) {
 	return upsertFromJSON(ctx, ds, rgsJSON, func(ctx context.Context, q *Queries, id int64) error {
-		return q.UpsertResourceGroupsFromVarJSON(ctx, id)
+		return q.UpsertLinkGroupsFromVarJSON(ctx, id)
 	})
 }
 

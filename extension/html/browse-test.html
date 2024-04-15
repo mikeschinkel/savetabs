@@ -11,9 +11,6 @@
     <script src="scripts/_hyperscript@0.9.12.min.js"
             integrity="sha384-+Uth1QzYJsTjnS5SXVN3fFO4I32Y571xIuv53WJ2SA7y5/36tKU1VCutONAmg5eH"
             crossorigin="anonymous"></script>
-    <script src="scripts/alpinejs@3.13.8.min.js"
-            integrity="sha384-MGt/yQlIAvCVZEB4PNx8b9JxEfqFXemRJcpH6AIHAxDt1bRfYFeOnv3HJMW0LVD3" crossorigin="anonymous"
-            defer></script>
 <!--    <script type="module" crossorigin src="scripts/browse.js"></script>-->
     <script type="text/javascript">
        window.newCollapsibleState = function(state) {
@@ -28,12 +25,22 @@
     </script>
 </head>
 <body>
-<div x-data="state=newCollapsibleState('collapsed')">
-    <p>Did it work?</p>
-    <div x-show="state.collapsed()">
-        <p>It worked!</p>
-    </div>
-</div>
+<ul class="">
+    <li x-data="">
+        <details class="grow">
+            <summary class="flex items-center w-full gap-2">
+                <span class="grow-0 p-2 cursor-pointer">
+                    <expand-icon hx-get="/kids" hx-target="#kids"></expand-icon>
+                </span>
+                <span @click="alert('Clicked!'); $event.stopPropagation()" class="grow p-2 cursor-pointer">
+                    My Menu Option Text
+                </span>
+            </summary>
+            <div id="kids"></div>
+        </details>
+    </li>
+</ul>
+<script type="module" crossorigin src="scripts/browse.js"></script>
 </body>
 </html>
 

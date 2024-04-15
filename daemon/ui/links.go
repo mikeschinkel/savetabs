@@ -3,6 +3,7 @@ package ui
 import (
 	"bytes"
 	"fmt"
+	"html"
 	"strconv"
 
 	"github.com/google/safehtml"
@@ -19,6 +20,13 @@ func (l link) Identifier() safehtml.Identifier {
 		strconv.FormatInt(l.Id, 10),
 	)
 }
+func (l link) Title() string {
+	return html.EscapeString(l.URL)
+}
+
+func (l link) ARIALabel() string {
+	return "External Link: " + html.EscapeString(l.URL)
+}
 
 type linkSet struct {
 	apiURL string
@@ -33,7 +41,7 @@ var linksTemplate = GetTemplate("links")
 
 func GetLinksHTML(ctx Context, host string, params SlugsForGetter) (html []byte, err error) {
 	var out bytes.Buffer
-	var ll []sqlc.Resource
+	var ll []sqlc.Link
 	var links []link
 	var ids []int64
 	var linkIds []int64
@@ -46,9 +54,9 @@ func GetLinksHTML(ctx Context, host string, params SlugsForGetter) (html []byte,
 			continue
 		}
 		if ch == MetaType {
-			ids, err = queries.ListResourceIdsByKeyValues(ctx, slugs)
+			ids, err = queries.ListLinkIdsByKeyValues(ctx, slugs)
 		} else {
-			ids, err = queries.ListResourceIdsByGroupSlugs(ctx, slugs)
+			ids, err = queries.ListLinkIdsByGroupSlugs(ctx, slugs)
 		}
 		if err != nil {
 			goto end
@@ -59,9 +67,9 @@ func GetLinksHTML(ctx Context, host string, params SlugsForGetter) (html []byte,
 		linkIds = append(linkIds, ids...)
 	}
 	if len(linkIds) == 0 {
-		ll, err = queries.ListResources(ctx)
+		ll, err = queries.ListLinks(ctx)
 	} else {
-		ll, err = queries.ListFilteredResources(ctx, linkIds)
+		ll, err = queries.ListFilteredLinks(ctx, linkIds)
 	}
 	if err != nil {
 		goto end
@@ -79,7 +87,7 @@ end:
 	return html, err
 }
 
-func linksFromResources(ll []sqlc.Resource) (links []link) {
+func linksFromResources(ll []sqlc.Link) (links []link) {
 	links = make([]link, len(ll))
 	for i, l := range ll {
 		links[i] = link{

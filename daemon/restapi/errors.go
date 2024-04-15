@@ -7,15 +7,15 @@ import (
 )
 
 var (
-	ErrFailedToExtractKeyValues   = errors.New("failed to extract key values")
-	ErrFailedToUnmarshal          = errors.New("failed to unmarshal JSON")
-	ErrFailedUpsertResources      = errors.New("failed to upsert resources")
-	ErrFailedUpsertResourceGroups = errors.New("failed to upsert resource-groups")
-	ErrFailedUpsertGroups         = errors.New("failed to upsert groups")
-	ErrFailedUpsertKeyValues      = errors.New("failed to upsert key values")
-	ErrUrlNotSpecified            = errors.New("url not specified")
-	ErrResourceIsNil              = errors.New("resource is nil")
-	ErrUrlNotAbsolute             = errors.New("url is not absolute")
+	ErrFailedToExtractKeyValues = errors.New("failed to extract key values")
+	ErrFailedToUnmarshal        = errors.New("failed to unmarshal JSON")
+	ErrFailedUpsertLinks        = errors.New("failed to upsert links")
+	ErrFailedUpsertLinkGroups   = errors.New("failed to upsert link-groups")
+	ErrFailedUpsertGroups       = errors.New("failed to upsert groups")
+	ErrFailedUpsertKeyValues    = errors.New("failed to upsert key values")
+	ErrUrlNotSpecified          = errors.New("url not specified")
+	ErrLinkIsNil                = errors.New("link is nil")
+	ErrUrlNotAbsolute           = errors.New("url is not absolute")
 )
 
 var errorTemplate *template.Template
