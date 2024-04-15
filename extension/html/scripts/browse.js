@@ -76,15 +76,6 @@ window.isBranchCollapsed = (id) => {
    return false;
 }
 
-
-// preventSummaryExpand stops propagation if the event targets 'SUMMARY'
-window.preventSummaryExpand = (event) => {
-   if (event.target.tagName !== 'SUMMARY') {
-      return
-   }
-   event.preventDefault()
-}
-
 class ErrorIcon extends HTMLElement {
    constructor() {
       super();
@@ -161,21 +152,33 @@ customElements.define('collapse-icon', CollapseIcon);
 customElements.define('blank-icon', BlankIcon);
 
 document.addEventListener('alpine:init', () => {
-   Alpine.data('collapsible', (initialState='collapsed') => ({
-      state: initialState,
+   Alpine.data('preventable', () => ({
+      preventExpandOnIconClick: function (event) {
+         if (['svg','path'].includes(event.target.tagName.toLowerCase())) {
+            return;
+         }
+         event.preventDefault()
+      }
+   }))
+   Alpine.data('collapsible', () => ({
+      state: 'collapsed',
       expanded: function () {
          return this.state === 'expanded'
       },
       collapsed: function () {
          return this.state === 'collapsed'
       },
-      collapse: function (ev) {
-         this.state = 'collapsed';
-         ev.stopPropagation();
-      },
-      expand: function (ev) {
-         this.state = 'expanded';
-         ev.stopPropagation();
+      toggle: function () {
+         switch (this.state) {
+            case 'collapsed':
+               this.state = 'expanded';
+               break;
+            case 'expanded':
+               this.state = 'collapsed';
+               break;
+            default:
+               alert(`Unexpected collapsible.state: ${this.state}`);
+         }
       },
    }))
 })
@@ -183,9 +186,9 @@ document.addEventListener('alpine:init', () => {
 // Load Alpine.js after initial configurations are done
 function loadAlpine() {
    const script = document.createElement('script');
-   script.src = 'scripts/alpinejs@3.13.8.min.js';
-   script.integrity='sha384-MGt/yQlIAvCVZEB4PNx8b9JxEfqFXemRJcpH6AIHAxDt1bRfYFeOnv3HJMW0LVD3';
-   script.crossorigin='anonymous';
+   script.src = 'scripts/alpinejs-csp@3.13.8.min.js';
+   script.integrity = 'sha384-ngWUWXGZwWaMILMRRZR1rmY/dFdl79tJTC1pJD+w4Ca0uyMJOf0p+L5C1fkWht0l';
+   script.crossorigin = 'anonymous';
    script.defer = true;
    script.onload = () => {
       console.log('Alpine.js has loaded, initializing now...');

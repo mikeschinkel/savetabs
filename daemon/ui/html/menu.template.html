@@ -1,16 +1,16 @@
 <ul class="menu p-0 mb-4 min-h-full bg-base-200 text-base-content x-data">
 {{range .MenuItems}}
   <li id="{{.Identifier}}" class="m-0 p-0 flex">
-    <details class="grow {{.DetailsClass}}" @click.prevent="preventSummaryExpand($event)">
-      <summary x-data class="{{.SummaryClass}} rounded-sm list-none flex items-center w-full gap-2">
+    <details x-data="preventable" class="grow {{.DetailsClass}}" @click="preventExpandOnIconClick">
+      <summary class="{{.SummaryClass}} rounded-sm list-none flex items-center w-full gap-2">
         {{if .IconIsBlank }}
           <span class="py-2">
             <blank-icon></blank-icon>
           </span>
         {{else}}
-          <span x-data="collapsible('{{.IconState}}')" class="grow-0 py-2 cursor-pointer">
-            <expand-icon x-show="collapsed()" @click="expand($event)" class="clickable" hx-get="{{$.HTMLMenuURL}}/{{.Slug}}" hx-target="#{{.Identifier}}-kids"></expand-icon>
-            <collapse-icon x-show="expanded()" @click="collapse($event)" class="clickable"></collapse-icon>
+          <span x-data="collapsible" class="grow-0 py-2 cursor-pointer">
+            <expand-icon x-show="collapsed" @click="toggle" class="clickable" hx-get="{{$.HTMLMenuURL}}/{{.Slug}}" hx-target="#{{.Identifier}}-kids"></expand-icon>
+            <collapse-icon x-show="expanded" @click="toggle" class="clickable"></collapse-icon>
           </span>
         {{end}}
         <span class="grow p-2 cursor-pointer" hx-get="{{$.HTMLLinksURL}}?{{.LinksCriteria}}" hx-target="#links-section">{{.Label}}</span>
