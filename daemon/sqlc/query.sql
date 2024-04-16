@@ -71,6 +71,12 @@ SELECT CAST(link_id AS INTEGER) AS link_id
 FROM metadata
 WHERE kv_pair IN (sqlc.slice('pairs'));
 
+-- name: ListLinkIdsByGroupType :many
+SELECT CAST(link_id AS INTEGER) AS link_id
+FROM link_group lg
+   JOIN `group` g ON lg.group_id = g.id
+WHERE g.type IN (sqlc.slice('gts'));
+
 -- name: ListLinksForGroup :many
 SELECT DISTINCT
    id,

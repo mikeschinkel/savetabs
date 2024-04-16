@@ -6,7 +6,7 @@ package ui
 var Routes = struct {
 	GetBrowseHTML          func(Context, string) ([]byte, error)
 	GetMenuHTML            func(Context, string) ([]byte, error)
-	GetLinksHTML           func(Context, string, SlugsForGetter) ([]byte, error)
+	GetLinksHTML           func(Context, string, FilterValueGetter) ([]byte, error)
 	GetGroupHTML           func(Context, string, string, string) ([]byte, error)
 	GetGroupTypeGroupsHTML func(Context, string, string) ([]byte, error)
 	GetMenuItemHTML        func(Context, string, string) ([]byte, error)

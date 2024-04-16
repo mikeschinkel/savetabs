@@ -152,6 +152,14 @@ func (siw *ServerInterfaceWrapper) GetLinks(w http.ResponseWriter, r *http.Reque
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetLinksParams
 
+	// ------------- Optional query parameter "gt" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "gt", r.URL.Query(), &params.Gt)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "gt", Err: err})
+		return
+	}
+
 	// ------------- Optional query parameter "g" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "g", r.URL.Query(), &params.G)

@@ -60,8 +60,8 @@ func (mi menuItem) Slug() safehtml.Identifier {
 	return mi.Source.Identifier()
 }
 
-func (mi menuItem) LinksCriteria() string {
-	return ""
+func (mi menuItem) LinksQueryParams() string {
+	return "?" + mi.Source.LinksQueryParams()
 }
 
 func (mi menuItem) Identifier() safehtml.Identifier {
@@ -117,8 +117,16 @@ var _ MenuItemable = (*allLinks)(nil)
 
 type allLinks struct{}
 
+func (allLinks) LinksQueryParams() string {
+	return "all=1"
+}
+
 func (a allLinks) Identifier() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant(`gt-all`)
+}
+
+func (a allLinks) MenuItemType() safehtml.Identifier {
+	return safehtml.IdentifierFromConstant(`A`)
 }
 
 func GetMenuItemHTML(ctx Context, host, item string) (html []byte, err error) {
@@ -198,6 +206,13 @@ var _ MenuItemable = (*noMenuItem)(nil)
 
 type noMenuItem struct{}
 
+func (noMenuItem) LinksQueryParams() string {
+	return "g=none"
+}
+
+func (i noMenuItem) MenuItemType() safehtml.Identifier {
+	return safehtml.IdentifierFromConstant("_")
+}
 func (noMenuItem) Identifier() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant("none")
 }

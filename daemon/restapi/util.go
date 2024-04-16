@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 type Context = context.Context
@@ -71,4 +72,11 @@ func sendWith(ctx Context, w http.ResponseWriter, r *http.Request, fn func(ctx C
 		return
 	}
 	sendHTML(w, out)
+}
+
+func toUpperSlice(s []string) []string {
+	for i := range s {
+		s[i] = strings.ToUpper(s[i])
+	}
+	return s
 }

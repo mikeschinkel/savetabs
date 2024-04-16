@@ -13,6 +13,8 @@ import (
 
 var groupsTemplate = GetTemplate("groups")
 
+var _ MenuItemable = (*group)(nil)
+
 type group struct {
 	Id        int64
 	Name      string
@@ -21,6 +23,14 @@ type group struct {
 	LinkCount int64
 	Links     []link
 	Host      string
+}
+
+func (g group) LinksQueryParams() string {
+	return fmt.Sprintf("g=%s", g.Slug())
+}
+
+func (g group) MenuItemType() safehtml.Identifier {
+	return safehtml.IdentifierFromConstant(GroupItemType)
 }
 
 func (g group) Slug() string {

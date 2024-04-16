@@ -390,6 +390,22 @@ func NewGetLinksRequest(server string, params *GetLinksParams) (*http.Request, e
 	if params != nil {
 		queryValues := queryURL.Query()
 
+		if params.Gt != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "gt", runtime.ParamLocationQuery, *params.Gt); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
 		if params.G != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "g", runtime.ParamLocationQuery, *params.G); err != nil {

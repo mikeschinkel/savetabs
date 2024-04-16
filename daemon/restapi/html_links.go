@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"savetabs/ui"
 )
@@ -14,16 +15,18 @@ func (a *API) GetLinks(w http.ResponseWriter, r *http.Request, params GetLinksPa
 	})
 }
 
-var _ ui.SlugsForGetter = (*GetLinksParams)(nil)
+var _ ui.FilterValueGetter = (*GetLinksParams)(nil)
 
-func (p GetLinksParams) GetSlugsFor(gt GroupType) (filters []string) {
+func (p GetLinksParams) GetFilterValues(s string) (filters []string) {
 	ensureNotNil := func(ss *[]string) []string {
 		if ss == nil {
 			return []string{}
 		}
 		return *ss
 	}
-	switch gt {
+	switch strings.ToUpper(s) {
+	case "GT":
+		return toUpperSlice(ensureNotNil(p.Gt))
 	case "B":
 		return ensureNotNil(p.B)
 	case "C":

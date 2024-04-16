@@ -1,23 +1,28 @@
 package ui
 
-type GroupType string
+type FilterType = string
 
-var MetaType = "M"
+var MetaFilter FilterType = "M"
 
 const (
-	BookmarkGroupType = "B"
-	TabGroupGroupType = "G"
-	TagGroupType      = "T"
-	CategoryGroupType = "C"
-	KeywordGroupType  = "K"
-	InvalidGroupType  = "I"
+	GroupTypeFilter FilterType = "GT"
+
+	BookmarkFilter FilterType = "B"
+	TabGroupFilter FilterType = "G"
+	TagFilter      FilterType = "T"
+	CategoryFilter FilterType = "C"
+	KeywordFilter  FilterType = "K"
+	InvalidFilter  FilterType = "I"
+
+	NoFilter FilterType = "_"
 )
 
-var GroupTypes = []GroupType{
-	TagGroupType,
-	TabGroupGroupType,
-	CategoryGroupType,
-	KeywordGroupType,
-	BookmarkGroupType,
-	InvalidGroupType,
+var FilterTypes = []FilterType{
+	GroupTypeFilter,
+	TagFilter,
+	TabGroupFilter,
+	CategoryFilter,
+	KeywordFilter,
+	BookmarkFilter,
+	InvalidFilter,
 }

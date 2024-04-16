@@ -23,6 +23,14 @@ type groupType struct {
 	Sort       int8
 }
 
+func (gt groupType) LinksQueryParams() string {
+	return fmt.Sprintf("gt=%s", strings.ToLower(gt.Type))
+}
+
+func (gt groupType) MenuItemType() safehtml.Identifier {
+	return safehtml.IdentifierFromConstant(GroupTypeItemType)
+}
+
 // Slug uniquely identifies a Group Type
 func (gt groupType) Slug() safehtml.Identifier {
 	return safehtml.IdentifierFromConstantPrefix(`gt`,

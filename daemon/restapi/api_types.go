@@ -56,6 +56,9 @@ type GroupSlug = string
 // GroupType defines model for GroupType.
 type GroupType = string
 
+// GroupTypeFilter defines model for GroupTypeFilter.
+type GroupTypeFilter = []string
+
 // GroupTypeName defines model for GroupTypeName.
 type GroupTypeName = string
 
@@ -79,6 +82,9 @@ type UnexpectedError = Error
 
 // GetLinksParams defines parameters for GetLinks.
 type GetLinksParams struct {
+	// Gt Links for a Group Type
+	Gt *GroupTypeFilter `form:"gt,omitempty" json:"gt,omitempty"`
+
 	// G TabGroup links by tags
 	G *TabGroupFilter `form:"g,omitempty" json:"g,omitempty"`
 

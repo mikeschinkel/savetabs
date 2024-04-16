@@ -10,8 +10,10 @@ type Context = context.Context
 
 type MenuItemable interface {
 	Identifier() safehtml.Identifier
+	MenuItemType() safehtml.Identifier
+	LinksQueryParams() string
 }
 
-type SlugsForGetter interface {
-	GetSlugsFor(string) []string
+type FilterValueGetter interface {
+	GetFilterValues(string) []string
 }

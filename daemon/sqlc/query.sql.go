@@ -236,6 +236,46 @@ func (q *Queries) ListLinkIdsByGroupSlugs(ctx context.Context, slugs []string) (
 	return items, nil
 }
 
+const listLinkIdsByGroupType = `-- name: ListLinkIdsByGroupType :many
+SELECT CAST(link_id AS INTEGER) AS link_id
+FROM link_group lg
+   JOIN ` + "`" + `group` + "`" + ` g ON lg.group_id = g.id
+WHERE g.type IN (/*SLICE:gts*/?)
+`
+
+func (q *Queries) ListLinkIdsByGroupType(ctx context.Context, gts []string) ([]int64, error) {
+	query := listLinkIdsByGroupType
+	var queryParams []interface{}
+	if len(gts) > 0 {
+		for _, v := range gts {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:gts*/?", strings.Repeat(",?", len(gts))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:gts*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var link_id int64
+		if err := rows.Scan(&link_id); err != nil {
+			return nil, err
+		}
+		items = append(items, link_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listLinkIdsByMetadata = `-- name: ListLinkIdsByMetadata :many
 SELECT CAST(link_id AS INTEGER) AS link_id
 FROM metadata

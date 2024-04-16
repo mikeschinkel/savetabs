@@ -8,6 +8,7 @@ paths:
       summary: Return the HTML for a paginated table of links with optional filtering criteria in query parameters
       operationId: getLinks
       parameters:
+      - $ref: '#/components/parameters/GroupTypeFilter'
       - $ref: '#/components/parameters/TabGroupFilter'
       - $ref: '#/components/parameters/CategoryFilter'
       - $ref: '#/components/parameters/TagFilter'
@@ -102,6 +103,16 @@ paths:
 
 components:
   parameters:
+    GroupTypeFilter:
+      in: query
+      name: gt
+      schema:
+        type: array
+        items:
+          type: string
+      description: Links for a Group Type
+      style: form
+      explode: true
     TabGroupFilter:
       in: query
       name: g
