@@ -1,8 +1,7 @@
 import {getApiServerUrl} from './api.js';
-const apiServerUrl = "http://localhost:8642"
 
 async function checkApiHealth(callback) {
-   const response = await fetch(`${apiServerUrl}/healthz`).catch( (_)=>{return {ok:false}})
+   const response = await fetch(`${getApiServerUrl()}/healthz`).catch( (_)=>{return {ok:false}})
    callback(response.ok)
 }
 
@@ -10,7 +9,7 @@ async function checkApiHealth(callback) {
 async function loadExtensionUiFromApi() {
    return new Promise((resolve, reject) => {
       let content;
-      fetch(`${apiServerUrl}/ui/home`)
+      fetch(`${getApiServerUrl()}/ui/home`)
             .then(response => {
                content = response.text();
             })
