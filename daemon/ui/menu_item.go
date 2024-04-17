@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -129,7 +130,7 @@ func (a allLinks) MenuItemType() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant(`A`)
 }
 
-func GetMenuItemHTML(ctx Context, host, item string) (html []byte, err error) {
+func GetMenuItemHTML(ctx Context, host, item string) (html []byte, status int, err error) {
 	var out bytes.Buffer
 	var items []menuItem
 
@@ -146,7 +147,7 @@ func GetMenuItemHTML(ctx Context, host, item string) (html []byte, err error) {
 	}
 	html = out.Bytes()
 end:
-	return html, err
+	return html, http.StatusInternalServerError, err
 }
 
 type ItemType string

@@ -8,7 +8,7 @@ import (
 )
 
 func (a *API) GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request, menuItem MenuItem) {
-	sendWith(context.Background(), w, r, func(ctx Context) ([]byte, error) {
+	sendWith(context.Background(), w, r, func(ctx Context) ([]byte, int, error) {
 		return ui.GetMenuItemHTML(ctx, r.Host, menuItem)
 	})
 }

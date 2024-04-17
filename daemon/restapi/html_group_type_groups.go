@@ -8,7 +8,7 @@ import (
 )
 
 func (a *API) GetHtmlGroupTypesGroupTypeNameGroups(w http.ResponseWriter, r *http.Request, groupTypeName GroupTypeName) {
-	sendWith(context.Background(), w, r, func(ctx Context) ([]byte, error) {
+	sendWith(context.Background(), w, r, func(ctx Context) ([]byte, int, error) {
 		return ui.GetGroupTypeGroupsHTML(ctx, r.Host, groupTypeName)
 	})
 }

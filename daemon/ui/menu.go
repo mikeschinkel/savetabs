@@ -3,6 +3,7 @@ package ui
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 )
 
 type menu struct {
@@ -20,7 +21,7 @@ func (m menu) HTMLLinksURL() string {
 
 var menuTemplate = GetTemplate("menu")
 
-func GetMenuHTML(ctx Context, host string) (html []byte, err error) {
+func GetMenuHTML(ctx Context, host string) (html []byte, status int, err error) {
 	var out bytes.Buffer
 	var items []menuItem
 
@@ -38,5 +39,5 @@ func GetMenuHTML(ctx Context, host string) (html []byte, err error) {
 	}
 	html = out.Bytes()
 end:
-	return html, err
+	return html, http.StatusInternalServerError, err
 }

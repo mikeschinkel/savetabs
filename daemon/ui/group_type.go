@@ -3,6 +3,7 @@ package ui
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 	"slices"
 	"strings"
 
@@ -151,7 +152,7 @@ func newGroupTypeMap(gtrs []sqlc.ListGroupsTypeRow) groupTypeMap {
 	return gts
 }
 
-func GetGroupTypeGroupsHTML(ctx Context, host, groupTypeName string) (html []byte, err error) {
+func GetGroupTypeGroupsHTML(ctx Context, host, groupTypeName string) (html []byte, status int, err error) {
 	var gt groupType
 	var out bytes.Buffer
 	var gg []sqlc.Group
@@ -176,5 +177,5 @@ func GetGroupTypeGroupsHTML(ctx Context, host, groupTypeName string) (html []byt
 	}
 	html = out.Bytes()
 end:
-	return html, err
+	return html, http.StatusInternalServerError, err
 }

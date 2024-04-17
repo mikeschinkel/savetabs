@@ -3,6 +3,7 @@ package ui
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -61,7 +62,7 @@ func constructGroups(grs []sqlc.Group) []group {
 	return gg
 }
 
-func GetGroupHTML(ctx Context, host, gt, gs string) (html []byte, err error) {
+func GetGroupHTML(ctx Context, host, gt, gs string) (html []byte, status int, err error) {
 	var out bytes.Buffer
 
 	//var gt groupType
@@ -94,7 +95,7 @@ func GetGroupHTML(ctx Context, host, gt, gs string) (html []byte, err error) {
 	html = out.Bytes()
 	goto end
 end:
-	return html, err
+	return html, http.StatusInternalServerError, err
 }
 
 func constructLinks(rfgs []sqlc.ListLinksForGroupRow) []link {

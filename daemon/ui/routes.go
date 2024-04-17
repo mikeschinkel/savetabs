@@ -4,12 +4,12 @@ package ui
 //
 //goland:noinspection GoUnusedGlobalVariable
 var Routes = struct {
-	GetBrowseHTML          func(Context, string) ([]byte, error)
-	GetMenuHTML            func(Context, string) ([]byte, error)
-	GetLinksHTML           func(Context, string, FilterValueGetter) ([]byte, error)
-	GetGroupHTML           func(Context, string, string, string) ([]byte, error)
-	GetGroupTypeGroupsHTML func(Context, string, string) ([]byte, error)
-	GetMenuItemHTML        func(Context, string, string) ([]byte, error)
+	GetBrowseHTML          func(Context, string) ([]byte, int, error)
+	GetMenuHTML            func(Context, string) ([]byte, int, error)
+	GetLinksHTML           func(Context, string, FilterValueGetter) ([]byte, int, error)
+	GetGroupHTML           func(Context, string, string, string) ([]byte, int, error)
+	GetGroupTypeGroupsHTML func(Context, string, string) ([]byte, int, error)
+	GetMenuItemHTML        func(Context, string, string) ([]byte, int, error)
 }{
 	GetMenuHTML:            GetMenuHTML,
 	GetLinksHTML:           GetLinksHTML,

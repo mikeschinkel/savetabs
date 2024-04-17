@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html"
+	"net/http"
 	"strconv"
 
 	"github.com/google/safehtml"
@@ -39,7 +40,7 @@ func (ls linkSet) HTMLLinksURL() string {
 
 var linksTemplate = GetTemplate("links")
 
-func GetLinksHTML(ctx Context, host string, params FilterValueGetter) (html []byte, err error) {
+func GetLinksHTML(ctx Context, host string, params FilterValueGetter) (html []byte, status int, err error) {
 	var out bytes.Buffer
 	var ll []sqlc.Link
 	var links []link
@@ -88,7 +89,7 @@ func GetLinksHTML(ctx Context, host string, params FilterValueGetter) (html []by
 	}
 	html = out.Bytes()
 end:
-	return html, err
+	return html, http.StatusInternalServerError, err
 }
 
 func linksFromResources(ll []sqlc.Link) (links []link) {

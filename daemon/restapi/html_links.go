@@ -10,7 +10,7 @@ import (
 )
 
 func (a *API) GetLinks(w http.ResponseWriter, r *http.Request, params GetLinksParams) {
-	sendWith(context.Background(), w, r, func(ctx Context) ([]byte, error) {
+	sendWith(context.Background(), w, r, func(ctx Context) ([]byte, int, error) {
 		return ui.GetLinksHTML(ctx, r.Host, params)
 	})
 }
