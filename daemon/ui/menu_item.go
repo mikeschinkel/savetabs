@@ -130,11 +130,11 @@ func (a allLinks) MenuItemType() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant(`A`)
 }
 
-func GetMenuItemHTML(ctx Context, host, item string) (html []byte, status int, err error) {
+func (v *Views) GetMenuItemHTML(ctx Context, host, item string) (html []byte, status int, err error) {
 	var out bytes.Buffer
 	var items []menuItem
 
-	items, err = GetMenuItemsForType(ctx, host, item)
+	items, err = v.getMenuItemsForType(ctx, host, item)
 	if err != nil {
 		goto end
 	}
@@ -159,7 +159,7 @@ const (
 
 var matchMenuItemKey = regexp.MustCompile(`^(gt|grp)-(.+)$`)
 
-func GetMenuItemsForType(ctx Context, host, key string) (items []menuItem, err error) {
+func (v *Views) getMenuItemsForType(ctx Context, host, key string) (items []menuItem, err error) {
 	var keys []string
 	var gt sqlc.GroupType
 
@@ -171,11 +171,11 @@ func GetMenuItemsForType(ctx Context, host, key string) (items []menuItem, err e
 	switch keys[1] {
 	case GroupTypeItemType: // Group Type
 		var gs []sqlc.Group
-		gs, err = queries.ListGroupsByType(ctx, strings.ToUpper(keys[2]))
+		gs, err = v.Queries.ListGroupsByType(ctx, strings.ToUpper(keys[2]))
 		if err != nil {
 			goto end
 		}
-		gt, err = queries.LoadGroupType(ctx, strings.ToUpper(keys[2]))
+		gt, err = v.Queries.LoadGroupType(ctx, strings.ToUpper(keys[2]))
 		if err != nil {
 			goto end
 		}

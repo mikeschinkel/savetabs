@@ -92,15 +92,6 @@ type ClientInterface interface {
 	// GetHealthz request
 	GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetHtmlBrowse request
-	GetHtmlBrowse(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetHtmlGroupTypesGroupTypeNameGroups request
-	GetHtmlGroupTypesGroupTypeNameGroups(ctx context.Context, groupTypeName GroupTypeName, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetHtmlGroupsGroupTypeGroupSlug request
-	GetHtmlGroupsGroupTypeGroupSlug(ctx context.Context, groupType GroupType, groupSlug GroupSlug, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// GetLinks request
 	GetLinks(ctx context.Context, params *GetLinksParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -121,42 +112,6 @@ type ClientInterface interface {
 
 func (c *Client) GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetHealthzRequest(c.Server)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetHtmlBrowse(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetHtmlBrowseRequest(c.Server)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetHtmlGroupTypesGroupTypeNameGroups(ctx context.Context, groupTypeName GroupTypeName, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetHtmlGroupTypesGroupTypeNameGroupsRequest(c.Server, groupTypeName)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetHtmlGroupsGroupTypeGroupSlug(ctx context.Context, groupType GroupType, groupSlug GroupSlug, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetHtmlGroupsGroupTypeGroupSlugRequest(c.Server, groupType, groupSlug)
 	if err != nil {
 		return nil, err
 	}
@@ -249,108 +204,6 @@ func NewGetHealthzRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/healthz")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetHtmlBrowseRequest generates requests for GetHtmlBrowse
-func NewGetHtmlBrowseRequest(server string) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/html/browse")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetHtmlGroupTypesGroupTypeNameGroupsRequest generates requests for GetHtmlGroupTypesGroupTypeNameGroups
-func NewGetHtmlGroupTypesGroupTypeNameGroupsRequest(server string, groupTypeName GroupTypeName) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "groupTypeName", runtime.ParamLocationPath, groupTypeName)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/html/group-types/%s/groups", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetHtmlGroupsGroupTypeGroupSlugRequest generates requests for GetHtmlGroupsGroupTypeGroupSlug
-func NewGetHtmlGroupsGroupTypeGroupSlugRequest(server string, groupType GroupType, groupSlug GroupSlug) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "groupType", runtime.ParamLocationPath, groupType)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "groupSlug", runtime.ParamLocationPath, groupSlug)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/html/groups/%s/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -687,15 +540,6 @@ type ClientWithResponsesInterface interface {
 	// GetHealthzWithResponse request
 	GetHealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthzResponse, error)
 
-	// GetHtmlBrowseWithResponse request
-	GetHtmlBrowseWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHtmlBrowseResponse, error)
-
-	// GetHtmlGroupTypesGroupTypeNameGroupsWithResponse request
-	GetHtmlGroupTypesGroupTypeNameGroupsWithResponse(ctx context.Context, groupTypeName GroupTypeName, reqEditors ...RequestEditorFn) (*GetHtmlGroupTypesGroupTypeNameGroupsResponse, error)
-
-	// GetHtmlGroupsGroupTypeGroupSlugWithResponse request
-	GetHtmlGroupsGroupTypeGroupSlugWithResponse(ctx context.Context, groupType GroupType, groupSlug GroupSlug, reqEditors ...RequestEditorFn) (*GetHtmlGroupsGroupTypeGroupSlugResponse, error)
-
 	// GetLinksWithResponse request
 	GetLinksWithResponse(ctx context.Context, params *GetLinksParams, reqEditors ...RequestEditorFn) (*GetLinksResponse, error)
 
@@ -729,69 +573,6 @@ func (r GetHealthzResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetHealthzResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type GetHtmlBrowseResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r GetHtmlBrowseResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetHtmlBrowseResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type GetHtmlGroupTypesGroupTypeNameGroupsResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r GetHtmlGroupTypesGroupTypeNameGroupsResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetHtmlGroupTypesGroupTypeNameGroupsResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type GetHtmlGroupsGroupTypeGroupSlugResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r GetHtmlGroupsGroupTypeGroupSlugResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetHtmlGroupsGroupTypeGroupSlugResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -914,33 +695,6 @@ func (c *ClientWithResponses) GetHealthzWithResponse(ctx context.Context, reqEdi
 	return ParseGetHealthzResponse(rsp)
 }
 
-// GetHtmlBrowseWithResponse request returning *GetHtmlBrowseResponse
-func (c *ClientWithResponses) GetHtmlBrowseWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHtmlBrowseResponse, error) {
-	rsp, err := c.GetHtmlBrowse(ctx, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetHtmlBrowseResponse(rsp)
-}
-
-// GetHtmlGroupTypesGroupTypeNameGroupsWithResponse request returning *GetHtmlGroupTypesGroupTypeNameGroupsResponse
-func (c *ClientWithResponses) GetHtmlGroupTypesGroupTypeNameGroupsWithResponse(ctx context.Context, groupTypeName GroupTypeName, reqEditors ...RequestEditorFn) (*GetHtmlGroupTypesGroupTypeNameGroupsResponse, error) {
-	rsp, err := c.GetHtmlGroupTypesGroupTypeNameGroups(ctx, groupTypeName, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetHtmlGroupTypesGroupTypeNameGroupsResponse(rsp)
-}
-
-// GetHtmlGroupsGroupTypeGroupSlugWithResponse request returning *GetHtmlGroupsGroupTypeGroupSlugResponse
-func (c *ClientWithResponses) GetHtmlGroupsGroupTypeGroupSlugWithResponse(ctx context.Context, groupType GroupType, groupSlug GroupSlug, reqEditors ...RequestEditorFn) (*GetHtmlGroupsGroupTypeGroupSlugResponse, error) {
-	rsp, err := c.GetHtmlGroupsGroupTypeGroupSlug(ctx, groupType, groupSlug, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetHtmlGroupsGroupTypeGroupSlugResponse(rsp)
-}
-
 // GetLinksWithResponse request returning *GetLinksResponse
 func (c *ClientWithResponses) GetLinksWithResponse(ctx context.Context, params *GetLinksParams, reqEditors ...RequestEditorFn) (*GetLinksResponse, error) {
 	rsp, err := c.GetLinks(ctx, params, reqEditors...)
@@ -1003,54 +757,6 @@ func ParseGetHealthzResponse(rsp *http.Response) (*GetHealthzResponse, error) {
 	}
 
 	response := &GetHealthzResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	return response, nil
-}
-
-// ParseGetHtmlBrowseResponse parses an HTTP response from a GetHtmlBrowseWithResponse call
-func ParseGetHtmlBrowseResponse(rsp *http.Response) (*GetHtmlBrowseResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetHtmlBrowseResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	return response, nil
-}
-
-// ParseGetHtmlGroupTypesGroupTypeNameGroupsResponse parses an HTTP response from a GetHtmlGroupTypesGroupTypeNameGroupsWithResponse call
-func ParseGetHtmlGroupTypesGroupTypeNameGroupsResponse(rsp *http.Response) (*GetHtmlGroupTypesGroupTypeNameGroupsResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetHtmlGroupTypesGroupTypeNameGroupsResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	return response, nil
-}
-
-// ParseGetHtmlGroupsGroupTypeGroupSlugResponse parses an HTTP response from a GetHtmlGroupsGroupTypeGroupSlugWithResponse call
-func ParseGetHtmlGroupsGroupTypeGroupSlugResponse(rsp *http.Response) (*GetHtmlGroupsGroupTypeGroupSlugResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetHtmlGroupsGroupTypeGroupSlugResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

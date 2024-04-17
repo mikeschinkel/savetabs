@@ -21,11 +21,11 @@ func (m menu) HTMLLinksURL() string {
 
 var menuTemplate = GetTemplate("menu")
 
-func GetMenuHTML(ctx Context, host string) (html []byte, status int, err error) {
+func (v *Views) GetMenuHTML(ctx Context, host string) (html []byte, status int, err error) {
 	var out bytes.Buffer
 	var items []menuItem
 
-	gts, err := queries.ListGroupsType(ctx)
+	gts, err := v.Queries.ListGroupsType(ctx)
 	if err != nil {
 		goto end
 	}

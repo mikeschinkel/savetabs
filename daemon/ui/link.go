@@ -40,7 +40,7 @@ func (ls linkSet) HTMLLinksURL() string {
 
 var linksTemplate = GetTemplate("links")
 
-func GetLinksHTML(ctx Context, host string, params FilterValueGetter) (html []byte, status int, err error) {
+func (v *Views) GetLinksHTML(ctx Context, host string, params FilterValueGetter) (html []byte, status int, err error) {
 	var out bytes.Buffer
 	var ll []sqlc.Link
 	var links []link
@@ -49,18 +49,17 @@ func GetLinksHTML(ctx Context, host string, params FilterValueGetter) (html []by
 	var values []string
 
 	for _, gt := range FilterTypes {
-		ch := string(gt)
-		values = params.GetFilterValues(ch)
+		values = params.GetFilterValues(gt)
 		if len(values) == 0 {
 			continue
 		}
-		switch ch {
+		switch gt {
 		case MetaFilter:
-			ids, err = queries.ListLinkIdsByMetadata(ctx, values)
+			ids, err = v.Queries.ListLinkIdsByMetadata(ctx, values)
 		case GroupTypeFilter:
-			ids, err = queries.ListLinkIdsByGroupType(ctx, values)
+			ids, err = v.Queries.ListLinkIdsByGroupType(ctx, values)
 		default:
-			ids, err = queries.ListLinkIdsByGroupSlugs(ctx, values)
+			ids, err = v.Queries.ListLinkIdsByGroupSlugs(ctx, values)
 		}
 		if err != nil {
 			goto end
@@ -74,7 +73,7 @@ func GetLinksHTML(ctx Context, host string, params FilterValueGetter) (html []by
 		html = []byte("<div>No links for selection</div>")
 		goto end
 	} else {
-		ll, err = queries.ListFilteredLinks(ctx, linkIds)
+		ll, err = v.Queries.ListFilteredLinks(ctx, linkIds)
 	}
 	if err != nil {
 		goto end

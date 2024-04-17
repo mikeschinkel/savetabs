@@ -19,20 +19,29 @@ var _ ServerInterface = (*API)(nil)
 
 type API struct {
 	Port    string
-	NextId  int64
 	Mux     *http.ServeMux
 	Swagger *swagger
 	Handler http.Handler
 	Server  *http.Server
 	Lock    sync.Mutex
+	Views   Viewer
 }
 
-func NewAPI(port string, s *swagger) *API {
+type APIArgs struct {
+	Port    string
+	Swagger *swagger
+	Views   Viewer
+}
+
+func NewAPI(args APIArgs) *API {
+	if args.Port == "" {
+		args.Port = DefaultPort
+	}
 	api := &API{
-		Port:    port,
-		NextId:  1000,
+		Port:    args.Port,
+		Swagger: args.Swagger,
+		Views:   args.Views,
 		Mux:     http.NewServeMux(),
-		Swagger: s,
 	}
 
 	// We now register our api above as the handler for the interface

@@ -17,3 +17,9 @@ type MenuItemable interface {
 type FilterValueGetter interface {
 	GetFilterValues(string) []string
 }
+
+type Viewer interface {
+	GetMenuHTML(Context, string) ([]byte, int, error)
+	GetLinksHTML(Context, string, FilterValueGetter) ([]byte, int, error)
+	GetMenuItemHTML(Context, string, string) ([]byte, int, error)
+}

@@ -62,14 +62,14 @@ func constructGroups(grs []sqlc.Group) []group {
 	return gg
 }
 
-func GetGroupHTML(ctx Context, host, gt, gs string) (html []byte, status int, err error) {
+func (v *Views) GetGroupHTML(ctx Context, host, gt, gs string) (html []byte, status int, err error) {
 	var out bytes.Buffer
 
 	//var gt groupType
 	var rfgs []sqlc.ListLinksForGroupRow
 	//var gs []group
 	//
-	rfgs, err = queries.ListLinksForGroup(ctx, sqlc.ListLinksForGroupParams{
+	rfgs, err = v.Queries.ListLinksForGroup(ctx, sqlc.ListLinksForGroupParams{
 		GroupType: strings.ToUpper(gt),
 		GroupSlug: gs,
 	})

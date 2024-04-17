@@ -56,10 +56,10 @@ func (gt groupType) Identifier() safehtml.Identifier {
 	)
 }
 
-func getGroupTypeMap(ctx Context) (gtm groupTypeMap, err error) {
+func (v *Views) getGroupTypeMap(ctx Context) (gtm groupTypeMap, err error) {
 	var gts []sqlc.ListGroupsTypeRow
 
-	gts, err = queries.ListGroupsType(ctx)
+	gts, err = v.Queries.ListGroupsType(ctx)
 	if err != nil {
 		goto end
 	}
@@ -68,12 +68,12 @@ end:
 	return gtm, err
 }
 
-func groupTypeFromName(ctx Context, name string) (t string, err error) {
+func (v *Views) groupTypeFromName(ctx Context, name string) (t string, err error) {
 	var ok bool
 	var gtm groupTypeMap
 	var gt groupType
 
-	gtm, err = getGroupTypeMap(ctx)
+	gtm, err = v.getGroupTypeMap(ctx)
 	if err != nil {
 		goto end
 	}
@@ -89,12 +89,12 @@ end:
 
 type groupTypeMap map[string]groupType
 
-func (gtm groupTypeMap) Map(fn func(gt groupType) groupType) groupTypeMap {
-	for i, x := range gtm {
-		gtm[i] = fn(x)
-	}
-	return gtm
-}
+//func (gtm groupTypeMap) Map(fn func(gt groupType) groupType) groupTypeMap {
+//	for i, x := range gtm {
+//		gtm[i] = fn(x)
+//	}
+//	return gtm
+//}
 
 func (gtm groupTypeMap) AsSortedSlice() (gts []groupType) {
 	gts = make([]groupType, len(gtm))
@@ -152,17 +152,17 @@ func newGroupTypeMap(gtrs []sqlc.ListGroupsTypeRow) groupTypeMap {
 	return gts
 }
 
-func GetGroupTypeGroupsHTML(ctx Context, host, groupTypeName string) (html []byte, status int, err error) {
+func (v *Views) GetGroupTypeGroupsHTML(ctx Context, host, groupTypeName string) (html []byte, status int, err error) {
 	var gt groupType
 	var out bytes.Buffer
 	var gg []sqlc.Group
 	var gs []group
 
-	t, err := groupTypeFromName(ctx, groupTypeName)
+	t, err := v.groupTypeFromName(ctx, groupTypeName)
 	if err != nil {
 		goto end
 	}
-	gg, err = queries.ListGroupsByType(ctx, strings.ToUpper(t))
+	gg, err = v.Queries.ListGroupsByType(ctx, strings.ToUpper(t))
 	if err != nil {
 		goto end
 	}

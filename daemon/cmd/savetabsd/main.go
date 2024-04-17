@@ -34,11 +34,10 @@ func main() {
 	}
 }
 
-var ds sqlc.DataStore
-
 func runServer(port *string) (err error) {
 	var swagger *openapi3.T
 	var api *restapi.API
+	var ds sqlc.DataStore
 
 	ctx := context.Background()
 
@@ -57,14 +56,12 @@ func runServer(port *string) (err error) {
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
 
-	err = ui.Initialize(ctx, ds)
-	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error initializing UI: %s", err)
-		os.Exit(2)
-	}
-
 	restapi.SetErrorTemplate(ui.GetTemplate("error"))
-	api = restapi.NewAPI(*port, swagger)
+	api = restapi.NewAPI(restapi.APIArgs{
+		Port:    *port,
+		Swagger: swagger,
+		Views:   ui.NewViews(ds),
+	})
 	err = api.ListenAndServe()
 end:
 	return err

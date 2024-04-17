@@ -17,15 +17,6 @@ type ServerInterface interface {
 	// Health Check
 	// (GET /healthz)
 	GetHealthz(w http.ResponseWriter, r *http.Request)
-	// Return the HTML for the Browse body, e.g. the list of group types as an HTML list
-	// (GET /html/browse)
-	GetHtmlBrowse(w http.ResponseWriter, r *http.Request)
-	// Return the list of groups for a group type as HTML
-	// (GET /html/group-types/{groupTypeName}/groups)
-	GetHtmlGroupTypesGroupTypeNameGroups(w http.ResponseWriter, r *http.Request, groupTypeName GroupTypeName)
-	// Return the list of links for a group as HTML
-	// (GET /html/groups/{groupType}/{groupSlug})
-	GetHtmlGroupsGroupTypeGroupSlug(w http.ResponseWriter, r *http.Request, groupType GroupType, groupSlug GroupSlug)
 	// Return the HTML for a paginated table of links with optional filtering criteria in query parameters
 	// (GET /html/links)
 	GetLinks(w http.ResponseWriter, r *http.Request, params GetLinksParams)
@@ -58,82 +49,6 @@ func (siw *ServerInterfaceWrapper) GetHealthz(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHealthz(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r.WithContext(ctx))
-}
-
-// GetHtmlBrowse operation middleware
-func (siw *ServerInterfaceWrapper) GetHtmlBrowse(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetHtmlBrowse(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r.WithContext(ctx))
-}
-
-// GetHtmlGroupTypesGroupTypeNameGroups operation middleware
-func (siw *ServerInterfaceWrapper) GetHtmlGroupTypesGroupTypeNameGroups(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var err error
-
-	// ------------- Path parameter "groupTypeName" -------------
-	var groupTypeName GroupTypeName
-
-	err = runtime.BindStyledParameterWithOptions("simple", "groupTypeName", r.PathValue("groupTypeName"), &groupTypeName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "groupTypeName", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetHtmlGroupTypesGroupTypeNameGroups(w, r, groupTypeName)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r.WithContext(ctx))
-}
-
-// GetHtmlGroupsGroupTypeGroupSlug operation middleware
-func (siw *ServerInterfaceWrapper) GetHtmlGroupsGroupTypeGroupSlug(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var err error
-
-	// ------------- Path parameter "groupType" -------------
-	var groupType GroupType
-
-	err = runtime.BindStyledParameterWithOptions("simple", "groupType", r.PathValue("groupType"), &groupType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "groupType", Err: err})
-		return
-	}
-
-	// ------------- Path parameter "groupSlug" -------------
-	var groupSlug GroupSlug
-
-	err = runtime.BindStyledParameterWithOptions("simple", "groupSlug", r.PathValue("groupSlug"), &groupSlug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "groupSlug", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetHtmlGroupsGroupTypeGroupSlug(w, r, groupType, groupSlug)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -405,9 +320,6 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
-	m.HandleFunc("GET "+options.BaseURL+"/html/browse", wrapper.GetHtmlBrowse)
-	m.HandleFunc("GET "+options.BaseURL+"/html/group-types/{groupTypeName}/groups", wrapper.GetHtmlGroupTypesGroupTypeNameGroups)
-	m.HandleFunc("GET "+options.BaseURL+"/html/groups/{groupType}/{groupSlug}", wrapper.GetHtmlGroupsGroupTypeGroupSlug)
 	m.HandleFunc("GET "+options.BaseURL+"/html/links", wrapper.GetLinks)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu", wrapper.GetHtmlMenu)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu/{menuItem}", wrapper.GetHtmlMenuMenuItem)

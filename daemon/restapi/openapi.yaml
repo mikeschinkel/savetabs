@@ -35,32 +35,6 @@ paths:
         '200':
           $ref: '#/components/responses/HtmlResponse'
 
-  /html/browse:
-    get:
-      summary: Return the HTML for the Browse body, e.g. the list of group types as an HTML list
-      responses:
-        '200':
-          $ref: '#/components/responses/HtmlResponse'
-
-  /html/group-types/{groupTypeName}/groups:
-    get:
-      summary: Return the list of groups for a group type as HTML
-      parameters:
-        - $ref: '#/components/parameters/GroupTypeName'
-      responses:
-        '200':
-          $ref: '#/components/responses/HtmlResponse'
-
-  /html/groups/{groupType}/{groupSlug}:
-    get:
-      summary: Return the list of links for a group as HTML
-      parameters:
-        - $ref: '#/components/parameters/GroupType'
-        - $ref: '#/components/parameters/GroupSlug'
-      responses:
-        '200':
-          $ref: '#/components/responses/HtmlResponse'
-
   /links/with-groups:
     post:
       summary: Adds multiple links, each with group info

@@ -50,17 +50,8 @@ type BookmarkFilter = []string
 // CategoryFilter defines model for CategoryFilter.
 type CategoryFilter = []string
 
-// GroupSlug defines model for GroupSlug.
-type GroupSlug = string
-
-// GroupType defines model for GroupType.
-type GroupType = string
-
 // GroupTypeFilter defines model for GroupTypeFilter.
 type GroupTypeFilter = []string
-
-// GroupTypeName defines model for GroupTypeName.
-type GroupTypeName = string
 
 // KeywordFilter defines model for KeywordFilter.
 type KeywordFilter = []string

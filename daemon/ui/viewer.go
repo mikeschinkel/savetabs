@@ -8,6 +8,21 @@ import (
 	"savetabs/sqlc"
 )
 
+var _ Viewer = (*Views)(nil)
+
+type Views struct {
+	DataStore sqlc.DataStore
+	Queries   *sqlc.Queries
+}
+
+func NewViews(ds sqlc.DataStore) *Views {
+	v := &Views{
+		DataStore: ds,
+	}
+	v.Queries = ds.Queries()
+	return v
+}
+
 //go:embed html/*.template.html
 var htmlFS embed.FS
 var trustedHTMLFS = template.TrustedFSFromEmbed(htmlFS)
@@ -17,20 +32,13 @@ func GetTemplate(name string) *template.Template {
 	return template.Must(template.New(name).ParseFS(trustedHTMLFS, "html/"+name))
 }
 
-var dataStore sqlc.DataStore
-var queries *sqlc.Queries
-
-func Initialize(ctx Context, ds sqlc.DataStore) (err error) {
-	dataStore = ds
-	queries = ds.Queries()
-
+func init() {
 	elements := template.MakeTrustedStringSlice("a", "li", "section", "img", "div", "expand-icon", "span")
+
 	template.AddTrustedElementsAndAttributesForContext("url", elements,
 		template.MakeTrustedStringSlice("hx-get"),
 	)
 	template.AddTrustedElementsAndAttributesForContext("identifier", elements,
 		template.MakeTrustedStringSlice("hx-target", "hx-trigger", "hx-sync", "x-data", "x-init"),
 	)
-
-	return err
 }
