@@ -1,3 +1,4 @@
+import {getApiServerUrl} from './api.js';
 const apiServerUrl = "http://localhost:8642"
 
 async function checkApiHealth(callback) {
