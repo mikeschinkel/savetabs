@@ -26,3 +26,12 @@ export function getHttpOptions(method,data) {
       body: body,
    }
 }
+
+export async function checkApiHealth(callback) {
+   const response = await fetch(`${apiServerUrl}/healthz`).catch( (_)=>{return {ok:false}})
+   callback(response.ok)
+}
+
+
+
+

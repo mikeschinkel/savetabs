@@ -1,9 +1,4 @@
-import {getApiServerUrl} from './api.js';
-
-async function checkApiHealth(callback) {
-   const response = await fetch(`${getApiServerUrl()}/healthz`).catch( (_)=>{return {ok:false}})
-   callback(response.ok)
-}
+import {getApiServerUrl,checkApiHealth} from './api.js';
 
 // Function to load content from API
 async function loadExtensionUiFromApi() {
@@ -19,11 +14,7 @@ async function loadExtensionUiFromApi() {
       document.getElementById("content-section").innerHTML = content
    })
 }
-function getFocusSection(isApiHealthy) {
-   return isApiHealthy
-      ? "extension-popup"
-      : "no-daemon-warning";
-}
+
 async function handleApiHealthCheck() {
    await checkApiHealth(isApiHealthy => {
       document.getElementById(getFocusSection(isApiHealthy)).style.display = "block";
@@ -31,13 +22,22 @@ async function handleApiHealthCheck() {
    });
 }
 
+function getFocusSection(isApiHealthy) {
+   return isApiHealthy
+      ? "extension-popup"
+      : "no-daemon-warning";
+}
 let apiHealthCheckHandle;
-
 // Call the function to handle API health check
 document.addEventListener('DOMContentLoaded', function () {
    const _ = handleApiHealthCheck();
    apiHealthCheckHandle = setInterval(handleApiHealthCheck, 5000)
+});
 
+
+// Handle click event on popup.html buttons
+// Replace with @click from AlpineJS
+document.addEventListener('DOMContentLoaded', function () {
    document.addEventListener('click', function(event) {
       const target = event.target;
       if (target.tagName !== 'BUTTON') {
