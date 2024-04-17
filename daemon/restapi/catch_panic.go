@@ -2,7 +2,7 @@ package restapi
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 	"runtime"
@@ -29,7 +29,7 @@ func (a *API) catchPanic(next http.Handler) http.Handler {
 				msg = fmt.Sprintf("%s; %s", msg, strings.Join(lines[i-1:i+1], ""))
 				break
 			}
-			log.Println(msg)
+			slog.Info(msg)
 			sendError(w, r, http.StatusInternalServerError, msg)
 		}()
 		next.ServeHTTP(w, r)

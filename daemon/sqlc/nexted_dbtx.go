@@ -3,6 +3,7 @@ package sqlc
 import (
 	"database/sql"
 	"log"
+	"log/slog"
 )
 
 type NestedDBTX struct {
@@ -65,7 +66,7 @@ func (dbtx *NestedDBTX) Exec(fn func(*sql.Tx) error) (err error) {
 	}
 	defer func() {
 		if err != nil {
-			log.Printf("ERROR: %s", err.Error())
+			slog.Error("NestedDBTX", "error", err.Error())
 			err = tx.Rollback()
 			if err != nil {
 				// If this happens, figure out how to make more robust

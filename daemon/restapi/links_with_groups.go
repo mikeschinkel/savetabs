@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"slices"
@@ -205,11 +205,12 @@ func upsertLinks(ctx context.Context, ds sqlc.DataStore, rr linksWithGroups) err
 	var linkGroupBytes []byte
 	var gg []group
 	var rgs []linkGroup
-	var kvs []metadata
+	var mm []metadata
 	var me = newMultiErr()
 
-	log.Printf("Received new batch of links from Chrome extension at %s",
-		time.Now().Format(time.DateTime))
+	slog.Info("Received from Chrome extension",
+		"num_links", len(rr),
+		"time", time.Now().Format(time.DateTime))
 
 	urls := rr.urls()
 
@@ -233,7 +234,7 @@ func upsertLinks(ctx context.Context, ds sqlc.DataStore, rr linksWithGroups) err
 	}
 
 	throttle()
-	kvs, err = rr.metadataFromURLs(urls)
+	mm, err = rr.metadataFromURLs(urls)
 	if err != nil {
 		me.Add(err, ErrFailedToExtractMetadata)
 	}
@@ -256,7 +257,7 @@ func upsertLinks(ctx context.Context, ds sqlc.DataStore, rr linksWithGroups) err
 		me.Add(err, ErrFailedUpsertGroups)
 	}
 
-	metadataBytes, err = json.Marshal(kvs)
+	metadataBytes, err = json.Marshal(mm)
 	if err != nil {
 		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "metadata"))
 	}
@@ -266,8 +267,12 @@ func upsertLinks(ctx context.Context, ds sqlc.DataStore, rr linksWithGroups) err
 	if err != nil {
 		me.Add(err, ErrFailedUpsertMetadata)
 	}
-	log.Printf("Received %d links, %d link-groups, %d groups, and %d key/values from Chrome extension",
-		len(rr), len(rgs), len(gg), len(kvs))
+	slog.Info("Received from Chrome extension",
+		"num_links", len(rr),
+		"num_link_groups", len(rgs),
+		"num_groups", len(gg),
+		"num_meta", len(mm),
+	)
 
 	return me.Err()
 }

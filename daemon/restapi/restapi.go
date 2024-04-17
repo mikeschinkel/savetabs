@@ -3,7 +3,7 @@
 package restapi
 
 import (
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"sync"
@@ -57,7 +57,7 @@ func NewAPI(port string, s *swagger) *API {
 func (a *API) openApiOptions() *middleware.Options {
 	return &middleware.Options{
 		ErrorHandler: func(w http.ResponseWriter, message string, statusCode int) {
-			log.Printf("HTTP ERROR[%d]: %s", statusCode, message)
+			slog.Error("HTTP ERROR", "status_code", statusCode, "error_msg", message)
 			http.Error(w, message, statusCode)
 		},
 	}
@@ -69,6 +69,6 @@ func (a *API) PostGroups(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) ListenAndServe() (err error) {
-	log.Printf("Server listening on port %s...", a.Port)
+	slog.Info("SaveTabs server listening", "port", a.Port)
 	return a.Server.ListenAndServe()
 }
