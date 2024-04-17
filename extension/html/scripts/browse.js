@@ -51,11 +51,6 @@ document.addEventListener('DOMContentLoaded', function () {
    });
 });
 
-// window.htmx.onLoad(function (target) {
-//    // document.addEventListener('htmx:afterRequest', function (event) {
-// });
-// Attach to window for global availability
-
 let clicked = false;
 window.isBranchCollapsed = (id) => {
    let el = document.getElementById(id)
