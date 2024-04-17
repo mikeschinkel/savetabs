@@ -1,4 +1,4 @@
-import {getApiServerUrl, getHttpOptions} from './api.js';
+import {getApiServerUrl} from './api.js';
 
 console.log("SaveTabs daemon:", getApiServerUrl())
 
