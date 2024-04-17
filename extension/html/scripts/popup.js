@@ -31,10 +31,12 @@ async function handleApiHealthCheck() {
    });
 }
 
+let apiHealthCheckHandle;
+
 // Call the function to handle API health check
 document.addEventListener('DOMContentLoaded', function () {
-   _ = handleApiHealthCheck();
-   intervalHandle = setInterval(handleApiHealthCheck, 5000)
+   const _ = handleApiHealthCheck();
+   apiHealthCheckHandle = setInterval(handleApiHealthCheck, 5000)
 
    document.addEventListener('click', function(event) {
       const target = event.target;
