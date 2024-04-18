@@ -49,7 +49,7 @@ func newMenuItemWithArgs(src MenuItemable, host, label string, args menuItemArgs
 		Label:        label,
 		menuItemArgs: args,
 	}
-	mi.Id = mi.Identifier()
+	mi.Id = mi.HTMLId()
 	return mi
 }
 
@@ -58,14 +58,14 @@ func (mi menuItem) IconIsBlank() bool {
 }
 
 func (mi menuItem) Slug() safehtml.Identifier {
-	return mi.Source.Identifier()
+	return mi.Source.HTMLId()
 }
 
 func (mi menuItem) LinksQueryParams() string {
 	return "?" + mi.Source.LinksQueryParams()
 }
 
-func (mi menuItem) Identifier() safehtml.Identifier {
+func (mi menuItem) HTMLId() safehtml.Identifier {
 	return safehtml.IdentifierFromConstantPrefix(`mi`, mi.Slug().String())
 }
 
@@ -122,7 +122,7 @@ func (allLinks) LinksQueryParams() string {
 	return "all=1"
 }
 
-func (a allLinks) Identifier() safehtml.Identifier {
+func (a allLinks) HTMLId() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant(`gt-all`)
 }
 
@@ -214,6 +214,6 @@ func (noMenuItem) LinksQueryParams() string {
 func (i noMenuItem) MenuItemType() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant("_")
 }
-func (noMenuItem) Identifier() safehtml.Identifier {
+func (noMenuItem) HTMLId() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant("none")
 }

@@ -9,7 +9,7 @@ import (
 type Context = context.Context
 
 type MenuItemable interface {
-	Identifier() safehtml.Identifier
+	HTMLId() safehtml.Identifier
 	MenuItemType() safehtml.Identifier
 	LinksQueryParams() string
 }

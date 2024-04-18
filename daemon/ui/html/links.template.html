@@ -1,9 +1,33 @@
-<ul class="">
-{{range .Links}}
-  <li id="{{.Identifier}}">
-    <span class="text-lg">
-      <a class="link link-primary" target="_blank" href="{{.URL}}" title="{{.Title}}" aria-label="{{.ARIALabel}}">{{.URL}}</a>
-    </span>
-  </li>
-{{end}}
-</ul>
+<nav class="navbar bg-base-300 min-h-0 h-2">
+</nav>
+<div class="overflow-x-auto">
+  <table class="table table-md">
+    <thead>
+    <tr id="{{.HeaderHTMLId}}">
+      <th class="p-0.5">#</th>
+      <th class="p-0.5">Link</th>
+    </tr>
+    </thead>
+    <tbody>
+      {{range .Links}}
+        <tr id="{{.RowHTMLId}}" class="p-0.5">
+          <td class="p-0.5">{{.RowId}}</td>
+          <td id="{{.HTMLId}}" class="p-0.5">
+            <a class="link link-primary"
+               target="_blank"
+               href="{{.URL}}"
+               title="{{.Title}}"
+               aria-label="{{.ARIALabel}}"
+            >{{.URL}}</a>
+          </td>
+        </tr>
+      {{end}}
+    </tbody>
+    <tfoot>
+    <tr id="{{.FooterHTMLId}}">
+      <th class="p-0.5">#</th>
+      <th class="p-0.5">Link</th>
+    </tr>
+    </tfoot>
+  </table>
+</div>

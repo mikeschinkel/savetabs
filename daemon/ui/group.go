@@ -48,7 +48,7 @@ func (g group) Target() safehtml.Identifier {
 	)
 }
 
-func (g group) Identifier() safehtml.Identifier {
+func (g group) HTMLId() safehtml.Identifier {
 	return safehtml.IdentifierFromConstantPrefix(`group`,
 		strconv.FormatInt(g.Id, 10),
 	)
@@ -66,28 +66,28 @@ func (v *Views) GetGroupHTML(ctx Context, host, gt, gs string) (html []byte, sta
 	var out bytes.Buffer
 
 	//var gt groupType
-	var rfgs []sqlc.ListLinksForGroupRow
+	var ll []sqlc.ListLinksForGroupRow
 	//var gs []group
 	//
-	rfgs, err = v.Queries.ListLinksForGroup(ctx, sqlc.ListLinksForGroupParams{
+	ll, err = v.Queries.ListLinksForGroup(ctx, sqlc.ListLinksForGroupParams{
 		GroupType: strings.ToUpper(gt),
 		GroupSlug: gs,
 	})
 	if err != nil {
 		goto end
 	}
-	if len(rfgs) == 0 {
+	if len(ll) == 0 {
 		goto end
 	}
 
 	err = linksTemplate.Execute(&out, group{
 		Host:      makeURL(host),
-		Id:        rfgs[0].GroupID,
-		Name:      rfgs[0].GroupName,
-		Type:      rfgs[0].GroupType,
-		TypeName:  rfgs[0].TypeName,
-		LinkCount: int64(len(rfgs)),
-		Links:     constructLinks(rfgs),
+		Id:        ll[0].GroupID,
+		Name:      ll[0].GroupName,
+		Type:      ll[0].GroupType,
+		TypeName:  ll[0].TypeName,
+		LinkCount: int64(len(ll)),
+		Links:     constructLinks(ll),
 	})
 	if err != nil {
 		goto end
@@ -98,14 +98,15 @@ end:
 	return html, http.StatusInternalServerError, err
 }
 
-func constructLinks(rfgs []sqlc.ListLinksForGroupRow) []link {
-	rr := make([]link, len(rfgs))
-	for i, rfg := range rfgs {
+func constructLinks(ll []sqlc.ListLinksForGroupRow) []link {
+	links := make([]link, len(ll))
+	for i, rfg := range ll {
 		r := &link{
-			Id:  rfg.ID.Int64,
-			URL: rfg.Url.String,
+			rowId: i + 1,
+			Id:    rfg.ID.Int64,
+			URL:   rfg.Url.String,
 		}
-		rr[i] = *r
+		links[i] = *r
 	}
-	return rr
+	return links
 }

@@ -16,7 +16,7 @@ func (m menu) HTMLMenuURL() string {
 }
 
 func (m menu) HTMLLinksURL() string {
-	return fmt.Sprintf("%s/html/links", m.apiURL)
+	return fmt.Sprintf("%s/html/linkset", m.apiURL)
 }
 
 var menuTemplate = GetTemplate("menu")

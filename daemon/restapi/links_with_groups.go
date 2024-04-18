@@ -196,7 +196,7 @@ func groupTypeFromName(n string) (t string) {
 }
 
 func throttle() {
-	time.Sleep(time.Second)
+	time.Sleep(250 * time.Millisecond)
 }
 
 func upsertLinks(ctx context.Context, ds sqlc.DataStore, rr linksWithGroups) error {
@@ -208,9 +208,7 @@ func upsertLinks(ctx context.Context, ds sqlc.DataStore, rr linksWithGroups) err
 	var mm []metadata
 	var me = newMultiErr()
 
-	slog.Info("Received from Chrome extension",
-		"num_links", len(rr),
-		"time", time.Now().Format(time.DateTime))
+	slog.Info("Received from Chrome extension", "num_links", len(rr))
 
 	urls := rr.urls()
 
@@ -267,7 +265,7 @@ func upsertLinks(ctx context.Context, ds sqlc.DataStore, rr linksWithGroups) err
 	if err != nil {
 		me.Add(err, ErrFailedUpsertMetadata)
 	}
-	slog.Info("Received from Chrome extension",
+	slog.Info("Saved",
 		"num_links", len(rr),
 		"num_link_groups", len(rgs),
 		"num_groups", len(gg),

@@ -2,7 +2,6 @@ package ui
 
 import (
 	"bytes"
-	"fmt"
 	"html"
 	"net/http"
 	"strconv"
@@ -12,13 +11,23 @@ import (
 )
 
 type link struct {
-	Id  int64
-	URL string
+	Id    int64
+	rowId int
+	URL   string
 }
 
-func (l link) Identifier() safehtml.Identifier {
+func (l link) RowId() int {
+	return l.rowId
+}
+
+func (l link) HTMLId() safehtml.Identifier {
 	return safehtml.IdentifierFromConstantPrefix(`link`,
 		strconv.FormatInt(l.Id, 10),
+	)
+}
+func (l link) RowHTMLId() safehtml.Identifier {
+	return safehtml.IdentifierFromConstantPrefix(`links-row`,
+		strconv.Itoa(l.rowId),
 	)
 }
 func (l link) Title() string {
@@ -27,15 +36,6 @@ func (l link) Title() string {
 
 func (l link) ARIALabel() string {
 	return "External Link: " + html.EscapeString(l.URL)
-}
-
-type linkSet struct {
-	apiURL string
-	Links  []link
-}
-
-func (ls linkSet) HTMLLinksURL() string {
-	return fmt.Sprintf("%s/html/links", ls.apiURL)
 }
 
 var linksTemplate = GetTemplate("links")
@@ -95,8 +95,9 @@ func linksFromResources(ll []sqlc.Link) (links []link) {
 	links = make([]link, len(ll))
 	for i, l := range ll {
 		links[i] = link{
-			Id:  l.ID,
-			URL: l.Url.String,
+			Id:    l.ID,
+			rowId: i + 1,
+			URL:   l.Url.String,
 		}
 	}
 	return links

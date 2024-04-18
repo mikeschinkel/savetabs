@@ -230,7 +230,7 @@ func NewGetLinksRequest(server string, params *GetLinksParams) (*http.Request, e
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/html/links")
+	operationPath := fmt.Sprintf("/html/linkset")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

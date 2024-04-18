@@ -50,7 +50,7 @@ func (gt groupType) Target() safehtml.Identifier {
 
 // Identifier uniquely identifies a Group Type across all entities that might
 // appear in an HTML page.
-func (gt groupType) Identifier() safehtml.Identifier {
+func (gt groupType) HTMLId() safehtml.Identifier {
 	return safehtml.IdentifierFromConstantPrefix(`gt`,
 		strings.ToLower(gt.Type),
 	)

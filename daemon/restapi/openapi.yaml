@@ -3,7 +3,7 @@ info:
   title: SaveTabs Daemon API
   version: 1.0.0
 paths:
-  /html/links:
+  /html/linkset:
     get:
       summary: Return the HTML for a paginated table of links with optional filtering criteria in query parameters
       operationId: getLinks

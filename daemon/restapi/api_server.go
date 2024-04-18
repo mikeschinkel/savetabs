@@ -18,7 +18,7 @@ type ServerInterface interface {
 	// (GET /healthz)
 	GetHealthz(w http.ResponseWriter, r *http.Request)
 	// Return the HTML for a paginated table of links with optional filtering criteria in query parameters
-	// (GET /html/links)
+	// (GET /html/linkset)
 	GetLinks(w http.ResponseWriter, r *http.Request, params GetLinksParams)
 	// Return the HTML for the Menu
 	// (GET /html/menu)
@@ -320,7 +320,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
-	m.HandleFunc("GET "+options.BaseURL+"/html/links", wrapper.GetLinks)
+	m.HandleFunc("GET "+options.BaseURL+"/html/linkset", wrapper.GetLinks)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu", wrapper.GetHtmlMenu)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu/{menuItem}", wrapper.GetHtmlMenuMenuItem)
 	m.HandleFunc("POST "+options.BaseURL+"/links/with-groups", wrapper.PostLinksWithGroups)
