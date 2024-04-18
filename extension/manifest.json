@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SaveTabs",
-  "version": "0.11",
+  "version": "0.12",
   "author": "Mike Schinkel",
   "description": "Save tabs to an external source. By default, save to local Sqlite database via a daemon (savetabsd) you need to install locally.",
   "homepage_url": "https://github.com/mikeschinkel/savetabs",
