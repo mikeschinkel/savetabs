@@ -13,6 +13,15 @@ type Action struct {
 	Name sql.NullString `json:"name"`
 }
 
+type Content struct {
+	ID          int64          `json:"id"`
+	LinkID      int64          `json:"link_id"`
+	Title       string         `json:"title"`
+	Body        string         `json:"body"`
+	CreatedTime sql.NullString `json:"created_time"`
+	Created     sql.NullInt64  `json:"created"`
+}
+
 type Group struct {
 	ID          int64          `json:"id"`
 	Name        string         `json:"name"`
@@ -32,16 +41,6 @@ type GroupType struct {
 	Description sql.NullString `json:"description"`
 }
 
-type GroupsWithCountsView struct {
-	ID         int64          `json:"id"`
-	LinkCount  int64          `json:"link_count"`
-	Name       string         `json:"name"`
-	Type       string         `json:"type"`
-	Slug       string         `json:"slug"`
-	TypeName   sql.NullString `json:"type_name"`
-	TypePlural sql.NullString `json:"type_plural"`
-}
-
 type History struct {
 	ID         int64         `json:"id"`
 	ForeignID  sql.NullInt64 `json:"foreign_id"`
@@ -52,6 +51,15 @@ type History struct {
 
 type Link struct {
 	ID          int64          `json:"id"`
+	Scheme      string         `json:"scheme"`
+	Subdomain   string         `json:"subdomain"`
+	Sld         string         `json:"sld"`
+	Tld         string         `json:"tld"`
+	Port        string         `json:"port"`
+	Path        string         `json:"path"`
+	Query       string         `json:"query"`
+	Fragment    string         `json:"fragment"`
+	OriginalUrl string         `json:"original_url"`
 	Url         sql.NullString `json:"url"`
 	CreatedTime sql.NullString `json:"created_time"`
 	VisitedTime sql.NullString `json:"visited_time"`
@@ -67,35 +75,6 @@ type LinkGroup struct {
 	LatestTime  sql.NullString `json:"latest_time"`
 	Created     sql.NullInt64  `json:"created"`
 	Latest      sql.NullInt64  `json:"latest"`
-}
-
-type LinkGroupIdsView struct {
-	LinkID           int64       `json:"link_id"`
-	GroupIds         string      `json:"group_ids"`
-	GroupTypes       string      `json:"group_types"`
-	GroupSlugs       string      `json:"group_slugs"`
-	GroupNames       string      `json:"group_names"`
-	QuotedGroupTypes interface{} `json:"quoted_group_types"`
-	QuotedGroupNames interface{} `json:"quoted_group_names"`
-	QuotedGroupSlugs interface{} `json:"quoted_group_slugs"`
-}
-
-type LinksView struct {
-	ID               sql.NullInt64  `json:"id"`
-	LinkID           sql.NullInt64  `json:"link_id"`
-	Url              sql.NullString `json:"url"`
-	GroupID          int64          `json:"group_id"`
-	GroupName        string         `json:"group_name"`
-	GroupSlug        string         `json:"group_slug"`
-	GroupType        string         `json:"group_type"`
-	TypeName         sql.NullString `json:"type_name"`
-	Domain           sql.NullString `json:"domain"`
-	GroupIds         sql.NullString `json:"group_ids"`
-	GroupTypes       sql.NullString `json:"group_types"`
-	GroupNames       sql.NullString `json:"group_names"`
-	QuotedGroupTypes interface{}    `json:"quoted_group_types"`
-	QuotedGroupSlugs interface{}    `json:"quoted_group_slugs"`
-	QuotedGroupNames interface{}    `json:"quoted_group_names"`
 }
 
 type Metadatum struct {

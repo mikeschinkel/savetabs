@@ -15,11 +15,13 @@ type MenuItemable interface {
 }
 
 type FilterValueGetter interface {
+	GetFilterLabel(string, string) string
 	GetFilterValues(string) []string
+	RawQuery() string
 }
 
 type Viewer interface {
 	GetMenuHTML(Context, string) ([]byte, int, error)
-	GetLinksHTML(Context, string, FilterValueGetter) ([]byte, int, error)
+	GetLinksHTML(Context, string, FilterValueGetter, string) ([]byte, int, error)
 	GetMenuItemHTML(Context, string, string) ([]byte, int, error)
 }

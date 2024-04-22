@@ -12,9 +12,6 @@ SELECT * FROM `group` WHERE type = ? ORDER BY name;
 -- name: LoadGroupsBySlug :one
 SELECT * FROM `group` WHERE slug = ? LIMIT 1;
 
--- name: ListGroupsWithCounts :many
-SELECT * FROM groups_with_counts_view;
-
 -- name: UpsertGroupsFromVarJSON :exec
 INSERT INTO `group` (name,type,slug)
 SELECT
@@ -53,12 +50,61 @@ ORDER BY
 SELECT * FROM link WHERE id = ? LIMIT 1;
 
 -- name: ListLinks :many
-SELECT * FROM link ORDER BY url LIMIT 100;
+SELECT * FROM link ORDER BY original_url LIMIT 100;
 
 -- name: ListFilteredLinks :many
-SELECT *
+SELECT
+   l.id,
+   l.original_url,
+   l.created_time,
+   l.visited_time,
+   c.id AS content_id,
+   c.title,
+   c.body
+FROM
+   link l
+    LEFT JOIN content c ON c.link_id=l.id
+WHERE
+   l.id IN (sqlc.slice('ids'))
+GROUP BY
+   l.id,
+   l.original_url,
+   l.created_time,
+   l.visited_time,
+   c.id,
+   c.title,
+   c.body
+HAVING 1=0
+   OR c.created=max(c.created)
+   OR count(c.id)=0
+ORDER BY
+   l.original_url;
+
+-- name: ListLatestUnparsedLinkURLs :many
+SELECT
+   id,
+   original_url
 FROM link
-WHERE id IN (sqlc.slice('ids'));
+WHERE
+   sld == ''
+ORDER BY
+   id DESC
+LIMIT 8; -- LIMIT was chosen as slice len == slice cap for 8
+
+-- name: UpdateLinkParts :exec
+UPDATE link
+SET
+   scheme = ?,
+   subdomain = ?,
+   sld = ?,
+   tld = ?,
+   port = ?,
+   path = ?,
+   query = ?,
+   fragment = ?
+WHERE
+   original_url = ?;
+
 
 -- name: ListLinkIdsByGroupSlugs :many
 SELECT CAST(rg.link_id AS INTEGER) AS link_id
@@ -77,40 +123,14 @@ FROM link_group lg
    JOIN `group` g ON lg.group_id = g.id
 WHERE g.type IN (sqlc.slice('gts'));
 
--- name: ListLinksForGroup :many
-SELECT DISTINCT
-   id,
-   link_id,
-   url,
-   group_id,
-   cast(group_name AS VARCHAR(32)) AS group_name,
-   cast(group_slug AS VARCHAR(32)) AS group_slug,
-   cast(group_type AS VARCHAR(1))  AS group_type,
-   cast(type_name AS VARCHAR(32))  AS type_name,
-   domain,
-   group_ids,
-   group_types,
-   group_names,
-   quoted_group_types,
-   quoted_group_slugs,
-   quoted_group_names
-FROM
-   links_view
-WHERE true
-   AND group_type = ?
-   AND group_slug = ?
-ORDER BY
-   url;
-
-
 
 -- name: UpsertLinksFromVarJSON :exec
-INSERT INTO link (url)
+INSERT INTO link (original_url)
 SELECT r.value AS url
 FROM var
    JOIN json_each( var.value ) r ON var.key='json'
 WHERE var.id = ?
-ON CONFLICT (url)
+ON CONFLICT (original_url)
    DO UPDATE
             SET visited = strftime('%s','now');
 
@@ -119,7 +139,7 @@ INSERT INTO link_group (group_id, link_id)
 SELECT g.id, r.id
 FROM var
    JOIN json_each( var.value ) j ON var.key='json'
-   JOIN link r ON r.url=json_extract(j.value,'$.link_url')
+   JOIN link r ON r.original_url=json_extract(j.value,'$.link_url')
    JOIN `group` g ON true
       AND g.name=json_extract(j.value,'$.group_name')
       AND g.type=json_extract(j.value,'$.group_type')
@@ -146,7 +166,7 @@ SELECT
    json_extract(kv.value,'$.value')
 FROM var
    JOIN json_each( var.value ) kv ON var.key='json'
-   JOIN link r ON r.url=json_extract(kv.value,'$.url')
+   JOIN link r ON r.original_url=json_extract(kv.value,'$.url')
 WHERE var.id = ?
    ON CONFLICT (link_id,key)
    DO UPDATE

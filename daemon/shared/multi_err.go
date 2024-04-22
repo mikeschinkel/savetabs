@@ -1,25 +1,25 @@
-package restapi
+package shared
 
 import (
 	"errors"
 )
 
-type multiErr struct {
+type MultiErr struct {
 	errs []error
 }
 
-func newMultiErr() *multiErr {
-	return &multiErr{
+func NewMultiErr() *MultiErr {
+	return &MultiErr{
 		errs: make([]error, 0),
 	}
 }
-func (r multiErr) IsError() bool {
+func (r MultiErr) IsError() bool {
 	return len(r.errs) > 0
 }
-func (r multiErr) Add(errs ...error) {
+func (r MultiErr) Add(errs ...error) {
 	r.errs = append(r.errs, errs...)
 }
-func (r multiErr) Err() (errs error) {
+func (r MultiErr) Err() (errs error) {
 	if len(r.errs) == 0 {
 		return nil
 	}

@@ -8,14 +8,19 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"savetabs/restapi"
 	"savetabs/sqlc"
+	"savetabs/tasks"
 	"savetabs/ui"
 )
 
@@ -38,11 +43,13 @@ func runServer(port *string) (err error) {
 	var swagger *openapi3.T
 	var api *restapi.API
 	var ds sqlc.DataStore
+	var stopChan chan os.Signal
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 
 	ds, err = sqlc.Initialize(ctx, DBFile)
 	if err != nil {
+		cancel()
 		goto end
 	}
 
@@ -62,7 +69,31 @@ func runServer(port *string) (err error) {
 		Swagger: swagger,
 		Views:   ui.NewViews(ds),
 	})
-	err = api.ListenAndServe()
+
+	go tasks.BackgroundTask(ctx, tasks.NewCaretaker(ds))
+
+	go func() {
+		err := api.ListenAndServe()
+		if errors.Is(err, http.ErrServerClosed) {
+			return
+		}
+		if err != nil {
+			log.Fatalf("Failed to listen and serve: %+v", err)
+		}
+	}()
+
+	// Graceful shutdown
+	stopChan = make(chan os.Signal, 1)
+	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
+	<-stopChan // Wait for interrupt or termination signal
+
+	cancel()
+	err = api.Shutdown(ctx)
+	if err != nil {
+		log.Fatalf("Server shutdown failed: %+v", err)
+	}
+
+	log.Println("Server and background task stopped gracefully")
 end:
 	return err
 }

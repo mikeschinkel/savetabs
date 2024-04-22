@@ -7,14 +7,8 @@ import (
 )
 
 var (
-	ErrFailedToExtractMetadata = errors.New("failed to extract metadata")
-	ErrFailedToUnmarshal       = errors.New("failed to unmarshal JSON")
-	ErrFailedUpsertLinks       = errors.New("failed to upsert links")
-	ErrFailedUpsertLinkGroups  = errors.New("failed to upsert link-groups")
-	ErrFailedUpsertGroups      = errors.New("failed to upsert groups")
-	ErrFailedUpsertMetadata    = errors.New("failed to upsert metadata")
-	ErrUrlNotSpecified         = errors.New("url not specified")
-	ErrUrlNotAbsolute          = errors.New("url is not absolute")
+	ErrFailedToUnmarshal = errors.New("failed to unmarshal JSON")
+	ErrFailedUpsertLinks = errors.New("failed to upsert links")
 )
 
 var errorTemplate *template.Template

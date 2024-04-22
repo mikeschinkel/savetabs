@@ -13,10 +13,6 @@ import (
 type Context = context.Context
 type Buffer = bytes.Buffer
 
-func ptr[T any](a T) *T {
-	return &a
-}
-
 func urlForRequest(r *http.Request) string {
 	r.URL.Host = r.Host
 	r.URL.Scheme = "http"

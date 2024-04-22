@@ -1,9 +1,7 @@
 package ui
 
 import (
-	"bytes"
 	"fmt"
-	"net/http"
 	"slices"
 	"strings"
 
@@ -150,32 +148,4 @@ func newGroupTypeMap(gtrs []sqlc.ListGroupsTypeRow) groupTypeMap {
 		gts[strings.ToLower(gtr.Name.String)] = newGroupTypeFromListGroupsTypeRow(gtr)
 	}
 	return gts
-}
-
-func (v *Views) GetGroupTypeGroupsHTML(ctx Context, host, groupTypeName string) (html []byte, status int, err error) {
-	var gt groupType
-	var out bytes.Buffer
-	var gg []sqlc.Group
-	var gs []group
-
-	t, err := v.groupTypeFromName(ctx, groupTypeName)
-	if err != nil {
-		goto end
-	}
-	gg, err = v.Queries.ListGroupsByType(ctx, strings.ToUpper(t))
-	if err != nil {
-		goto end
-	}
-	gs = constructGroups(gg)
-	gt = groupType{
-		Host:   makeURL(host),
-		Groups: gs,
-	}
-	err = groupsTemplate.Execute(&out, gt)
-	if err != nil {
-		goto end
-	}
-	html = out.Bytes()
-end:
-	return html, http.StatusInternalServerError, err
 }

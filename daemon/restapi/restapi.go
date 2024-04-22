@@ -14,8 +14,9 @@ import (
 
 type swagger = openapi3.T
 
-// Declare that *API implements ServerInterface
+// Declare that *API implements ServerInterface and Persister interfaces
 var _ ServerInterface = (*API)(nil)
+var _ Persister = (*API)(nil)
 
 type API struct {
 	Port    string
@@ -72,12 +73,11 @@ func (a *API) openApiOptions() *middleware.Options {
 	}
 }
 
-func (a *API) PostGroups(w http.ResponseWriter, r *http.Request) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (a *API) ListenAndServe() (err error) {
 	slog.Info("SaveTabs server listening", "port", a.Port)
 	return a.Server.ListenAndServe()
+}
+func (a *API) Shutdown(ctx Context) (err error) {
+	slog.Info("SaveTabs server shutting down")
+	return a.Server.Shutdown(ctx)
 }

@@ -13,7 +13,7 @@ func (a *API) GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request, menuIt
 
 func (a *API) GetLinks(w http.ResponseWriter, r *http.Request, params GetLinksParams) {
 	sendWith(context.Background(), w, r, func(ctx Context) ([]byte, int, error) {
-		return a.Views.GetLinksHTML(ctx, r.Host, params)
+		return a.Views.GetLinksHTML(ctx, r.Host, params, r.URL.RawQuery)
 	})
 }
 

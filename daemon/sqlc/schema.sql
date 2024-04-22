@@ -60,7 +60,31 @@ BEGIN
 END
 ;
 
+CREATE TABLE IF NOT EXISTS content
+(
+   id           INTEGER PRIMARY KEY AUTOINCREMENT,
+   link_id      INTEGER     NOT NULL,
+   title        VARCHAR(64) NOT NULL,
+   body         TEXT        NOT NULL,
+   created_time TEXT GENERATED ALWAYS AS (DATETIME(created, 'unixepoch')) VIRTUAL,
+   created      INTEGER DEFAULT (STRFTIME('%s', 'now'))
+)
+;
 
+CREATE TRIGGER IF NOT EXISTS update_content_modified
+   AFTER UPDATE
+   ON content
+   FOR EACH ROW
+BEGIN
+   UPDATE content
+   SET
+      created = CASE
+                   WHEN old.created = new.created THEN created
+                   ELSE STRFTIME('%s', 'now') END
+   WHERE
+      id = old.id;
+END
+;
 
 CREATE TABLE IF NOT EXISTS group_type
 (
@@ -136,6 +160,9 @@ CREATE TABLE IF NOT EXISTS link_group
 )
 ;
 
+DROP TRIGGER IF EXISTS update_link_group_latest
+;
+
 CREATE TRIGGER IF NOT EXISTS update_link_group_latest
    AFTER UPDATE
    ON link_group
@@ -154,13 +181,29 @@ END
 CREATE TABLE IF NOT EXISTS link
 (
    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-   url          VARCHAR(256) UNIQUE,
+   scheme       VARCHAR(5)  NOT NULL,
+   subdomain    VARCHAR(32) NOT NULL,
+   sld          VARCHAR(32) NOT NULL,
+   tld          VARCHAR(10) NOT NULL,
+   port         VARCHAR(6) NOT NULL,
+   path         VARCHAR(64) NOT NULL,
+   query        VARCHAR(64) NOT NULL,
+   fragment     VARCHAR(64) NOT NULL,
+   original_url VARCHAR(256) NOT NULL,
+   url          VARCHAR(256) GENERATED ALWAYS AS (scheme||'://'
+      ||CASE WHEN sld='' THEN sld ELSE sld||'.'||tld END
+      ||CASE WHEN port='' THEN '' ELSE ':'||port END
+      ||path
+      ||CASE WHEN query='' THEN '' ELSE '?'||query END
+      ||CASE WHEN fragment='' THEN '' ELSE '#'||fragment END),
    created_time TEXT GENERATED ALWAYS AS (DATETIME(created, 'unixepoch')) VIRTUAL,
    visited_time TEXT GENERATED ALWAYS AS (DATETIME(visited, 'unixepoch')) VIRTUAL,
    created      INTEGER DEFAULT (STRFTIME('%s', 'now')),
    visited      INTEGER DEFAULT (STRFTIME('%s', 'now'))
 )
 ;
+DROP INDEX IF EXISTS idx_link__original_url;
+CREATE UNIQUE INDEX idx_link__original_url ON link(original_url);
 
 CREATE TRIGGER IF NOT EXISTS update_link_visited
    AFTER UPDATE
@@ -174,105 +217,3 @@ END
 --=======================================================================--
 -- VIEWS BELOW
 --=======================================================================--
-DROP VIEW IF EXISTS groups_with_counts_view
-;
-
--- SELECT * FROM groups_with_counts_view;
-CREATE VIEW groups_with_counts_view AS
-SELECT
-   g.id,
-   COUNT(DISTINCT rg.link_id) AS link_count,
-   g.name,
-   g.type,
-   g.slug,
-   gt.name                    AS type_name,
-   gt.plural                  AS type_plural
-FROM
-   `group` g
-      JOIN group_type gt
-         ON gt.type = g.type
-      LEFT JOIN link_group rg
-         ON rg.group_id = g.id
-GROUP BY
-   g.id,
-   g.name,
-   gt.name
-ORDER BY
-   gt.name,
-   g.name
-;
-
-
-DROP VIEW IF EXISTS link_group_ids_view
-;
-
--- SELECT * FROM link_group_ids_view;
-CREATE VIEW IF NOT EXISTS link_group_ids_view AS
-SELECT
-   link_id,
-   group_ids,
-   group_types,
-   group_slugs,
-   group_names,
-   '''' || REPLACE(group_types, ',', ''',''') || '''' AS quoted_group_types,
-   '''' || REPLACE(group_names, ',', ''',''') || '''' AS quoted_group_names,
-   '''' || REPLACE(group_slugs, ',', ''',''') || '''' AS quoted_group_slugs
-FROM
-   (
-      SELECT DISTINCT
-         rg.link_id,
-         GROUP_CONCAT(DISTINCT g.id)                           AS group_ids,
-         GROUP_CONCAT(DISTINCT g.type)                         AS group_types,
-         GROUP_CONCAT(DISTINCT g.type || ':' || g.name)        AS group_names,
-         GROUP_CONCAT(DISTINCT LOWER(g.type) || ':' || g.slug) AS group_slugs
-      FROM
-         `group` g
-            JOIN link_group rg
-               ON g.id = rg.group_id
-      GROUP BY
-         rg.link_id
-      ) x
-;
-
-DROP VIEW IF EXISTS links_view
-;
-
--- SELECT * FROM links_view;
-CREATE VIEW IF NOT EXISTS links_view AS
-SELECT
-   r.id,
-   r.id      AS link_id,
-   r.url,
-   g.id      AS group_id,
-   g.name    AS group_name,
-   g.slug    AS group_slug,
-   g.type    AS group_type,
-   gt.name   AS type_name,
-   sld.value AS domain,
-   gs.group_ids,
-   gs.group_types,
-   gs.group_names,
-   gs.quoted_group_types,
-   gs.quoted_group_slugs,
-   gs.quoted_group_names
-FROM
-   `group` g
-      JOIN group_type gt
-         ON gt.type = g.type
-      LEFT JOIN link_group rg
-         ON g.id = rg.group_id
-      LEFT JOIN link r
-         ON r.id = rg.link_id
-      LEFT JOIN metadata sld
-         ON sld.key = 'sld' AND sld.link_id = r.id
-      LEFT JOIN link_group_ids_view gs
-         ON r.id = gs.link_id
-ORDER BY
-   g.name,
-   r.url
-;
-
-
-
-
-

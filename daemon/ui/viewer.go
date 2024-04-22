@@ -33,10 +33,10 @@ func GetTemplate(name string) *template.Template {
 }
 
 func init() {
-	elements := template.MakeTrustedStringSlice("a", "li", "section", "img", "div", "expand-icon", "span")
+	elements := template.MakeTrustedStringSlice("a", "li", "section", "img", "div", "expand-icon", "span", "form")
 
 	template.AddTrustedElementsAndAttributesForContext("url", elements,
-		template.MakeTrustedStringSlice("hx-get"),
+		template.MakeTrustedStringSlice("hx-get", "hx-post"),
 	)
 	template.AddTrustedElementsAndAttributesForContext("identifier", elements,
 		template.MakeTrustedStringSlice("hx-target", "hx-trigger", "hx-sync", "x-data", "x-init"),

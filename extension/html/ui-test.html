@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:x-on="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,38 +7,15 @@
     <script src="scripts/htmx@1.9.11.min.js"
             integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0"
             crossorigin="anonymous"></script>
-    <script src="scripts/_hyperscript@0.9.12.min.js"
-            integrity="sha384-+Uth1QzYJsTjnS5SXVN3fFO4I32Y571xIuv53WJ2SA7y5/36tKU1VCutONAmg5eH"
-            crossorigin="anonymous"></script>
-<!--    <script type="module" crossorigin src="scripts/ui.js"></script>-->
-    <script type="text/javascript">
-       window.newCollapsibleState = function(state) {
-          return {
-             state:state,
-             expanded: () => state==='expanded',
-             collapsed: () => state==='collapsed',
-             collapse: (ev) => state = 'collapsed' && ev.stopPropagation(),
-             expand: (ev) => state = 'expanded' && ev.stopPropagation(),
-          }
-       }
-    </script>
 </head>
 <body>
-<ul class="">
-    <li x-data="">
-        <details class="grow">
-            <summary class="flex items-center w-full gap-2">
-                <span class="grow-0 p-2 cursor-pointer">
-                    <expand-icon hx-get="/kids" hx-target="#kids"></expand-icon>
-                </span>
-                <span @click="alert('Clicked!'); $event.stopPropagation()" class="grow p-2 cursor-pointer">
-                    My Menu Option Text
-                </span>
-            </summary>
-            <div id="kids"></div>
-        </details>
-    </li>
-</ul>
+<nav class="navbar bg-base-300 min-h-0 h-8 border-solid border-b border-t">
+    <div class="navbar-start"></div>
+    <div class="navbar-center">
+        <input class="btn min-h-0 h-4" type="submit" value="Delete">
+    </div>
+    <div class="navbar-end"></div>
+</nav>
 <script type="module" crossorigin src="scripts/ui.js"></script>
 </body>
 </html>
