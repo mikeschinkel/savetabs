@@ -54,6 +54,7 @@ func sendHTML(w http.ResponseWriter, html []byte) {
 	_, _ = w.Write(html)
 }
 
+//goland:noinspection GoUnusedFunction
 func deleteElement[T any](slice []T, index int) []T {
 	// Copy the elements following the index one position to the left.
 	copy(slice[index:], slice[index+1:])
