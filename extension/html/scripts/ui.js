@@ -38,7 +38,7 @@ document.addEventListener('alpine:init', () => {
             const tableId = obj.closest('table').id;
             const form = obj.closest('form');
             const trId = obj.closest('tr').id;
-            return form.querySelectorAll(`input[type="checkbox"]:not(#${trId})`)[0];
+            return form.querySelectorAll(`input[type="checkbox"].check-all:not(tr#${trId} input)`)[0];
          },
          allChecked(checkboxes) {
             return checkboxes.every(_ =>  _.checked);
@@ -61,8 +61,7 @@ document.addEventListener('alpine:init', () => {
             }
             // Ask for confirmation since some rows checked, some rows not
             const action = event.target.checked ? 'select' : 'deselect';
-            const state = event.target.checked ? 'unselected' : 'selected';
-            this.confirmationPrompt = `Are you sure you want to ${action} all those ${state}?`;
+            this.confirmationPrompt = `Are you sure you want to ${action} ALL?`;
             this.confirmationDialogState = 'open';
             return true;
          },
