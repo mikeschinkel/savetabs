@@ -45,7 +45,7 @@ func (gt groupType) Target() safehtml.Identifier {
 		strings.ToLower(gt.Type))
 }
 
-// Identifier uniquely identifies a Group Type across all entities that might
+// HTMLId uniquely identifies a Group Type across all entities that might
 // appear in an HTML page.
 func (gt groupType) HTMLId() safehtml.Identifier {
 	return safehtml.IdentifierFromConstantPrefix(`gt`,
