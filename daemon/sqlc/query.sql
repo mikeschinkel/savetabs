@@ -1,16 +1,29 @@
 -- noinspection SqlResolveForFile @ any/"sqlc"
 
 -- name: LoadGroup :one
-SELECT * FROM `group` WHERE id = ? LIMIT 1;
+SELECT * FROM `group`
+WHERE true
+   AND id = ?
+   AND archived IN (sqlc.slice('group_archived'))
+LIMIT 1;
 
 -- name: LoadGroupType :one
 SELECT * FROM group_type WHERE type = ? LIMIT 1;
 
 -- name: ListGroupsByType :many
-SELECT * FROM `group` WHERE type = ? ORDER BY name;
+SELECT *
+FROM `group`
+WHERE true
+   AND type = ?
+   AND archived IN (sqlc.slice('group_archived'))
+ORDER BY name;
 
 -- name: LoadGroupsBySlug :one
-SELECT * FROM `group` WHERE slug = ? LIMIT 1;
+SELECT * FROM `group`
+WHERE true
+   AND slug = ?
+   AND archived IN (sqlc.slice('group_archived'))
+LIMIT 1;
 
 -- name: UpsertGroupsFromVarJSON :exec
 INSERT INTO `group` (name,type,slug)
@@ -33,12 +46,15 @@ SELECT DISTINCT
    gt.name,
    gt.plural,
    COUNT(DISTINCT g.id) AS group_count,
+   COUNT(DISTINCT g.archived=1) AS group_archived,
    CAST(CASE WHEN g.ID IS NULL THEN 0
       ELSE COUNT(DISTINCT rg.link_id) END AS INTEGER) AS link_count,
+   COUNT(DISTINCT l.archived=1) AS link_archived,
    gt.sort
 FROM group_type gt
    LEFT JOIN `group` g ON gt.type=g.type
    LEFT JOIN link_group rg ON g.id=rg.group_id
+   LEFT JOIN link l ON l.id=rg.link_id
 GROUP BY
    gt.sort,
    gt.type,
@@ -47,10 +63,14 @@ ORDER BY
    gt.sort;
 
 -- name: LoadLink :one
-SELECT * FROM link WHERE id = ? LIMIT 1;
+SELECT * FROM link WHERE archived IN (sqlc.slice('link_archived')) AND id = ? LIMIT 1;
 
 -- name: ListLinks :many
-SELECT * FROM link ORDER BY original_url LIMIT 100;
+SELECT *
+FROM link
+WHERE archived IN (sqlc.slice('link_archived'))
+ORDER BY original_url
+LIMIT 100;
 
 -- name: ListFilteredLinks :many
 SELECT
@@ -64,8 +84,9 @@ SELECT
 FROM
    link l
     LEFT JOIN content c ON c.link_id=l.id
-WHERE
-   l.id IN (sqlc.slice('ids'))
+WHERE true
+   AND l.id IN (sqlc.slice('ids'))
+   AND archived IN (sqlc.slice('link_archived'))
 GROUP BY
    l.id,
    l.original_url,
@@ -85,8 +106,9 @@ SELECT
    id,
    original_url
 FROM link
-WHERE
-   sld == ''
+WHERE true
+   AND sld == ''
+   AND archived IN (sqlc.slice('link_archived'))
 ORDER BY
    id DESC
 LIMIT 8; -- LIMIT was chosen as slice len == slice cap for 8
@@ -107,22 +129,32 @@ WHERE
 
 
 -- name: ListLinkIdsByGroupSlugs :many
-SELECT CAST(rg.link_id AS INTEGER) AS link_id
-FROM link_group rg
-JOIN `group` g ON g.id=rg.group_id
-WHERE g.slug IN (sqlc.slice('slugs'));
+SELECT CAST(l.id AS INTEGER) AS link_id
+FROM
+   link l
+   JOIN link_group rg ON l.id=rg.link_id
+   JOIN `group` g ON g.id=rg.group_id
+WHERE true
+   AND g.slug IN (sqlc.slice('slugs'))
+   AND l.archived IN (sqlc.slice('link_archived'))
+;
 
 -- name: ListLinkIdsByMetadata :many
-SELECT CAST(link_id AS INTEGER) AS link_id
-FROM metadata
-WHERE kv_pair IN (sqlc.slice('pairs'));
+SELECT CAST(m.link_id AS INTEGER) AS link_id
+FROM metadata m
+   JOIN link l ON l.id=m.link_id
+WHERE true
+   AND m.kv_pair IN (sqlc.slice('kv_pairs'))
+   AND l.archived IN (sqlc.slice('link_archived'));
 
 -- name: ListLinkIdsByGroupType :many
 SELECT CAST(link_id AS INTEGER) AS link_id
 FROM link_group lg
-   JOIN `group` g ON lg.group_id = g.id
-WHERE g.type IN (sqlc.slice('gts'));
-
+        JOIN `group` g ON lg.group_id = g.id
+        JOIN link l ON l.id=lg.link_id
+WHERE true
+   AND g.type IN (sqlc.slice('groupTypes'))
+   AND l.archived IN (sqlc.slice('link_archived'));
 
 -- name: UpsertLinksFromVarJSON :exec
 INSERT INTO link (original_url)
@@ -156,7 +188,11 @@ ON CONFLICT (key) DO UPDATE SET value = excluded.value;
 DELETE FROM var WHERE id = ?;
 
 -- name: ListMetadata :many
-SELECT * FROM metadata ORDER BY link_id,key DESC;
+SELECT *
+FROM metadata m
+   JOIN link l ON m.link_id = l.id
+WHERE l.archived IN (sqlc.slice('link_archived'))
+ORDER BY link_id,key DESC;
 
 -- name: UpsertMetadataFromVarJSON :exec
 INSERT INTO metadata (link_id, key, value)

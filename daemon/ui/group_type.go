@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/google/safehtml"
@@ -54,65 +53,6 @@ func (gt groupType) HTMLId() safehtml.Identifier {
 	)
 }
 
-func (v *Views) getGroupTypeMap(ctx Context) (gtm groupTypeMap, err error) {
-	var gts []sqlc.ListGroupsTypeRow
-
-	gts, err = v.Queries.ListGroupsType(ctx)
-	if err != nil {
-		goto end
-	}
-	gtm = newGroupTypeMap(gts)
-end:
-	return gtm, err
-}
-
-func (v *Views) groupTypeFromName(ctx Context, name string) (t string, err error) {
-	var ok bool
-	var gtm groupTypeMap
-	var gt groupType
-
-	gtm, err = v.getGroupTypeMap(ctx)
-	if err != nil {
-		goto end
-	}
-	gt, ok = gtm[name]
-	if !ok {
-		t = "I"
-		goto end
-	}
-	t = gt.Type
-end:
-	return t, err
-}
-
-type groupTypeMap map[string]groupType
-
-//func (gtm groupTypeMap) Map(fn func(gt groupType) groupType) groupTypeMap {
-//	for i, x := range gtm {
-//		gtm[i] = fn(x)
-//	}
-//	return gtm
-//}
-
-func (gtm groupTypeMap) AsSortedSlice() (gts []groupType) {
-	gts = make([]groupType, len(gtm))
-	i := 0
-	for _, gt := range gtm {
-		gts[i] = gt
-		i++
-	}
-	slices.SortFunc(gts, func(a, b groupType) int {
-		switch {
-		case a.Sort > b.Sort:
-			return 1
-		case a.Sort < b.Sort:
-			return -1
-		}
-		return 0
-	})
-	return gts
-}
-
 func newGroupTypeFromListGroupsTypeRow(gtr sqlc.ListGroupsTypeRow) groupType {
 	return groupType{
 		Type:       gtr.Type,
@@ -121,31 +61,4 @@ func newGroupTypeFromListGroupsTypeRow(gtr sqlc.ListGroupsTypeRow) groupType {
 		GroupCount: gtr.GroupCount,
 		Sort:       int8(gtr.Sort.Int64),
 	}
-}
-
-func newGroupTypeMap(gtrs []sqlc.ListGroupsTypeRow) groupTypeMap {
-	cnt := len(gtrs)
-
-	// No need to show invalid as a group type if
-	// there are no links of that type
-	invalid := -1
-	for i, gtr := range gtrs {
-		if gtr.LinkCount != 0 {
-			continue
-		}
-		if gtr.Type != "I" {
-			continue
-		}
-		cnt--
-		invalid = i
-		break
-	}
-	gts := make(groupTypeMap, cnt)
-	for i, gtr := range gtrs {
-		if i == invalid {
-			continue
-		}
-		gts[strings.ToLower(gtr.Name.String)] = newGroupTypeFromListGroupsTypeRow(gtr)
-	}
-	return gts
 }

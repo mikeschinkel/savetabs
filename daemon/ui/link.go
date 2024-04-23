@@ -5,6 +5,7 @@ import (
 	"html"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -103,9 +104,15 @@ func (v *Views) GetLinksHTML(ctx Context, host string, params FilterValueGetter,
 		labels = append(labels, params.GetFilterLabel(gt, strings.Join(values, ",")))
 		switch gt {
 		case MetaFilter:
-			ids, err = v.Queries.ListLinkIdsByMetadata(ctx, values)
+			ids, err = v.Queries.ListLinkIdsByMetadata(ctx, sqlc.ListLinkIdsByMetadataParams{
+				KvPairs:      values,
+				LinkArchived: sqlc.NotArchived,
+			})
 		case GroupTypeFilter:
-			ids, err = v.Queries.ListLinkIdsByGroupType(ctx, values)
+			ids, err = v.Queries.ListLinkIdsByGroupType(ctx, sqlc.ListLinkIdsByGroupTypeParams{
+				GroupTypes:   values,
+				LinkArchived: sqlc.NotArchived,
+			})
 		default:
 			ids, err = v.Queries.ListLinkIdsByGroupSlugs(ctx, values)
 		}
@@ -121,7 +128,10 @@ func (v *Views) GetLinksHTML(ctx Context, host string, params FilterValueGetter,
 		html = []byte("<div>No links for selection</div>")
 		goto end
 	} else {
-		ll, err = v.Queries.ListFilteredLinks(ctx, linkIds)
+		ll, err = v.Queries.ListFilteredLinks(ctx, sqlc.ListFilteredLinksParams{
+			Ids:          linkIds,
+			LinkArchived: sqlc.NotArchived,
+		})
 	}
 	if err != nil {
 		goto end

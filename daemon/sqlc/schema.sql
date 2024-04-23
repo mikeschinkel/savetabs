@@ -125,12 +125,11 @@ CREATE TABLE IF NOT EXISTS `group`
    latest_time  TEXT GENERATED ALWAYS AS (DATETIME(latest, 'unixepoch')) VIRTUAL,
    created      INTEGER DEFAULT (STRFTIME('%s', 'now')),
    latest       INTEGER DEFAULT (STRFTIME('%s', 'now')),
+   archived     INTEGER NOT NULL DEFAULT 0,
    UNIQUE (name, type),
    UNIQUE (slug)
 )
 ;
-
-
 
 DROP INDEX IF EXISTS idx_group__type
 ;
@@ -199,7 +198,9 @@ CREATE TABLE IF NOT EXISTS link
    created_time TEXT GENERATED ALWAYS AS (DATETIME(created, 'unixepoch')) VIRTUAL,
    visited_time TEXT GENERATED ALWAYS AS (DATETIME(visited, 'unixepoch')) VIRTUAL,
    created      INTEGER DEFAULT (STRFTIME('%s', 'now')),
-   visited      INTEGER DEFAULT (STRFTIME('%s', 'now'))
+   visited      INTEGER DEFAULT (STRFTIME('%s', 'now')),
+   archived     INTEGER NOT NULL DEFAULT 0
+
 )
 ;
 DROP INDEX IF EXISTS idx_link__original_url;

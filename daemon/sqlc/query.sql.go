@@ -32,8 +32,9 @@ SELECT
 FROM
    link l
     LEFT JOIN content c ON c.link_id=l.id
-WHERE
-   l.id IN (/*SLICE:ids*/?)
+WHERE true
+   AND l.id IN (/*SLICE:ids*/?)
+   AND archived IN (/*SLICE:link_archived*/?)
 GROUP BY
    l.id,
    l.original_url,
@@ -49,6 +50,11 @@ ORDER BY
    l.original_url
 `
 
+type ListFilteredLinksParams struct {
+	Ids          []int64 `json:"ids"`
+	LinkArchived []int64 `json:"link_archived"`
+}
+
 type ListFilteredLinksRow struct {
 	ID          int64          `json:"id"`
 	OriginalUrl string         `json:"original_url"`
@@ -59,16 +65,24 @@ type ListFilteredLinksRow struct {
 	Body        sql.NullString `json:"body"`
 }
 
-func (q *Queries) ListFilteredLinks(ctx context.Context, ids []int64) ([]ListFilteredLinksRow, error) {
+func (q *Queries) ListFilteredLinks(ctx context.Context, arg ListFilteredLinksParams) ([]ListFilteredLinksRow, error) {
 	query := listFilteredLinks
 	var queryParams []interface{}
-	if len(ids) > 0 {
-		for _, v := range ids {
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
 			queryParams = append(queryParams, v)
 		}
-		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	if len(arg.LinkArchived) > 0 {
+		for _, v := range arg.LinkArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", strings.Repeat(",?", len(arg.LinkArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", "NULL", 1)
 	}
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -101,11 +115,32 @@ func (q *Queries) ListFilteredLinks(ctx context.Context, ids []int64) ([]ListFil
 }
 
 const listGroupsByType = `-- name: ListGroupsByType :many
-SELECT id, name, type, slug, created_time, latest_time, created, latest FROM ` + "`" + `group` + "`" + ` WHERE type = ? ORDER BY name
+SELECT id, name, type, slug, created_time, latest_time, created, latest, archived
+FROM ` + "`" + `group` + "`" + `
+WHERE true
+   AND type = ?
+   AND archived IN (/*SLICE:group_archived*/?)
+ORDER BY name
 `
 
-func (q *Queries) ListGroupsByType(ctx context.Context, type_ string) ([]Group, error) {
-	rows, err := q.db.QueryContext(ctx, listGroupsByType, type_)
+type ListGroupsByTypeParams struct {
+	Type          string  `json:"type"`
+	GroupArchived []int64 `json:"group_archived"`
+}
+
+func (q *Queries) ListGroupsByType(ctx context.Context, arg ListGroupsByTypeParams) ([]Group, error) {
+	query := listGroupsByType
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.Type)
+	if len(arg.GroupArchived) > 0 {
+		for _, v := range arg.GroupArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:group_archived*/?", strings.Repeat(",?", len(arg.GroupArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:group_archived*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +157,7 @@ func (q *Queries) ListGroupsByType(ctx context.Context, type_ string) ([]Group, 
 			&i.LatestTime,
 			&i.Created,
 			&i.Latest,
+			&i.Archived,
 		); err != nil {
 			return nil, err
 		}
@@ -142,12 +178,15 @@ SELECT DISTINCT
    gt.name,
    gt.plural,
    COUNT(DISTINCT g.id) AS group_count,
+   COUNT(DISTINCT g.archived=1) AS group_archived,
    CAST(CASE WHEN g.ID IS NULL THEN 0
       ELSE COUNT(DISTINCT rg.link_id) END AS INTEGER) AS link_count,
+   COUNT(DISTINCT l.archived=1) AS link_archived,
    gt.sort
 FROM group_type gt
    LEFT JOIN ` + "`" + `group` + "`" + ` g ON gt.type=g.type
    LEFT JOIN link_group rg ON g.id=rg.group_id
+   LEFT JOIN link l ON l.id=rg.link_id
 GROUP BY
    gt.sort,
    gt.type,
@@ -157,12 +196,14 @@ ORDER BY
 `
 
 type ListGroupsTypeRow struct {
-	Type       string         `json:"type"`
-	Name       sql.NullString `json:"name"`
-	Plural     sql.NullString `json:"plural"`
-	GroupCount int64          `json:"group_count"`
-	LinkCount  int64          `json:"link_count"`
-	Sort       sql.NullInt64  `json:"sort"`
+	Type          string         `json:"type"`
+	Name          sql.NullString `json:"name"`
+	Plural        sql.NullString `json:"plural"`
+	GroupCount    int64          `json:"group_count"`
+	GroupArchived int64          `json:"group_archived"`
+	LinkCount     int64          `json:"link_count"`
+	LinkArchived  int64          `json:"link_archived"`
+	Sort          sql.NullInt64  `json:"sort"`
 }
 
 func (q *Queries) ListGroupsType(ctx context.Context) ([]ListGroupsTypeRow, error) {
@@ -179,7 +220,9 @@ func (q *Queries) ListGroupsType(ctx context.Context) ([]ListGroupsTypeRow, erro
 			&i.Name,
 			&i.Plural,
 			&i.GroupCount,
+			&i.GroupArchived,
 			&i.LinkCount,
+			&i.LinkArchived,
 			&i.Sort,
 		); err != nil {
 			return nil, err
@@ -200,8 +243,9 @@ SELECT
    id,
    original_url
 FROM link
-WHERE
-   sld == ''
+WHERE true
+   AND sld == ''
+   AND archived IN (/*SLICE:link_archived*/?)
 ORDER BY
    id DESC
 LIMIT 8
@@ -212,8 +256,18 @@ type ListLatestUnparsedLinkURLsRow struct {
 	OriginalUrl string `json:"original_url"`
 }
 
-func (q *Queries) ListLatestUnparsedLinkURLs(ctx context.Context) ([]ListLatestUnparsedLinkURLsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listLatestUnparsedLinkURLs)
+func (q *Queries) ListLatestUnparsedLinkURLs(ctx context.Context, linkArchived []int64) ([]ListLatestUnparsedLinkURLsRow, error) {
+	query := listLatestUnparsedLinkURLs
+	var queryParams []interface{}
+	if len(linkArchived) > 0 {
+		for _, v := range linkArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", strings.Repeat(",?", len(linkArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
 	}
@@ -236,22 +290,39 @@ func (q *Queries) ListLatestUnparsedLinkURLs(ctx context.Context) ([]ListLatestU
 }
 
 const listLinkIdsByGroupSlugs = `-- name: ListLinkIdsByGroupSlugs :many
-SELECT CAST(rg.link_id AS INTEGER) AS link_id
-FROM link_group rg
-JOIN ` + "`" + `group` + "`" + ` g ON g.id=rg.group_id
-WHERE g.slug IN (/*SLICE:slugs*/?)
+SELECT CAST(l.id AS INTEGER) AS link_id
+FROM
+   link l
+   JOIN link_group rg ON l.id=rg.link_id
+   JOIN ` + "`" + `group` + "`" + ` g ON g.id=rg.group_id
+WHERE true
+   AND g.slug IN (/*SLICE:slugs*/?)
+   AND l.archived IN (/*SLICE:link_archived*/?)
 `
 
-func (q *Queries) ListLinkIdsByGroupSlugs(ctx context.Context, slugs []string) ([]int64, error) {
+type ListLinkIdsByGroupSlugsParams struct {
+	Slugs        []string `json:"slugs"`
+	LinkArchived []int64  `json:"link_archived"`
+}
+
+func (q *Queries) ListLinkIdsByGroupSlugs(ctx context.Context, arg ListLinkIdsByGroupSlugsParams) ([]int64, error) {
 	query := listLinkIdsByGroupSlugs
 	var queryParams []interface{}
-	if len(slugs) > 0 {
-		for _, v := range slugs {
+	if len(arg.Slugs) > 0 {
+		for _, v := range arg.Slugs {
 			queryParams = append(queryParams, v)
 		}
-		query = strings.Replace(query, "/*SLICE:slugs*/?", strings.Repeat(",?", len(slugs))[1:], 1)
+		query = strings.Replace(query, "/*SLICE:slugs*/?", strings.Repeat(",?", len(arg.Slugs))[1:], 1)
 	} else {
 		query = strings.Replace(query, "/*SLICE:slugs*/?", "NULL", 1)
+	}
+	if len(arg.LinkArchived) > 0 {
+		for _, v := range arg.LinkArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", strings.Repeat(",?", len(arg.LinkArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", "NULL", 1)
 	}
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -278,20 +349,36 @@ func (q *Queries) ListLinkIdsByGroupSlugs(ctx context.Context, slugs []string) (
 const listLinkIdsByGroupType = `-- name: ListLinkIdsByGroupType :many
 SELECT CAST(link_id AS INTEGER) AS link_id
 FROM link_group lg
-   JOIN ` + "`" + `group` + "`" + ` g ON lg.group_id = g.id
-WHERE g.type IN (/*SLICE:gts*/?)
+        JOIN ` + "`" + `group` + "`" + ` g ON lg.group_id = g.id
+        JOIN link l ON l.id=lg.link_id
+WHERE true
+   AND g.type IN (/*SLICE:groupTypes*/?)
+   AND l.archived IN (/*SLICE:link_archived*/?)
 `
 
-func (q *Queries) ListLinkIdsByGroupType(ctx context.Context, gts []string) ([]int64, error) {
+type ListLinkIdsByGroupTypeParams struct {
+	GroupTypes   []string `json:"groupTypes"`
+	LinkArchived []int64  `json:"link_archived"`
+}
+
+func (q *Queries) ListLinkIdsByGroupType(ctx context.Context, arg ListLinkIdsByGroupTypeParams) ([]int64, error) {
 	query := listLinkIdsByGroupType
 	var queryParams []interface{}
-	if len(gts) > 0 {
-		for _, v := range gts {
+	if len(arg.GroupTypes) > 0 {
+		for _, v := range arg.GroupTypes {
 			queryParams = append(queryParams, v)
 		}
-		query = strings.Replace(query, "/*SLICE:gts*/?", strings.Repeat(",?", len(gts))[1:], 1)
+		query = strings.Replace(query, "/*SLICE:groupTypes*/?", strings.Repeat(",?", len(arg.GroupTypes))[1:], 1)
 	} else {
-		query = strings.Replace(query, "/*SLICE:gts*/?", "NULL", 1)
+		query = strings.Replace(query, "/*SLICE:groupTypes*/?", "NULL", 1)
+	}
+	if len(arg.LinkArchived) > 0 {
+		for _, v := range arg.LinkArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", strings.Repeat(",?", len(arg.LinkArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", "NULL", 1)
 	}
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -316,21 +403,39 @@ func (q *Queries) ListLinkIdsByGroupType(ctx context.Context, gts []string) ([]i
 }
 
 const listLinkIdsByMetadata = `-- name: ListLinkIdsByMetadata :many
-SELECT CAST(link_id AS INTEGER) AS link_id
-FROM metadata
-WHERE kv_pair IN (/*SLICE:pairs*/?)
+;
+
+SELECT CAST(m.link_id AS INTEGER) AS link_id
+FROM metadata m
+   JOIN link l ON l.id=m.link_id
+WHERE true
+   AND m.kv_pair IN (/*SLICE:kv_pairs*/?)
+   AND l.archived IN (/*SLICE:link_archived*/?)
 `
 
-func (q *Queries) ListLinkIdsByMetadata(ctx context.Context, pairs []string) ([]int64, error) {
+type ListLinkIdsByMetadataParams struct {
+	KvPairs      []string `json:"kv_pairs"`
+	LinkArchived []int64  `json:"link_archived"`
+}
+
+func (q *Queries) ListLinkIdsByMetadata(ctx context.Context, arg ListLinkIdsByMetadataParams) ([]int64, error) {
 	query := listLinkIdsByMetadata
 	var queryParams []interface{}
-	if len(pairs) > 0 {
-		for _, v := range pairs {
+	if len(arg.KvPairs) > 0 {
+		for _, v := range arg.KvPairs {
 			queryParams = append(queryParams, v)
 		}
-		query = strings.Replace(query, "/*SLICE:pairs*/?", strings.Repeat(",?", len(pairs))[1:], 1)
+		query = strings.Replace(query, "/*SLICE:kv_pairs*/?", strings.Repeat(",?", len(arg.KvPairs))[1:], 1)
 	} else {
-		query = strings.Replace(query, "/*SLICE:pairs*/?", "NULL", 1)
+		query = strings.Replace(query, "/*SLICE:kv_pairs*/?", "NULL", 1)
+	}
+	if len(arg.LinkArchived) > 0 {
+		for _, v := range arg.LinkArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", strings.Repeat(",?", len(arg.LinkArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", "NULL", 1)
 	}
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -355,11 +460,25 @@ func (q *Queries) ListLinkIdsByMetadata(ctx context.Context, pairs []string) ([]
 }
 
 const listLinks = `-- name: ListLinks :many
-SELECT id, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited FROM link ORDER BY original_url LIMIT 100
+SELECT id, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited, archived
+FROM link
+WHERE archived IN (/*SLICE:link_archived*/?)
+ORDER BY original_url
+LIMIT 100
 `
 
-func (q *Queries) ListLinks(ctx context.Context) ([]Link, error) {
-	rows, err := q.db.QueryContext(ctx, listLinks)
+func (q *Queries) ListLinks(ctx context.Context, linkArchived []int64) ([]Link, error) {
+	query := listLinks
+	var queryParams []interface{}
+	if len(linkArchived) > 0 {
+		for _, v := range linkArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", strings.Repeat(",?", len(linkArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
 	}
@@ -383,6 +502,7 @@ func (q *Queries) ListLinks(ctx context.Context) ([]Link, error) {
 			&i.VisitedTime,
 			&i.Created,
 			&i.Visited,
+			&i.Archived,
 		); err != nil {
 			return nil, err
 		}
@@ -398,18 +518,60 @@ func (q *Queries) ListLinks(ctx context.Context) ([]Link, error) {
 }
 
 const listMetadata = `-- name: ListMetadata :many
-SELECT id, link_id, "key", value, kv_pair, created_time, modified_time, created, modified FROM metadata ORDER BY link_id,key DESC
+SELECT m.id, link_id, "key", value, kv_pair, m.created_time, modified_time, m.created, modified, l.id, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, l.created_time, visited_time, l.created, visited, archived
+FROM metadata m
+   JOIN link l ON m.link_id = l.id
+WHERE l.archived IN (/*SLICE:link_archived*/?)
+ORDER BY link_id,key DESC
 `
 
-func (q *Queries) ListMetadata(ctx context.Context) ([]Metadatum, error) {
-	rows, err := q.db.QueryContext(ctx, listMetadata)
+type ListMetadataRow struct {
+	ID            int64          `json:"id"`
+	LinkID        int64          `json:"link_id"`
+	Key           string         `json:"key"`
+	Value         string         `json:"value"`
+	KvPair        string         `json:"kv_pair"`
+	CreatedTime   sql.NullString `json:"created_time"`
+	ModifiedTime  sql.NullString `json:"modified_time"`
+	Created       sql.NullInt64  `json:"created"`
+	Modified      sql.NullInt64  `json:"modified"`
+	ID_2          int64          `json:"id_2"`
+	Scheme        string         `json:"scheme"`
+	Subdomain     string         `json:"subdomain"`
+	Sld           string         `json:"sld"`
+	Tld           string         `json:"tld"`
+	Port          string         `json:"port"`
+	Path          string         `json:"path"`
+	Query         string         `json:"query"`
+	Fragment      string         `json:"fragment"`
+	OriginalUrl   string         `json:"original_url"`
+	Url           sql.NullString `json:"url"`
+	CreatedTime_2 sql.NullString `json:"created_time_2"`
+	VisitedTime   sql.NullString `json:"visited_time"`
+	Created_2     sql.NullInt64  `json:"-"`
+	Visited       sql.NullInt64  `json:"visited"`
+	Archived      int64          `json:"archived"`
+}
+
+func (q *Queries) ListMetadata(ctx context.Context, linkArchived []int64) ([]ListMetadataRow, error) {
+	query := listMetadata
+	var queryParams []interface{}
+	if len(linkArchived) > 0 {
+		for _, v := range linkArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", strings.Repeat(",?", len(linkArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Metadatum
+	var items []ListMetadataRow
 	for rows.Next() {
-		var i Metadatum
+		var i ListMetadataRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.LinkID,
@@ -420,6 +582,22 @@ func (q *Queries) ListMetadata(ctx context.Context) ([]Metadatum, error) {
 			&i.ModifiedTime,
 			&i.Created,
 			&i.Modified,
+			&i.ID_2,
+			&i.Scheme,
+			&i.Subdomain,
+			&i.Sld,
+			&i.Tld,
+			&i.Port,
+			&i.Path,
+			&i.Query,
+			&i.Fragment,
+			&i.OriginalUrl,
+			&i.Url,
+			&i.CreatedTime_2,
+			&i.VisitedTime,
+			&i.Created_2,
+			&i.Visited,
+			&i.Archived,
 		); err != nil {
 			return nil, err
 		}
@@ -436,12 +614,32 @@ func (q *Queries) ListMetadata(ctx context.Context) ([]Metadatum, error) {
 
 const loadGroup = `-- name: LoadGroup :one
 
-SELECT id, name, type, slug, created_time, latest_time, created, latest FROM ` + "`" + `group` + "`" + ` WHERE id = ? LIMIT 1
+SELECT id, name, type, slug, created_time, latest_time, created, latest, archived FROM ` + "`" + `group` + "`" + `
+WHERE true
+   AND id = ?
+   AND archived IN (/*SLICE:group_archived*/?)
+LIMIT 1
 `
 
+type LoadGroupParams struct {
+	ID            int64   `json:"id"`
+	GroupArchived []int64 `json:"group_archived"`
+}
+
 // noinspection SqlResolveForFile @ any/"sqlc"
-func (q *Queries) LoadGroup(ctx context.Context, id int64) (Group, error) {
-	row := q.db.QueryRowContext(ctx, loadGroup, id)
+func (q *Queries) LoadGroup(ctx context.Context, arg LoadGroupParams) (Group, error) {
+	query := loadGroup
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ID)
+	if len(arg.GroupArchived) > 0 {
+		for _, v := range arg.GroupArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:group_archived*/?", strings.Repeat(",?", len(arg.GroupArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:group_archived*/?", "NULL", 1)
+	}
+	row := q.db.QueryRowContext(ctx, query, queryParams...)
 	var i Group
 	err := row.Scan(
 		&i.ID,
@@ -452,6 +650,7 @@ func (q *Queries) LoadGroup(ctx context.Context, id int64) (Group, error) {
 		&i.LatestTime,
 		&i.Created,
 		&i.Latest,
+		&i.Archived,
 	)
 	return i, err
 }
@@ -474,11 +673,31 @@ func (q *Queries) LoadGroupType(ctx context.Context, type_ string) (GroupType, e
 }
 
 const loadGroupsBySlug = `-- name: LoadGroupsBySlug :one
-SELECT id, name, type, slug, created_time, latest_time, created, latest FROM ` + "`" + `group` + "`" + ` WHERE slug = ? LIMIT 1
+SELECT id, name, type, slug, created_time, latest_time, created, latest, archived FROM ` + "`" + `group` + "`" + `
+WHERE true
+   AND slug = ?
+   AND archived IN (/*SLICE:group_archived*/?)
+LIMIT 1
 `
 
-func (q *Queries) LoadGroupsBySlug(ctx context.Context, slug string) (Group, error) {
-	row := q.db.QueryRowContext(ctx, loadGroupsBySlug, slug)
+type LoadGroupsBySlugParams struct {
+	Slug          string  `json:"slug"`
+	GroupArchived []int64 `json:"group_archived"`
+}
+
+func (q *Queries) LoadGroupsBySlug(ctx context.Context, arg LoadGroupsBySlugParams) (Group, error) {
+	query := loadGroupsBySlug
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.Slug)
+	if len(arg.GroupArchived) > 0 {
+		for _, v := range arg.GroupArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:group_archived*/?", strings.Repeat(",?", len(arg.GroupArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:group_archived*/?", "NULL", 1)
+	}
+	row := q.db.QueryRowContext(ctx, query, queryParams...)
 	var i Group
 	err := row.Scan(
 		&i.ID,
@@ -489,16 +708,33 @@ func (q *Queries) LoadGroupsBySlug(ctx context.Context, slug string) (Group, err
 		&i.LatestTime,
 		&i.Created,
 		&i.Latest,
+		&i.Archived,
 	)
 	return i, err
 }
 
 const loadLink = `-- name: LoadLink :one
-SELECT id, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited FROM link WHERE id = ? LIMIT 1
+SELECT id, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited, archived FROM link WHERE archived IN (/*SLICE:link_archived*/?) AND id = ? LIMIT 1
 `
 
-func (q *Queries) LoadLink(ctx context.Context, id int64) (Link, error) {
-	row := q.db.QueryRowContext(ctx, loadLink, id)
+type LoadLinkParams struct {
+	LinkArchived []int64 `json:"link_archived"`
+	ID           int64   `json:"id"`
+}
+
+func (q *Queries) LoadLink(ctx context.Context, arg LoadLinkParams) (Link, error) {
+	query := loadLink
+	var queryParams []interface{}
+	if len(arg.LinkArchived) > 0 {
+		for _, v := range arg.LinkArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", strings.Repeat(",?", len(arg.LinkArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", "NULL", 1)
+	}
+	queryParams = append(queryParams, arg.ID)
+	row := q.db.QueryRowContext(ctx, query, queryParams...)
 	var i Link
 	err := row.Scan(
 		&i.ID,
@@ -516,6 +752,7 @@ func (q *Queries) LoadLink(ctx context.Context, id int64) (Link, error) {
 		&i.VisitedTime,
 		&i.Created,
 		&i.Visited,
+		&i.Archived,
 	)
 	return i, err
 }

@@ -29,7 +29,7 @@ func (c Caretaker) Run(ctx context.Context) (err error) {
 	var u *url.URL
 
 	slog.Info("Running Caretaker")
-	ll, err = c.Queries.ListLatestUnparsedLinkURLs(ctx)
+	ll, err = c.Queries.ListLatestUnparsedLinkURLs(ctx, sqlc.NotArchived)
 	if err != nil {
 		goto end
 	}
