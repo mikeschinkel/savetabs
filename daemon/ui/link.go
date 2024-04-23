@@ -114,7 +114,18 @@ func (v *Views) GetLinksHTML(ctx Context, host string, params FilterValueGetter,
 				LinkArchived: sqlc.NotArchived,
 			})
 		default:
-			ids, err = v.Queries.ListLinkIdsByGroupSlugs(ctx, values)
+			switch {
+			case slices.Contains(values, "none"):
+				ids, err = v.Queries.ListLinkIdsNotInGroupType(ctx, sqlc.ListLinkIdsNotInGroupTypeParams{
+					GroupTypes:   []string{gt},
+					LinkArchived: sqlc.NotArchived,
+				})
+			default:
+				ids, err = v.Queries.ListLinkIdsByGroupSlugs(ctx, sqlc.ListLinkIdsByGroupSlugsParams{
+					Slugs:        values,
+					LinkArchived: sqlc.NotArchived,
+				})
+			}
 		}
 		if err != nil {
 			goto end
@@ -122,6 +133,8 @@ func (v *Views) GetLinksHTML(ctx Context, host string, params FilterValueGetter,
 		if len(ids) == 0 {
 			continue
 		}
+		// TODO: Once the UI supports calling API with multiple values this needs to be
+		//       refactored to support AND logic vs. the OR logic it now has by default.
 		linkIds = append(linkIds, ids...)
 	}
 	if len(linkIds) == 0 {

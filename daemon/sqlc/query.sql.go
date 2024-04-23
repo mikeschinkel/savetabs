@@ -459,6 +459,65 @@ func (q *Queries) ListLinkIdsByMetadata(ctx context.Context, arg ListLinkIdsByMe
 	return items, nil
 }
 
+const listLinkIdsNotInGroupType = `-- name: ListLinkIdsNotInGroupType :many
+SELECT CAST(l.id AS INTEGER) AS link_id
+FROM link l
+WHERE TRUE
+   AND l.archived IN (/*SLICE:link_archived*/?)
+   AND l.id NOT IN (
+      SELECT lg.link_id
+      FROM link_group lg
+        JOIN ` + "`" + `group` + "`" + ` g ON lg.group_id = g.id
+      WHERE g.type IN (/*SLICE:groupTypes*/?)
+   )
+`
+
+type ListLinkIdsNotInGroupTypeParams struct {
+	LinkArchived []int64  `json:"link_archived"`
+	GroupTypes   []string `json:"groupTypes"`
+}
+
+func (q *Queries) ListLinkIdsNotInGroupType(ctx context.Context, arg ListLinkIdsNotInGroupTypeParams) ([]int64, error) {
+	query := listLinkIdsNotInGroupType
+	var queryParams []interface{}
+	if len(arg.LinkArchived) > 0 {
+		for _, v := range arg.LinkArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", strings.Repeat(",?", len(arg.LinkArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_archived*/?", "NULL", 1)
+	}
+	if len(arg.GroupTypes) > 0 {
+		for _, v := range arg.GroupTypes {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:groupTypes*/?", strings.Repeat(",?", len(arg.GroupTypes))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:groupTypes*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var link_id int64
+		if err := rows.Scan(&link_id); err != nil {
+			return nil, err
+		}
+		items = append(items, link_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listLinks = `-- name: ListLinks :many
 SELECT id, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited, archived
 FROM link

@@ -156,6 +156,18 @@ WHERE true
    AND g.type IN (sqlc.slice('groupTypes'))
    AND l.archived IN (sqlc.slice('link_archived'));
 
+-- name: ListLinkIdsNotInGroupType :many
+SELECT CAST(l.id AS INTEGER) AS link_id
+FROM link l
+WHERE TRUE
+   AND l.archived IN (sqlc.slice('link_archived'))
+   AND l.id NOT IN (
+      SELECT lg.link_id
+      FROM link_group lg
+        JOIN `group` g ON lg.group_id = g.id
+      WHERE g.type IN (sqlc.slice('groupTypes'))
+   );
+
 -- name: UpsertLinksFromVarJSON :exec
 INSERT INTO link (original_url)
 SELECT r.value AS url
