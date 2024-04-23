@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -93,7 +94,7 @@ func runServer(port *string) (err error) {
 		log.Fatalf("Server shutdown failed: %+v", err)
 	}
 
-	log.Println("Server and background task stopped gracefully")
+	slog.Info("API Server and Caretaker stopped gracefully.")
 end:
 	return err
 }
