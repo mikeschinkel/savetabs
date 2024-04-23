@@ -62,7 +62,7 @@ func deleteElement[T any](slice []T, index int) []T {
 	return slice[:len(slice)-1]
 }
 
-func sendWith(ctx Context, w http.ResponseWriter, r *http.Request, fn func(ctx Context) ([]byte, int, error)) {
+func sendView(ctx Context, w http.ResponseWriter, r *http.Request, fn func(ctx Context) ([]byte, int, error)) {
 	out, status, err := fn(ctx)
 	if err != nil {
 		sendError(w, r, status, err.Error())
