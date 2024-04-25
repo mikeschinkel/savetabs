@@ -3,7 +3,6 @@
 package restapi
 
 import (
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -86,8 +85,7 @@ func (a *API) openApiOptions() *middleware.Options {
 				// TODO: Call function in ui package to display error message
 				w.Header().Set("Content-Type", "text/html; charset=utf-8")
 				w.Header().Set("X-Content-Type-Options", "nosniff")
-				w.WriteHeader(statusCode)
-				_, _ = fmt.Fprintf(w, "<div>HTTP ERROR: %s</div>", message)
+				a.sendError(w, opts.Request, statusCode, message)
 			case "text/plain":
 				fallthrough
 			default:

@@ -21,6 +21,7 @@ type FilterValueGetter interface {
 }
 
 type Viewer interface {
+	GetErrorHTML(Context, error) ([]byte, int, error)
 	GetMenuHTML(Context, string) ([]byte, int, error)
 	GetLinkSetHTML(Context, string, FilterValueGetter, string) ([]byte, int, error)
 	GetMenuItemHTML(Context, string, string) ([]byte, int, error)

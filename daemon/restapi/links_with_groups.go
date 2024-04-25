@@ -16,13 +16,13 @@ func (a *API) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		// TODO: Find a better status result than "Bad Gateway"
-		sendError(w, r, http.StatusBadGateway, err.Error())
+		a.sendError(w, r, http.StatusBadGateway, err.Error())
 		return
 	}
 	var links LinksWithGroups
 	err = json.Unmarshal(body, &links)
 	if err != nil {
-		sendError(w, r, http.StatusBadRequest, err.Error())
+		a.sendError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 	err = storage.UpsertLinksWithGroups(ctx, linksWithGroups(links))
@@ -30,12 +30,12 @@ func (a *API) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 	case err == nil:
 		goto end
 	case errors.Is(err, ErrFailedToUnmarshal):
-		sendError(w, r, http.StatusBadRequest, err.Error())
+		a.sendError(w, r, http.StatusBadRequest, err.Error())
 	case errors.Is(err, ErrFailedUpsertLinks):
 		// TODO: Break out errors into different status for different reasons
 		fallthrough
 	default:
-		sendError(w, r, http.StatusInternalServerError, err.Error())
+		a.sendError(w, r, http.StatusInternalServerError, err.Error())
 	}
 end:
 }

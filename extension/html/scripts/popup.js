@@ -1,4 +1,5 @@
 import {checkApiHealth} from "./api.js";
+import {} from './shared'
 import {} from "./alpine-loader.js";
 
 // Handle click event on popup.html buttons

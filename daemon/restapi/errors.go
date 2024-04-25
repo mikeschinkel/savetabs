@@ -2,8 +2,6 @@ package restapi
 
 import (
 	"errors"
-
-	"github.com/google/safehtml/template"
 )
 
 var (
@@ -11,9 +9,3 @@ var (
 	ErrFailedUpsertLinks  = errors.New("failed to upsert links")
 	ErrNoLinkIdsSubmitted = errors.New("no link IDs submitted")
 )
-
-var errorTemplate *template.Template
-
-func SetErrorTemplate(t *template.Template) {
-	errorTemplate = t
-}

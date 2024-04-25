@@ -14,12 +14,12 @@ func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
-		sendError(w, r, http.StatusBadRequest, err.Error())
+		a.sendError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 	linkIds, ok := r.Form["link_id"]
 	if !ok {
-		sendError(w, r, http.StatusBadRequest, ErrNoLinkIdsSubmitted.Error())
+		a.sendError(w, r, http.StatusBadRequest, ErrNoLinkIdsSubmitted.Error())
 		return
 	}
 	err = storage.UpsertLinkSet(ctx, linkSetAction{
@@ -30,12 +30,12 @@ func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 	case err == nil:
 		goto end
 	case errors.Is(err, ErrFailedToUnmarshal):
-		sendError(w, r, http.StatusBadRequest, err.Error())
+		a.sendError(w, r, http.StatusBadRequest, err.Error())
 	case errors.Is(err, ErrFailedUpsertLinks):
 		// TODO: Break out errors into different status for different reasons
 		fallthrough
 	default:
-		sendError(w, r, http.StatusInternalServerError, err.Error())
+		a.sendError(w, r, http.StatusInternalServerError, err.Error())
 	}
 end:
 }

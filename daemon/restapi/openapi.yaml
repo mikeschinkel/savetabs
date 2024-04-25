@@ -60,6 +60,16 @@ paths:
         '200':
           $ref: '#/components/responses/HtmlResponse'
 
+  /html/error:
+    get:
+      summary: HTML-formatted error
+      description: Error formatted as Daisy UI alert HTML
+      parameters:
+      - $ref: '#/components/parameters/ErrorMsg'
+      responses:
+        '200':
+          description: OK
+
   /links/with-groups:
     post:
       summary: Adds multiple links, each with group info
@@ -172,6 +182,13 @@ components:
       style: form
       explode: true
       description: Key/Value metadata filter for Links
+    ErrorMsg:
+      in: query
+      name: err
+      schema:
+        type: string
+      style: form
+      description: Error message to display as HTML
     MenuItem:
       name: menuItem
       in: path
@@ -240,7 +257,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/JSONError'
   schemas:
     Id:
       type: integer
@@ -315,7 +332,7 @@ components:
               type: integer
               format: int64
               description: The unique identifier for the group
-    Error:
+    JSONError:
       required:
         - code
         - message
@@ -327,6 +344,8 @@ components:
         message:
           type: string
           description: Error message
+    HTMLError:
+      type: string
 
 #jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 #security:

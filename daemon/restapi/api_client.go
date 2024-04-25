@@ -92,6 +92,9 @@ type ClientInterface interface {
 	// GetHealthz request
 	GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetHtmlError request
+	GetHtmlError(ctx context.Context, params *GetHtmlErrorParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetHtmlLinkset request
 	GetHtmlLinkset(ctx context.Context, params *GetHtmlLinksetParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -117,6 +120,18 @@ type ClientInterface interface {
 
 func (c *Client) GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetHealthzRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetHtmlError(ctx context.Context, params *GetHtmlErrorParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHtmlErrorRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -240,6 +255,55 @@ func NewGetHealthzRequest(server string) (*http.Request, error) {
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetHtmlErrorRequest generates requests for GetHtmlError
+func NewGetHtmlErrorRequest(server string, params *GetHtmlErrorParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/html/error")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Err != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "err", runtime.ParamLocationQuery, *params.Err); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -609,6 +673,9 @@ type ClientWithResponsesInterface interface {
 	// GetHealthzWithResponse request
 	GetHealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthzResponse, error)
 
+	// GetHtmlErrorWithResponse request
+	GetHtmlErrorWithResponse(ctx context.Context, params *GetHtmlErrorParams, reqEditors ...RequestEditorFn) (*GetHtmlErrorResponse, error)
+
 	// GetHtmlLinksetWithResponse request
 	GetHtmlLinksetWithResponse(ctx context.Context, params *GetHtmlLinksetParams, reqEditors ...RequestEditorFn) (*GetHtmlLinksetResponse, error)
 
@@ -647,6 +714,27 @@ func (r GetHealthzResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetHealthzResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetHtmlErrorResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetHtmlErrorResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetHtmlErrorResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -790,6 +878,15 @@ func (c *ClientWithResponses) GetHealthzWithResponse(ctx context.Context, reqEdi
 	return ParseGetHealthzResponse(rsp)
 }
 
+// GetHtmlErrorWithResponse request returning *GetHtmlErrorResponse
+func (c *ClientWithResponses) GetHtmlErrorWithResponse(ctx context.Context, params *GetHtmlErrorParams, reqEditors ...RequestEditorFn) (*GetHtmlErrorResponse, error) {
+	rsp, err := c.GetHtmlError(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetHtmlErrorResponse(rsp)
+}
+
 // GetHtmlLinksetWithResponse request returning *GetHtmlLinksetResponse
 func (c *ClientWithResponses) GetHtmlLinksetWithResponse(ctx context.Context, params *GetHtmlLinksetParams, reqEditors ...RequestEditorFn) (*GetHtmlLinksetResponse, error) {
 	rsp, err := c.GetHtmlLinkset(ctx, params, reqEditors...)
@@ -869,6 +966,22 @@ func ParseGetHealthzResponse(rsp *http.Response) (*GetHealthzResponse, error) {
 	}
 
 	response := &GetHealthzResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetHtmlErrorResponse parses an HTTP response from a GetHtmlErrorWithResponse call
+func ParseGetHtmlErrorResponse(rsp *http.Response) (*GetHtmlErrorResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetHtmlErrorResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

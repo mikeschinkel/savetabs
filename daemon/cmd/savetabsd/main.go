@@ -64,7 +64,6 @@ func runServer(port *string) (err error) {
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
 
-	restapi.SetErrorTemplate(ui.GetTemplate("error"))
 	api = restapi.NewAPI(restapi.APIArgs{
 		Port:    *port,
 		Swagger: swagger,

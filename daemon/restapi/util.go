@@ -21,23 +21,11 @@ func urlForRequest(r *http.Request) string {
 
 // sendError wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
-func sendError(w http.ResponseWriter, r *http.Request, code int, msg string) {
-	var out bytes.Buffer
-	var html []byte
+func (a *API) sendError(w http.ResponseWriter, r *http.Request, code int, msg string) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(code)
 	msg = fmt.Sprintf("ERROR[%d]: '%s' from %s.", code, msg, urlForRequest(r))
-	err := errorTemplate.Execute(&out, errors.New(msg))
-	if err != nil {
-		// Fallback for error; ideally will never be needed.
-		html = []byte(fmt.Sprintf(
-			`<div class="alert alert-error"><span>%sl %s</span></div>`,
-			err.Error(),
-			msg,
-		))
-	} else {
-		html = out.Bytes()
-	}
+	html, _, _ := a.Views.GetErrorHTML(nil, errors.New(msg))
 	_, _ = w.Write(html)
 }
 
@@ -62,10 +50,10 @@ func deleteElement[T any](slice []T, index int) []T {
 	return slice[:len(slice)-1]
 }
 
-func sendView(ctx Context, w http.ResponseWriter, r *http.Request, fn func(ctx Context) ([]byte, int, error)) {
+func (a *API) sendView(ctx Context, w http.ResponseWriter, r *http.Request, fn func(ctx Context) ([]byte, int, error)) {
 	out, status, err := fn(ctx)
 	if err != nil {
-		sendError(w, r, status, err.Error())
+		a.sendError(w, r, status, err.Error())
 		return
 	}
 	sendHTML(w, out)

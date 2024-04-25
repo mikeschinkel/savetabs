@@ -17,6 +17,9 @@ type ServerInterface interface {
 	// Health Check
 	// (GET /healthz)
 	GetHealthz(w http.ResponseWriter, r *http.Request)
+	// HTML-formatted error
+	// (GET /html/error)
+	GetHtmlError(w http.ResponseWriter, r *http.Request, params GetHtmlErrorParams)
 	// Return the HTML for a paginated table of links with optional filtering criteria in query parameters
 	// (GET /html/linkset)
 	GetHtmlLinkset(w http.ResponseWriter, r *http.Request, params GetHtmlLinksetParams)
@@ -52,6 +55,34 @@ func (siw *ServerInterfaceWrapper) GetHealthz(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHealthz(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetHtmlError operation middleware
+func (siw *ServerInterfaceWrapper) GetHtmlError(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetHtmlErrorParams
+
+	// ------------- Optional query parameter "err" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "err", r.URL.Query(), &params.Err)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "err", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetHtmlError(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -338,6 +369,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
+	m.HandleFunc("GET "+options.BaseURL+"/html/error", wrapper.GetHtmlError)
 	m.HandleFunc("GET "+options.BaseURL+"/html/linkset", wrapper.GetHtmlLinkset)
 	m.HandleFunc("POST "+options.BaseURL+"/html/linkset", wrapper.PostHtmlLinkset)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu", wrapper.GetHtmlMenu)
