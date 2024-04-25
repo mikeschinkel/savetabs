@@ -30,6 +30,7 @@ func (a *API) addCORSHeaders(handler http.Handler) http.Handler {
 			"hx-current-url",
 		}, ", "))
 
+		// TODO: Move to its own middleware to not bypass auth
 		// Handle preflight OPTIONS requests
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
