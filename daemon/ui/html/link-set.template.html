@@ -14,13 +14,14 @@
       hx-swap="outerHTML settle:30s"
       hx-target="#toast"
       x-data="allCheckboxChecker">
+  <input type="hidden" name="action">
   <nav class="navbar bg-base-300 min-h-0 h-8 border-solid border-gray-400 border-t">
     <span class="text-base font-semibold">{{.Label}}</span>
   </nav>
   <nav class="navbar bg-base-300 min-h-0 h-8 border-solid border-gray-400 border-t">
     <div class="navbar-start gap-2">
-      <input class="btn min-h-0 h-4" type="submit" value="Archive">
-      <input class="btn min-h-0 h-4" type="submit" value="Delete">
+      <input class="btn min-h-0 h-4" type="submit" value="Archive" data-action="archive">
+      <input class="btn min-h-0 h-4" type="submit" value="Delete" data-action="delete">
     </div>
 <!--    <div class="navbar-center"></div>-->
 <!--    <div class="navbar-end"></div>-->

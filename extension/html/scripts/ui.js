@@ -85,3 +85,52 @@ document.addEventListener('alpine:init', () => {
       });
    });
 });
+
+/**
+ * Capture data-action value on `<input type="submit"> and set the value of `<input name="action">` before HTMX request.
+ */
+document.addEventListener('htmx:trigger', function(event) {
+   const el = document.activeElement;
+   const {tagName, type} = el;
+   if (tagName !== 'INPUT') {
+      return
+   }
+   if (type !== 'submit') {
+      return
+   }
+   const form = el.closest('form')
+   if (!form) {
+      alert(`<form> not found for ${el.name}`);
+      return
+   }
+   const input = form.querySelector('input[type="hidden"][name="action"]');
+   if (!input) {
+      alert(`<input name="action"> not found for ${el.name}`);
+      return
+   }
+   const action = el.getAttribute('data-action')
+   if (action==="") {
+      alert(`<input name="action" data-action="..."> not found for ${el.name}`);
+      return
+   }
+   input.value = action;
+});
+
+const htmxEvents = [
+   // 'trigger',
+   // 'confirm',
+   // 'validate',
+   // 'configRequest',
+   // 'validateUrl',
+   // 'beforeRequest',
+   // 'beforeSend',
+   // 'xhr:loadstart',
+   // 'xhr:progress',
+   // 'xhr:loadend',
+]
+// for (let index in htmxEvents) {
+//    let ev = htmxEvents[index];
+//    document.body.addEventListener(`htmx:${ev}`, function (event) {
+//       console.log(event);
+//    });
+// }
