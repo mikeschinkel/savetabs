@@ -38,19 +38,19 @@ func upsertFromJSON(ctx context.Context, ds DataStore, j string, fn func(ctx con
 	err = db.Exec(func(tx *sql.Tx) (err error) {
 		var varId int64
 
-		q := ds.Queries()
-		varId, err = q.WithTx(tx).UpsertVar(ctx, UpsertVarParams{
+		q := ds.Queries().WithTx(tx)
+		varId, err = q.UpsertVar(ctx, UpsertVarParams{
 			Key:   "json",
 			Value: NewNullString(j),
 		})
 		if err != nil {
 			goto end
 		}
-		err = fn(ctx, q.WithTx(tx), varId)
+		err = fn(ctx, q, varId)
 		if err != nil {
 			goto end
 		}
-		err = q.WithTx(tx).DeleteVar(ctx, varId)
+		err = q.DeleteVar(ctx, varId)
 		if err != nil {
 			goto end
 		}
