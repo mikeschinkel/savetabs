@@ -3,12 +3,14 @@
 package restapi
 
 import (
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
 	"sync"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/routers"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
 )
 
@@ -64,11 +66,34 @@ func NewAPI(args APIArgs) *API {
 	return api
 }
 
+// routeContentType returns the first content type defined for the route
+// TODO: Make more robust
+func routeContentType(route *routers.Route) (ct string) {
+	m := route.Operation.Responses.Map()
+	type mt = map[string]*openapi3.MediaType
+	for key := range mt(m["200"].Value.Content) {
+		ct = key
+	}
+	return ct
+}
+
 func (a *API) openApiOptions() *middleware.Options {
 	return &middleware.Options{
-		ErrorHandler: func(w http.ResponseWriter, message string, statusCode int) {
-			slog.Error("HTTP ERROR", "status_code", statusCode, "error_msg", message)
-			http.Error(w, message, statusCode)
+		ErrorHandlerWithArgs: func(w http.ResponseWriter, message string, statusCode int, args middleware.ErrorHandlerArgs) {
+			switch routeContentType(args.Route) {
+			case "application/json":
+			case "text/html":
+				// TODO: Call function in ui package to display error message
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				w.Header().Set("X-Content-Type-Options", "nosniff")
+				w.WriteHeader(statusCode)
+				_, _ = fmt.Fprintf(w, "<div>HTTP ERROR: %s</div>", message)
+			case "text/plain":
+				fallthrough
+			default:
+				slog.Error("HTTP ERROR", "status_code", statusCode, "error_msg", message)
+				http.Error(w, message, statusCode)
+			}
 		},
 	}
 }
