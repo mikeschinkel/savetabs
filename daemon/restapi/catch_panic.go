@@ -29,7 +29,7 @@ func (a *API) catchPanic(next http.Handler) http.Handler {
 				msg = fmt.Sprintf("%s; %s", msg, strings.Join(lines[i-1:i+1], ""))
 				break
 			}
-			slog.Info(msg)
+			slog.Error(msg)
 			sendError(w, r, http.StatusInternalServerError, msg)
 		}()
 		next.ServeHTTP(w, r)
