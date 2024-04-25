@@ -79,8 +79,8 @@ func routeContentType(route *routers.Route) (ct string) {
 
 func (a *API) openApiOptions() *middleware.Options {
 	return &middleware.Options{
-		ErrorHandlerWithArgs: func(w http.ResponseWriter, message string, statusCode int, args middleware.ErrorHandlerArgs) {
-			switch routeContentType(args.Route) {
+		ErrorHandlerWithOpts: func(w http.ResponseWriter, message string, statusCode int, opts middleware.ErrorHandlerOpts) {
+			switch routeContentType(opts.Route) {
 			case "application/json":
 			case "text/html":
 				// TODO: Call function in ui package to display error message
