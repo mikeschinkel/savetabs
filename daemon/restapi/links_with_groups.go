@@ -25,7 +25,7 @@ func (a *API) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 		sendError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
-	err = storage.UpsertLinksWithGroups(ctx, GetLinkWithGroupGetSetters(links))
+	err = storage.UpsertLinksWithGroups(ctx, linksWithGroups(links))
 	switch {
 	case err == nil:
 		goto end
@@ -40,30 +40,18 @@ func (a *API) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 end:
 }
 
-// GetLinkWithGroupGetSetters transforms a slice of LinkWithGroup into
-// LinksWithGroupsGetSetter which is also a slice of LinkWithGroup.
-func GetLinkWithGroupGetSetters(links []LinkWithGroup) storage.LinksWithGroupsGetSetter {
-	ll := make([]storage.LinkWithGroupPropGetSetter, len(links))
-	for i, link := range links {
-		ll[i] = link
-	}
-	return linksWithGroups{links: ll}
-}
-
 var _ storage.LinksWithGroupsGetSetter = (*linksWithGroups)(nil)
 
-type linksWithGroups struct {
-	links []storage.LinkWithGroupPropGetSetter
-}
+type linksWithGroups LinksWithGroups
 
 func (ls linksWithGroups) GetLinkCount() int {
-	return len(ls.links)
+	return len(ls)
 }
 
-func (ls linksWithGroups) GetLinksWithGroups() []storage.LinkWithGroupPropGetSetter {
-	return ls.links
-}
-
-func (ls linksWithGroups) SetLinksWithGroups(links []storage.LinkWithGroupPropGetSetter) {
-	ls.links = links
+func (ls linksWithGroups) GetLinksWithGroups() []storage.LinkWithGroupGetSetter {
+	ll := make([]storage.LinkWithGroupGetSetter, ls.GetLinkCount())
+	for i, link := range ls {
+		ll[i] = link
+	}
+	return ll
 }

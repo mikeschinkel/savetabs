@@ -4,9 +4,34 @@ info:
   version: 1.0.0
 paths:
   /html/linkset:
+    post:
+      summary: Update a set of Links
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  nullable: false
+                link_id:
+                  type: array
+                  nullable: false
+                  items:
+                    $ref: '#/components/schemas/Id'
+            encoding:
+              action:
+                style: form
+              link_id:
+                style: form
+                explode: true
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlResponse'
     get:
       summary: Return the HTML for a paginated table of links with optional filtering criteria in query parameters
-      operationId: getLinks
       parameters:
       - $ref: '#/components/parameters/GroupTypeFilter'
       - $ref: '#/components/parameters/TabGroupFilter'
@@ -217,24 +242,11 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
-    Link:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          nullable: false
-        url:
-          type: string
-          format: uri
-          nullable: false
-        title:
-          type: string
-
     Id:
       type: integer
       format: int64
       description: Primary key identifier
+      nullable: false
     IdObject:
       type: object
       properties:
@@ -244,7 +256,21 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/IdObject'
-
+    Link:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        originalUrl:
+          type: string
+          format: uri
+          nullable: false
+        url:
+          type: string
+          format: uri
+          nullable: false
+        title:
+          type: string
     LinkWithGroup:
       allOf:
         - $ref: '#/components/schemas/Link'
@@ -260,6 +286,12 @@ components:
             groupType:
               type: string
               nullable: false
+    LinkIds:
+      type: array
+      items:
+          type: integer
+          format: int64
+          description: Primary key identifier
     LinksWithGroups:
       type: array
       items:

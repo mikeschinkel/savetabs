@@ -7,14 +7,14 @@ import (
 	"savetabs/ui"
 )
 
-var _ ui.FilterValueGetter = (*GetLinksParams)(nil)
+var _ ui.FilterValueGetter = (*GetHtmlLinksetParams)(nil)
 
-func (p GetLinksParams) RawQuery() string {
+func (p GetHtmlLinksetParams) RawQuery() string {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (p GetLinksParams) GetFilterLabel(typ, value string) string {
+func (p GetHtmlLinksetParams) GetFilterLabel(typ, value string) string {
 	var name string
 	switch strings.ToUpper(typ) {
 	case "GT":
@@ -39,7 +39,7 @@ func (p GetLinksParams) GetFilterLabel(typ, value string) string {
 	return fmt.Sprintf("%s(s): %s", name, value)
 }
 
-func (p GetLinksParams) GetFilterValues(typ string) (filters []string) {
+func (p GetHtmlLinksetParams) GetFilterValues(typ string) (filters []string) {
 	ensureNotNil := func(ss *[]string) []string {
 		if ss == nil {
 			return []string{}

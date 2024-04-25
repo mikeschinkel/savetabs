@@ -92,8 +92,13 @@ type ClientInterface interface {
 	// GetHealthz request
 	GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetLinks request
-	GetLinks(ctx context.Context, params *GetLinksParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetHtmlLinkset request
+	GetHtmlLinkset(ctx context.Context, params *GetHtmlLinksetParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostHtmlLinksetWithBody request with any body
+	PostHtmlLinksetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostHtmlLinksetWithFormdataBody(ctx context.Context, body PostHtmlLinksetFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetHtmlMenu request
 	GetHtmlMenu(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -122,8 +127,32 @@ func (c *Client) GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) 
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetLinks(ctx context.Context, params *GetLinksParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetLinksRequest(c.Server, params)
+func (c *Client) GetHtmlLinkset(ctx context.Context, params *GetHtmlLinksetParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHtmlLinksetRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostHtmlLinksetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostHtmlLinksetRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostHtmlLinksetWithFormdataBody(ctx context.Context, body PostHtmlLinksetFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostHtmlLinksetRequestWithFormdataBody(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -221,8 +250,8 @@ func NewGetHealthzRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetLinksRequest generates requests for GetLinks
-func NewGetLinksRequest(server string, params *GetLinksParams) (*http.Request, error) {
+// NewGetHtmlLinksetRequest generates requests for GetHtmlLinkset
+func NewGetHtmlLinksetRequest(server string, params *GetHtmlLinksetParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -362,6 +391,46 @@ func NewGetLinksRequest(server string, params *GetLinksParams) (*http.Request, e
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewPostHtmlLinksetRequestWithFormdataBody calls the generic PostHtmlLinkset builder with application/x-www-form-urlencoded body
+func NewPostHtmlLinksetRequestWithFormdataBody(server string, body PostHtmlLinksetFormdataRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	bodyStr, err := runtime.MarshalForm(body, nil)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = strings.NewReader(bodyStr.Encode())
+	return NewPostHtmlLinksetRequestWithBody(server, "application/x-www-form-urlencoded", bodyReader)
+}
+
+// NewPostHtmlLinksetRequestWithBody generates requests for PostHtmlLinkset with any type of body
+func NewPostHtmlLinksetRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/html/linkset")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -540,8 +609,13 @@ type ClientWithResponsesInterface interface {
 	// GetHealthzWithResponse request
 	GetHealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthzResponse, error)
 
-	// GetLinksWithResponse request
-	GetLinksWithResponse(ctx context.Context, params *GetLinksParams, reqEditors ...RequestEditorFn) (*GetLinksResponse, error)
+	// GetHtmlLinksetWithResponse request
+	GetHtmlLinksetWithResponse(ctx context.Context, params *GetHtmlLinksetParams, reqEditors ...RequestEditorFn) (*GetHtmlLinksetResponse, error)
+
+	// PostHtmlLinksetWithBodyWithResponse request with any body
+	PostHtmlLinksetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostHtmlLinksetResponse, error)
+
+	PostHtmlLinksetWithFormdataBodyWithResponse(ctx context.Context, body PostHtmlLinksetFormdataRequestBody, reqEditors ...RequestEditorFn) (*PostHtmlLinksetResponse, error)
 
 	// GetHtmlMenuWithResponse request
 	GetHtmlMenuWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHtmlMenuResponse, error)
@@ -579,13 +653,13 @@ func (r GetHealthzResponse) StatusCode() int {
 	return 0
 }
 
-type GetLinksResponse struct {
+type GetHtmlLinksetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetLinksResponse) Status() string {
+func (r GetHtmlLinksetResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -593,7 +667,28 @@ func (r GetLinksResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetLinksResponse) StatusCode() int {
+func (r GetHtmlLinksetResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostHtmlLinksetResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PostHtmlLinksetResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostHtmlLinksetResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -695,13 +790,30 @@ func (c *ClientWithResponses) GetHealthzWithResponse(ctx context.Context, reqEdi
 	return ParseGetHealthzResponse(rsp)
 }
 
-// GetLinksWithResponse request returning *GetLinksResponse
-func (c *ClientWithResponses) GetLinksWithResponse(ctx context.Context, params *GetLinksParams, reqEditors ...RequestEditorFn) (*GetLinksResponse, error) {
-	rsp, err := c.GetLinks(ctx, params, reqEditors...)
+// GetHtmlLinksetWithResponse request returning *GetHtmlLinksetResponse
+func (c *ClientWithResponses) GetHtmlLinksetWithResponse(ctx context.Context, params *GetHtmlLinksetParams, reqEditors ...RequestEditorFn) (*GetHtmlLinksetResponse, error) {
+	rsp, err := c.GetHtmlLinkset(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetLinksResponse(rsp)
+	return ParseGetHtmlLinksetResponse(rsp)
+}
+
+// PostHtmlLinksetWithBodyWithResponse request with arbitrary body returning *PostHtmlLinksetResponse
+func (c *ClientWithResponses) PostHtmlLinksetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostHtmlLinksetResponse, error) {
+	rsp, err := c.PostHtmlLinksetWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostHtmlLinksetResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostHtmlLinksetWithFormdataBodyWithResponse(ctx context.Context, body PostHtmlLinksetFormdataRequestBody, reqEditors ...RequestEditorFn) (*PostHtmlLinksetResponse, error) {
+	rsp, err := c.PostHtmlLinksetWithFormdataBody(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostHtmlLinksetResponse(rsp)
 }
 
 // GetHtmlMenuWithResponse request returning *GetHtmlMenuResponse
@@ -764,15 +876,31 @@ func ParseGetHealthzResponse(rsp *http.Response) (*GetHealthzResponse, error) {
 	return response, nil
 }
 
-// ParseGetLinksResponse parses an HTTP response from a GetLinksWithResponse call
-func ParseGetLinksResponse(rsp *http.Response) (*GetLinksResponse, error) {
+// ParseGetHtmlLinksetResponse parses an HTTP response from a GetHtmlLinksetWithResponse call
+func ParseGetHtmlLinksetResponse(rsp *http.Response) (*GetHtmlLinksetResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetLinksResponse{
+	response := &GetHtmlLinksetResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParsePostHtmlLinksetResponse parses an HTTP response from a PostHtmlLinksetWithResponse call
+func ParsePostHtmlLinksetResponse(rsp *http.Response) (*PostHtmlLinksetResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostHtmlLinksetResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

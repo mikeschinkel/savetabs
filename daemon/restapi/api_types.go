@@ -26,9 +26,11 @@ type IdObjects = []IdObject
 
 // Link defines model for Link.
 type Link struct {
-	Id    *int64  `json:"id,omitempty"`
-	Title *string `json:"title,omitempty"`
-	Url   *string `json:"url,omitempty"`
+	// Id Primary key identifier
+	Id          *Id     `json:"id,omitempty"`
+	OriginalUrl *string `json:"originalUrl,omitempty"`
+	Title       *string `json:"title,omitempty"`
+	Url         *string `json:"url,omitempty"`
 }
 
 // LinkWithGroup defines model for LinkWithGroup.
@@ -36,9 +38,12 @@ type LinkWithGroup struct {
 	Group     *string `json:"group,omitempty"`
 	GroupId   *int64  `json:"groupId,omitempty"`
 	GroupType *string `json:"groupType,omitempty"`
-	Id        *int64  `json:"id,omitempty"`
-	Title     *string `json:"title,omitempty"`
-	Url       *string `json:"url,omitempty"`
+
+	// Id Primary key identifier
+	Id          *Id     `json:"id,omitempty"`
+	OriginalUrl *string `json:"originalUrl,omitempty"`
+	Title       *string `json:"title,omitempty"`
+	Url         *string `json:"url,omitempty"`
 }
 
 // LinksWithGroups defines model for LinksWithGroups.
@@ -71,8 +76,8 @@ type TagFilter = []string
 // UnexpectedError defines model for UnexpectedError.
 type UnexpectedError = Error
 
-// GetLinksParams defines parameters for GetLinks.
-type GetLinksParams struct {
+// GetHtmlLinksetParams defines parameters for GetHtmlLinkset.
+type GetHtmlLinksetParams struct {
 	// Gt Links for a Group Type
 	Gt *GroupTypeFilter `form:"gt,omitempty" json:"gt,omitempty"`
 
@@ -94,6 +99,15 @@ type GetLinksParams struct {
 	// M Key/Value metadata filter for Links
 	M *MetadataFilter `form:"m,omitempty" json:"m,omitempty"`
 }
+
+// PostHtmlLinksetFormdataBody defines parameters for PostHtmlLinkset.
+type PostHtmlLinksetFormdataBody struct {
+	Action *string `form:"action,omitempty" json:"action,omitempty"`
+	LinkId *[]Id   `form:"link_id,omitempty" json:"link_id,omitempty"`
+}
+
+// PostHtmlLinksetFormdataRequestBody defines body for PostHtmlLinkset for application/x-www-form-urlencoded ContentType.
+type PostHtmlLinksetFormdataRequestBody PostHtmlLinksetFormdataBody
 
 // PostLinksWithGroupsJSONRequestBody defines body for PostLinksWithGroups for application/json ContentType.
 type PostLinksWithGroupsJSONRequestBody = LinksWithGroups

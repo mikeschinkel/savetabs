@@ -1,26 +1,35 @@
 package storage
 
-type StorageModifier interface {
+type Modifier interface {
 	UpsertLinksWithGroups(Context, LinksWithGroups) error
 }
 
 type LinksWithGroupsGetSetter interface {
 	GetLinkCount() int
-	GetLinksWithGroups() []LinkWithGroupPropGetSetter
-	SetLinksWithGroups([]LinkWithGroupPropGetSetter)
+	GetLinksWithGroups() []LinkWithGroupGetSetter
 }
-
-type LinkWithGroupPropGetSetter interface {
+type LinkWithGroupGetSetter interface {
+	LinkGetSetter
 	GetGroup() string
 	SetGroup(string)
 	GetGroupId() int64
 	SetGroupId(int64)
 	GetGroupType() string
 	SetGroupType(string)
+}
+
+type LinkSetGetSetter interface {
+	GetLinkCount() int
+	GetLinks() []LinkGetSetter
+}
+type LinkGetSetter interface {
 	GetId() int64
 	SetId(int64)
-	GetTitle() string
-	SetTitle(string)
-	GetURL() string
-	SetURL(string)
+	GetOriginalURL() string
+	SetOriginalURL(string)
+}
+
+type LinkSetActionGetter interface {
+	GetAction() string
+	GetLinkIds() ([]int64, error)
 }

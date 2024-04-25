@@ -16,36 +16,26 @@ import (
 	"savetabs/sqlc"
 )
 
-func UpsertLinksWithGroups(ctx Context, gs LinksWithGroupsGetSetter) (err error) {
-	links := make(LinksWithGroups, gs.GetLinkCount())
-	for i, link := range gs.GetLinksWithGroups() {
-		l, ok := link.(LinkWithGroupPropGetSetter)
-		if !ok {
-			err = ErrLinkWithGroupPropGetSetterExpected
-			goto end
-		}
-		links[i] = l
-	}
-	err = links.Upsert(ctx)
-end:
-	return err
+// UpsertLinksWithGroups converts type for slice to type
+func UpsertLinksWithGroups(ctx Context, gs LinksWithGroupsGetSetter) error {
+	return LinksWithGroups(gs.GetLinksWithGroups()).Upsert(ctx)
 }
 
-type LinksWithGroups []LinkWithGroupPropGetSetter
+type LinksWithGroups []LinkWithGroupGetSetter
 
 func (links LinksWithGroups) urls() []string {
 	var appended = make(map[string]struct{})
 	var urls = make([]string, 0)
 	for _, r := range links {
-		if r.GetURL() == "" {
+		if r.GetOriginalURL() == "" {
 			continue
 		}
-		_, seen := appended[r.GetURL()]
+		_, seen := appended[r.GetOriginalURL()]
 		if seen {
 			continue
 		}
-		appended[r.GetURL()] = struct{}{}
-		urls = append(urls, r.GetURL())
+		appended[r.GetOriginalURL()] = struct{}{}
+		urls = append(urls, r.GetOriginalURL())
 	}
 	return urls
 }
@@ -76,7 +66,7 @@ func (links LinksWithGroups) groups() []group {
 			Name: g.GetGroup(),
 			Slug: fmt.Sprintf("%s/%s", strings.ToLower(gt), shared.Slugify(g.GetGroup())),
 		})
-		keywords = augment.ParseKeywords(g.GetURL())
+		keywords = augment.ParseKeywords(g.GetOriginalURL())
 		groups = append(groups, shared.MapSliceFunc(keywords, func(kw string) group {
 			return group{
 				Type: "K",
@@ -102,16 +92,16 @@ func (links LinksWithGroups) linkGroups() []linkGroup {
 		if !seen {
 			appended[rg.GetGroupId()] = make(map[string]struct{})
 		}
-		if rg.GetURL() == "" {
+		if rg.GetOriginalURL() == "" {
 			continue
 		}
-		_, seen = appended[rg.GetGroupId()][rg.GetURL()]
+		_, seen = appended[rg.GetGroupId()][rg.GetOriginalURL()]
 		if seen {
 			continue
 		}
-		appended[rg.GetGroupId()][rg.GetURL()] = struct{}{}
+		appended[rg.GetGroupId()][rg.GetOriginalURL()] = struct{}{}
 		rgs = append(rgs, linkGroup{
-			LinkURL:   rg.GetURL(),
+			LinkURL:   rg.GetOriginalURL(),
 			GroupName: rg.GetGroup(),
 			GroupSlug: shared.Slugify(rg.GetGroup()),
 			GroupType: sqlc.GroupTypeFromName(rg.GetGroupType()),
@@ -287,7 +277,7 @@ end:
 func sanitizeLinksWithGroups(data LinksWithGroups) (_ LinksWithGroups, err error) {
 	for i := 0; i < len(data); i++ {
 		rg := data[i]
-		if rg.GetURL() == "" {
+		if rg.GetOriginalURL() == "" {
 			if err == nil {
 				err = errors.Join(ErrUrlNotSpecified, fmt.Errorf("error found in link index %d", i))
 			} else {
@@ -308,6 +298,29 @@ func sanitizeLinksWithGroups(data LinksWithGroups) (_ LinksWithGroups, err error
 		}
 	}
 	return data, err
+}
+
+func (links LinksWithGroups) Upsert(ctx Context) error {
+	var ds sqlc.DataStore
+	var db *sqlc.NestedDBTX
+	var ok bool
+
+	links, err := sanitizeLinksWithGroups(links)
+	if err != nil {
+		goto end
+	}
+	ds = sqlc.GetDatastore()
+	db, ok = ds.DB().(*sqlc.NestedDBTX)
+	if !ok {
+		err = ErrDBNotANestedDCTX
+		goto end
+	}
+	err = db.Exec(func(tx *sql.Tx) (err error) {
+		// TODO: Need to use tx, somehow
+		return excludeUnwantedLinks(links).UpsertLinks(ctx, ds)
+	})
+end:
+	return err
 }
 
 // excludeUnwantedLinks removes unwanted URLs such as "about:blank" and "chrome://*"
@@ -333,10 +346,10 @@ func excludeUnwantedLinks(links LinksWithGroups) LinksWithGroups {
 	wanted := make(LinksWithGroups, len(links))
 	index := 0
 	for _, link := range links {
-		if link.GetURL == nil {
+		if link.GetOriginalURL == nil {
 			continue
 		}
-		u := link.GetURL()
+		u := link.GetOriginalURL()
 		switch {
 		case u == "about:blank":
 			continue
@@ -347,31 +360,4 @@ func excludeUnwantedLinks(links LinksWithGroups) LinksWithGroups {
 		index++
 	}
 	return wanted
-}
-
-func (links LinksWithGroups) Upsert(ctx Context) error {
-	var ds sqlc.DataStore
-	var db *sqlc.NestedDBTX
-	var ok bool
-
-	links, err := sanitizeLinksWithGroups(links)
-	if err != nil {
-		goto end
-	}
-	ds = sqlc.GetDatastore()
-	db, ok = ds.DB().(*sqlc.NestedDBTX)
-	if !ok {
-		err = ErrDBNotANestedDCTX
-		goto end
-	}
-	err = db.Exec(upsertLinksWithTx(ctx, ds, links))
-end:
-	return err
-}
-
-func upsertLinksWithTx(ctx Context, ds sqlc.DataStore, links LinksWithGroups) func(tx *sql.Tx) error {
-	return func(tx *sql.Tx) (err error) {
-		links = excludeUnwantedLinks(links)
-		return links.UpsertLinks(ctx, ds)
-	}
 }

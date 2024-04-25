@@ -22,6 +22,6 @@ type FilterValueGetter interface {
 
 type Viewer interface {
 	GetMenuHTML(Context, string) ([]byte, int, error)
-	GetLinksHTML(Context, string, FilterValueGetter, string) ([]byte, int, error)
+	GetLinkSetHTML(Context, string, FilterValueGetter, string) ([]byte, int, error)
 	GetMenuItemHTML(Context, string, string) ([]byte, int, error)
 }

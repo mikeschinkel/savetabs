@@ -19,7 +19,10 @@ type ServerInterface interface {
 	GetHealthz(w http.ResponseWriter, r *http.Request)
 	// Return the HTML for a paginated table of links with optional filtering criteria in query parameters
 	// (GET /html/linkset)
-	GetLinks(w http.ResponseWriter, r *http.Request, params GetLinksParams)
+	GetHtmlLinkset(w http.ResponseWriter, r *http.Request, params GetHtmlLinksetParams)
+	// Update a set of Links
+	// (POST /html/linkset)
+	PostHtmlLinkset(w http.ResponseWriter, r *http.Request)
 	// Return the HTML for the Menu
 	// (GET /html/menu)
 	GetHtmlMenu(w http.ResponseWriter, r *http.Request)
@@ -58,14 +61,14 @@ func (siw *ServerInterfaceWrapper) GetHealthz(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// GetLinks operation middleware
-func (siw *ServerInterfaceWrapper) GetLinks(w http.ResponseWriter, r *http.Request) {
+// GetHtmlLinkset operation middleware
+func (siw *ServerInterfaceWrapper) GetHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetLinksParams
+	var params GetHtmlLinksetParams
 
 	// ------------- Optional query parameter "gt" -------------
 
@@ -124,7 +127,22 @@ func (siw *ServerInterfaceWrapper) GetLinks(w http.ResponseWriter, r *http.Reque
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetLinks(w, r, params)
+		siw.Handler.GetHtmlLinkset(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// PostHtmlLinkset operation middleware
+func (siw *ServerInterfaceWrapper) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostHtmlLinkset(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -320,7 +338,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
-	m.HandleFunc("GET "+options.BaseURL+"/html/linkset", wrapper.GetLinks)
+	m.HandleFunc("GET "+options.BaseURL+"/html/linkset", wrapper.GetHtmlLinkset)
+	m.HandleFunc("POST "+options.BaseURL+"/html/linkset", wrapper.PostHtmlLinkset)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu", wrapper.GetHtmlMenu)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu/{menuItem}", wrapper.GetHtmlMenuMenuItem)
 	m.HandleFunc("POST "+options.BaseURL+"/links/with-groups", wrapper.PostLinksWithGroups)

@@ -4,7 +4,7 @@ import (
 	"savetabs/storage"
 )
 
-var _ storage.LinkWithGroupPropGetSetter = (*LinkWithGroup)(nil)
+var _ storage.LinkWithGroupGetSetter = (*LinkWithGroup)(nil)
 
 func (link LinkWithGroup) GetGroup() string {
 	if link.Group == nil {
@@ -51,12 +51,12 @@ func (link LinkWithGroup) GetTitle() string {
 func (link LinkWithGroup) SetTitle(s string) {
 	link.Title = &s
 }
-func (link LinkWithGroup) GetURL() string {
+func (link LinkWithGroup) GetOriginalURL() string {
 	if link.Url == nil {
 		return ""
 	}
 	return *link.Url
 }
-func (link LinkWithGroup) SetURL(s string) {
+func (link LinkWithGroup) SetOriginalURL(s string) {
 	link.Url = &s
 }
