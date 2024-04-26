@@ -1,5 +1,4 @@
 import {checkApiHealth} from "./api.js";
-import {} from './shared'
 import {} from "./alpine-loader.js";
 
 // Handle click event on popup.html buttons
@@ -16,7 +15,6 @@ document.addEventListener('DOMContentLoaded', function () {
       chrome.tabs.create({url: target.getAttribute('data-href')});
    });
 });
-
 
 let apiHealthCheckHandle;
 
