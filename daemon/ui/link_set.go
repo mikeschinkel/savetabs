@@ -70,25 +70,29 @@ func (v *Views) GetLinkSetHTML(ctx Context, host string, params FilterValueGette
 		switch gt {
 		case MetaFilter:
 			ids, err = v.Queries.ListLinkIdsByMetadata(ctx, sqlc.ListLinkIdsByMetadataParams{
-				KvPairs:      values,
-				LinkArchived: sqlc.NotArchived,
+				KvPairs:       values,
+				LinksArchived: sqlc.NotArchived,
+				LinksDeleted:  sqlc.NotDeleted,
 			})
 		case GroupTypeFilter:
 			ids, err = v.Queries.ListLinkIdsByGroupType(ctx, sqlc.ListLinkIdsByGroupTypeParams{
-				GroupTypes:   values,
-				LinkArchived: sqlc.NotArchived,
+				GroupTypes:    values,
+				LinksArchived: sqlc.NotArchived,
+				LinksDeleted:  sqlc.NotDeleted,
 			})
 		default:
 			switch {
 			case slices.Contains(values, "none"):
 				ids, err = v.Queries.ListLinkIdsNotInGroupType(ctx, sqlc.ListLinkIdsNotInGroupTypeParams{
-					GroupTypes:   []string{gt},
-					LinkArchived: sqlc.NotArchived,
+					GroupTypes:    []string{gt},
+					LinksArchived: sqlc.NotArchived,
+					LinksDeleted:  sqlc.NotDeleted,
 				})
 			default:
 				ids, err = v.Queries.ListLinkIdsByGroupSlugs(ctx, sqlc.ListLinkIdsByGroupSlugsParams{
-					Slugs:        values,
-					LinkArchived: sqlc.NotArchived,
+					Slugs:         values,
+					LinksArchived: sqlc.NotArchived,
+					LinksDeleted:  sqlc.NotDeleted,
 				})
 			}
 		}
@@ -107,8 +111,9 @@ func (v *Views) GetLinkSetHTML(ctx Context, host string, params FilterValueGette
 		goto end
 	} else {
 		ll, err = v.Queries.ListFilteredLinks(ctx, sqlc.ListFilteredLinksParams{
-			Ids:          linkIds,
-			LinkArchived: sqlc.NotArchived,
+			Ids:           linkIds,
+			LinksArchived: sqlc.NotArchived,
+			LinksDeleted:  sqlc.NotDeleted,
 		})
 	}
 	if err != nil {

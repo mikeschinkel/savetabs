@@ -14,4 +14,5 @@ var (
 	ErrFailedUpsertMetadata    = errors.New("failed to upsert metadata")
 	ErrUrlNotSpecified         = errors.New("url not specified")
 	ErrUrlNotAbsolute          = errors.New("url is not absolute")
+	ErrFailedToArchiveLinks    = errors.New("failed to archive links")
 )

@@ -4,7 +4,8 @@
 SELECT * FROM `group`
 WHERE true
    AND id = ?
-   AND archived IN (sqlc.slice('group_archived'))
+   AND archived IN (sqlc.slice('groups_archived'))
+   AND deleted IN (sqlc.slice('groups_deleted'))
 LIMIT 1;
 
 -- name: LoadGroupType :one
@@ -15,14 +16,16 @@ SELECT *
 FROM `group`
 WHERE true
    AND type = ?
-   AND archived IN (sqlc.slice('group_archived'))
+   AND archived IN (sqlc.slice('groups_archived'))
+   AND deleted IN (sqlc.slice('groups_deleted'))
 ORDER BY name;
 
 -- name: LoadGroupsBySlug :one
 SELECT * FROM `group`
 WHERE true
    AND slug = ?
-   AND archived IN (sqlc.slice('group_archived'))
+   AND archived IN (sqlc.slice('groups_archived'))
+   AND deleted IN (sqlc.slice('groups_deleted'))
 LIMIT 1;
 
 -- name: UpsertGroupsFromVarJSON :exec
@@ -46,10 +49,12 @@ SELECT DISTINCT
    gt.name,
    gt.plural,
    COUNT(DISTINCT g.id) AS group_count,
-   COUNT(DISTINCT g.archived=1) AS group_archived,
+   COUNT(DISTINCT g.archived=1) AS groups_archived,
+   COUNT(DISTINCT g.deleted=1) AS groups_deleted,
    CAST(CASE WHEN g.ID IS NULL THEN 0
       ELSE COUNT(DISTINCT rg.link_id) END AS INTEGER) AS link_count,
-   COUNT(DISTINCT l.archived=1) AS link_archived,
+   COUNT(DISTINCT l.archived=1) AS links_archived,
+   COUNT(DISTINCT l.deleted=1) AS links_deleted,
    gt.sort
 FROM group_type gt
    LEFT JOIN `group` g ON gt.type=g.type
@@ -63,14 +68,33 @@ ORDER BY
    gt.sort;
 
 -- name: LoadLink :one
-SELECT * FROM link WHERE archived IN (sqlc.slice('link_archived')) AND id = ? LIMIT 1;
+SELECT *
+FROM link
+WHERE true
+   AND id = ?
+   AND archived IN (sqlc.slice('links_archived'))
+   AND deleted IN (sqlc.slice('links_deleted'))
+LIMIT 1
+;
 
 -- name: ListLinks :many
 SELECT *
 FROM link
-WHERE archived IN (sqlc.slice('link_archived'))
+WHERE true
+   AND archived IN (sqlc.slice('links_archived'))
+   AND deleted IN (sqlc.slice('links_deleted'))
 ORDER BY original_url
 LIMIT 100;
+
+-- name: ArchiveLinks :exec
+UPDATE link
+SET archived=1
+WHERE id IN (sqlc.slice('link_ids'));
+
+-- name: DeleteLinks :exec
+UPDATE link
+SET deleted=1
+WHERE id IN (sqlc.slice('link_ids'));
 
 -- name: ListFilteredLinks :many
 SELECT
@@ -86,7 +110,8 @@ FROM
     LEFT JOIN content c ON c.link_id=l.id
 WHERE true
    AND l.id IN (sqlc.slice('ids'))
-   AND archived IN (sqlc.slice('link_archived'))
+   AND archived IN (sqlc.slice('links_archived'))
+   AND deleted IN (sqlc.slice('links_deleted'))
 GROUP BY
    l.id,
    l.original_url,
@@ -108,7 +133,8 @@ SELECT
 FROM link
 WHERE true
    AND sld == ''
-   AND archived IN (sqlc.slice('link_archived'))
+   AND archived IN (sqlc.slice('links_archived'))
+   AND deleted IN (sqlc.slice('links_deleted'))
 ORDER BY
    id DESC
 LIMIT 8; -- LIMIT was chosen as slice len == slice cap for 8
@@ -136,7 +162,8 @@ FROM
    JOIN `group` g ON g.id=rg.group_id
 WHERE true
    AND g.slug IN (sqlc.slice('slugs'))
-   AND l.archived IN (sqlc.slice('link_archived'))
+   AND l.archived IN (sqlc.slice('links_archived'))
+   AND l.deleted IN (sqlc.slice('links_deleted'))
 ;
 
 -- name: ListLinkIdsByMetadata :many
@@ -145,7 +172,8 @@ FROM metadata m
    JOIN link l ON l.id=m.link_id
 WHERE true
    AND m.kv_pair IN (sqlc.slice('kv_pairs'))
-   AND l.archived IN (sqlc.slice('link_archived'));
+   AND archived IN (sqlc.slice('links_archived'))
+   AND deleted IN (sqlc.slice('links_deleted'));
 
 -- name: ListLinkIdsByGroupType :many
 SELECT CAST(link_id AS INTEGER) AS link_id
@@ -154,13 +182,15 @@ FROM link_group lg
         JOIN link l ON l.id=lg.link_id
 WHERE true
    AND g.type IN (sqlc.slice('groupTypes'))
-   AND l.archived IN (sqlc.slice('link_archived'));
+   AND l.archived IN (sqlc.slice('links_archived'))
+   AND l.deleted IN (sqlc.slice('links_deleted'));
 
 -- name: ListLinkIdsNotInGroupType :many
 SELECT CAST(l.id AS INTEGER) AS link_id
 FROM link l
 WHERE TRUE
-   AND l.archived IN (sqlc.slice('link_archived'))
+   AND l.archived IN (sqlc.slice('links_archived'))
+   AND l.deleted IN (sqlc.slice('links_deleted'))
    AND l.id NOT IN (
       SELECT lg.link_id
       FROM link_group lg
@@ -203,7 +233,9 @@ DELETE FROM var WHERE id = ?;
 SELECT *
 FROM metadata m
    JOIN link l ON m.link_id = l.id
-WHERE l.archived IN (sqlc.slice('link_archived'))
+WHERE true
+   AND archived IN (sqlc.slice('links_archived'))
+   AND deleted IN (sqlc.slice('links_deleted'))
 ORDER BY link_id,key DESC;
 
 -- name: UpsertMetadataFromVarJSON :exec

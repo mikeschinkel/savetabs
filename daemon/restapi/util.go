@@ -36,7 +36,7 @@ func sendJSON(w http.ResponseWriter, code int, content any) {
 }
 
 // sendHTML sends a success code of 200 and the HTML content provided
-func sendHTML(w http.ResponseWriter, html []byte) {
+func (a *API) sendHTML(w http.ResponseWriter, html []byte) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(html)
@@ -56,7 +56,7 @@ func (a *API) sendView(ctx Context, w http.ResponseWriter, r *http.Request, fn f
 		a.sendError(w, r, status, err.Error())
 		return
 	}
-	sendHTML(w, out)
+	a.sendHTML(w, out)
 }
 
 func toUpperSlice(s []string) []string {

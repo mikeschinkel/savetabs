@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
+
+	"savetabs/ui"
 )
 
 func (a *API) GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request, menuItem MenuItem) {
@@ -27,5 +29,10 @@ func (a *API) GetHtmlMenu(w http.ResponseWriter, r *http.Request) {
 func (a *API) GetHtmlError(w http.ResponseWriter, r *http.Request, params GetHtmlErrorParams) {
 	a.sendView(context.Background(), w, r, func(ctx Context) ([]byte, int, error) {
 		return a.Views.GetErrorHTML(ctx, errors.New(*params.Err))
+	})
+}
+func (a *API) GetHtmlAlert(w http.ResponseWriter, r *http.Request, params GetHtmlAlertParams) {
+	a.sendView(context.Background(), w, r, func(ctx Context) ([]byte, int, error) {
+		return a.Views.GetAlertHTML(ctx, ui.AlertType(*params.Typ), *params.Msg)
 	})
 }

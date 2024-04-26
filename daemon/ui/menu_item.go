@@ -172,8 +172,9 @@ func (v *Views) getMenuItemsForType(ctx Context, host, key string) (items []menu
 	case GroupTypeItemType: // Group Type
 		var gs []sqlc.Group
 		gs, err = v.Queries.ListGroupsByType(ctx, sqlc.ListGroupsByTypeParams{
-			Type:          strings.ToUpper(keys[2]),
-			GroupArchived: sqlc.NotArchived,
+			Type:           strings.ToUpper(keys[2]),
+			GroupsArchived: sqlc.NotArchived,
+			GroupsDeleted:  sqlc.NotDeleted,
 		})
 		if err != nil {
 			goto end

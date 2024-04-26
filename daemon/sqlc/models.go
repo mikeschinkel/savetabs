@@ -32,6 +32,7 @@ type Group struct {
 	Created     sql.NullInt64  `json:"-"`
 	Latest      sql.NullInt64  `json:"latest"`
 	Archived    int64          `json:"archived"`
+	Deleted     int64          `json:"deleted"`
 }
 
 type GroupType struct {
@@ -67,6 +68,7 @@ type Link struct {
 	Created     sql.NullInt64  `json:"-"`
 	Visited     sql.NullInt64  `json:"visited"`
 	Archived    int64          `json:"archived"`
+	Deleted     int64          `json:"deleted"`
 }
 
 type LinkGroup struct {

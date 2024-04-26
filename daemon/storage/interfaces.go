@@ -1,5 +1,9 @@
 package storage
 
+import (
+	"savetabs/shared"
+)
+
 type Modifier interface {
 	UpsertLinksWithGroups(Context, LinksWithGroups) error
 }
@@ -30,6 +34,6 @@ type LinkGetSetter interface {
 }
 
 type LinkSetActionGetter interface {
-	GetAction() string
+	GetAction() shared.ActionType
 	GetLinkIds() ([]int64, error)
 }

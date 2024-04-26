@@ -1,18 +1,8 @@
 <!--suppress CssUnusedSymbol -->
-<style>
-    #toast.htmx-settling {
-        opacity: 100;
-    }
-    #toast {
-        background: #E1F0DA;
-        opacity: 0;
-        transition: opacity 30s ease-out;
-    }
-</style>
 <form id="link-actions"
       hx-post="http://localhost:8642/html/linkset{{.URLQuery}}"
-      hx-swap="outerHTML settle:30s"
-      hx-target="#toast"
+      hx-swap="afterbegin"
+      hx-target="#status-panel"
       x-data="allCheckboxChecker">
   <input type="hidden" name="action">
   <nav class="navbar bg-base-300 min-h-0 h-8 border-solid border-gray-400 border-t">
@@ -74,7 +64,6 @@
       </tfoot>
     </table>
   </div>
-  <span id="toast"></span>
 
   <div x-show="showConfirmationDialog" class="modal modal-open">
     <div class="modal-box">

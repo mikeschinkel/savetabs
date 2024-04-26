@@ -17,6 +17,9 @@ type ServerInterface interface {
 	// Health Check
 	// (GET /healthz)
 	GetHealthz(w http.ResponseWriter, r *http.Request)
+	// HTML-formatted alert
+	// (GET /html/alert)
+	GetHtmlAlert(w http.ResponseWriter, r *http.Request, params GetHtmlAlertParams)
 	// HTML-formatted error
 	// (GET /html/error)
 	GetHtmlError(w http.ResponseWriter, r *http.Request, params GetHtmlErrorParams)
@@ -55,6 +58,42 @@ func (siw *ServerInterfaceWrapper) GetHealthz(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHealthz(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetHtmlAlert operation middleware
+func (siw *ServerInterfaceWrapper) GetHtmlAlert(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetHtmlAlertParams
+
+	// ------------- Optional query parameter "typ" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "typ", r.URL.Query(), &params.Typ)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "typ", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "msg" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "msg", r.URL.Query(), &params.Msg)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "msg", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetHtmlAlert(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -369,6 +408,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
+	m.HandleFunc("GET "+options.BaseURL+"/html/alert", wrapper.GetHtmlAlert)
 	m.HandleFunc("GET "+options.BaseURL+"/html/error", wrapper.GetHtmlError)
 	m.HandleFunc("GET "+options.BaseURL+"/html/linkset", wrapper.GetHtmlLinkset)
 	m.HandleFunc("POST "+options.BaseURL+"/html/linkset", wrapper.PostHtmlLinkset)

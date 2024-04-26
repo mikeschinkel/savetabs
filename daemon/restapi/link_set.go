@@ -6,10 +6,14 @@ import (
 	"net/http"
 	"strconv"
 
+	"savetabs/shared"
 	"savetabs/storage"
+	"savetabs/ui"
 )
 
 func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
+	var msg string
+
 	ctx := context.TODO()
 
 	err := r.ParseForm()
@@ -22,12 +26,15 @@ func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 		a.sendError(w, r, http.StatusBadRequest, ErrNoLinkIdsSubmitted.Error())
 		return
 	}
-	err = storage.UpsertLinkSet(ctx, linkSetAction{
-		Action:  r.Form.Get("action"),
+	msg, err = storage.UpsertLinkSet(ctx, linkSetAction{
+		Action:  shared.ActionType(r.Form.Get("action")),
 		LinkIds: linkIds,
 	})
 	switch {
 	case err == nil:
+		var html []byte
+		html, _, err = a.Views.GetAlertHTML(ctx, ui.SuccessAlert, msg)
+		a.sendHTML(w, html)
 		goto end
 	case errors.Is(err, ErrFailedToUnmarshal):
 		a.sendError(w, r, http.StatusBadRequest, err.Error())
@@ -43,11 +50,11 @@ end:
 var _ storage.LinkSetActionGetter = (*linkSetAction)(nil)
 
 type linkSetAction struct {
-	Action  string
+	Action  shared.ActionType
 	LinkIds []string
 }
 
-func (l linkSetAction) GetAction() string {
+func (l linkSetAction) GetAction() shared.ActionType {
 	return l.Action
 }
 

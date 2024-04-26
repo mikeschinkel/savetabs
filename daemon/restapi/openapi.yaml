@@ -68,7 +68,18 @@ paths:
       - $ref: '#/components/parameters/ErrorMsg'
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/HtmlResponse'
+
+  /html/alert:
+    get:
+      summary: HTML-formatted alert
+      description: Alert formatted as Daisy UI alert HTML
+      parameters:
+      - $ref: '#/components/parameters/AlertType'
+      - $ref: '#/components/parameters/AlertMsg'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlResponse'
 
   /links/with-groups:
     post:
@@ -182,6 +193,26 @@ components:
       style: form
       explode: true
       description: Key/Value metadata filter for Links
+    AlertType:
+      in: query
+      name: typ
+      schema:
+        type: string
+        enum:
+        - alert
+        - info
+        - success
+        - warning
+        - error
+      style: form
+      description: Type of alert message to display as HTML
+    AlertMsg:
+      in: query
+      name: msg
+      schema:
+        type: string
+      style: form
+      description: Alert message to display as HTML
     ErrorMsg:
       in: query
       name: err

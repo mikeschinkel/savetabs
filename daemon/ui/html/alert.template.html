@@ -1,0 +1,6 @@
+<div x-data="dismissibleAlert" class="alert alert-{{.AlertType}} shadow-lg flex items-center justify-between py-4 mt-3 min-w-full">
+  <div class="flex items-center flex-1">{{.IconHTML}}
+    <span class="text-white font-bold text-lg">{{.Message}}.</span>
+  </div>
+  <close-icon @click="dismiss"></close-icon>
+</div>
