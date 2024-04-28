@@ -1,10 +1,11 @@
 <!--suppress CssUnusedSymbol -->
 <form id="link-actions"
       hx-post="http://localhost:8642/html/linkset{{.URLQuery}}"
-      hx-swap="afterbegin"
-      hx-target="#status-panel"
+      hx-target="#links-section"
       x-data="allCheckboxChecker">
   <input type="hidden" name="action">
+  <input type="hidden" name="url_query" value="{{.URLQuery}}">
+  <input type="hidden" name="query_json" value="{{.QueryJSON}}">
   <nav class="navbar bg-base-300 min-h-0 h-8 border-solid border-gray-400 border-t">
     <span class="text-base font-semibold">{{.Label}}</span>
   </nav>

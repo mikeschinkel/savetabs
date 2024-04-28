@@ -65,9 +65,10 @@ func runServer(port *string) (err error) {
 	swagger.Servers = nil
 
 	api = restapi.NewAPI(restapi.APIArgs{
-		Port:    *port,
-		Swagger: swagger,
-		Views:   ui.NewViews(ds),
+		Port:      *port,
+		Swagger:   swagger,
+		Views:     ui.NewViews(ds),
+		DataStore: ds,
 	})
 
 	go tasks.BackgroundTask(ctx, tasks.NewCaretaker(ds))

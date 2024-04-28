@@ -86,15 +86,22 @@ WHERE true
 ORDER BY original_url
 LIMIT 100;
 
+-- name: GetLinkURLs :many
+SELECT CAST(ifnull(url,'<invalid>') AS TEXT) FROM link
+WHERE id IN (sqlc.slice('link_ids'))
+;
+
 -- name: ArchiveLinks :exec
 UPDATE link
 SET archived=1
-WHERE id IN (sqlc.slice('link_ids'));
+WHERE id IN (sqlc.slice('link_ids'))
+;
 
 -- name: DeleteLinks :exec
 UPDATE link
 SET deleted=1
-WHERE id IN (sqlc.slice('link_ids'));
+WHERE id IN (sqlc.slice('link_ids'))
+;
 
 -- name: ListFilteredLinks :many
 SELECT

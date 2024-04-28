@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"bytes"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"slices"
@@ -13,10 +13,11 @@ import (
 )
 
 type linkSet struct {
-	apiURL   string
-	rawQuery string
-	Label    string
-	Links    []link
+	apiURL     string
+	Links      []link
+	Label      string
+	requestURI string
+	queryJSON  string
 }
 
 func (ls linkSet) HeaderHTMLId() safehtml.Identifier {
@@ -26,7 +27,16 @@ func (ls linkSet) FooterHTMLId() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant(`links-row-foot`)
 }
 func (ls linkSet) URLQuery() safehtml.URL {
-	return safehtml.URLSanitized("?" + ls.rawQuery)
+	parts := strings.Split(ls.requestURI+"?", "?")
+	return safehtml.URLSanitized("?" + parts[1])
+}
+func (ls linkSet) QueryJSON() safehtml.JSON {
+	j, err := safehtml.JSONFromValue(ls.queryJSON)
+	if err != nil {
+		slog.Error("Unable to create safe JSON", "json", ls.queryJSON)
+		j = safehtml.JSONFromConstant("{}")
+	}
+	return j
 }
 func (ls linkSet) NumLinks() int {
 	return len(ls.Links)
@@ -51,22 +61,19 @@ func (ls linkSet) TableHeaderFooterHTML() safehtml.HTML {
 
 var linkSetTemplate = GetTemplate("link-set")
 
-func (v *Views) GetLinkSetHTML(ctx Context, host string, params FilterValueGetter, rawQuery string) (html []byte, status int, err error) {
-	var out bytes.Buffer
+func (v *Views) GetLinkSetHTML(ctx Context, host, requestURI string, params FilterGetter) (html safehtml.HTML, status int, err error) {
 	var ll []sqlc.ListFilteredLinksRow
 	var links []link
 	var ids []int64
 	var linkIds []int64
 	var values []string
+	var queryJSON string
 
-	labels := []string{}
 	for _, gt := range FilterTypes {
 		values = params.GetFilterValues(gt)
 		if len(values) == 0 {
 			continue
 		}
-		// TODO: Change to using names for labels, not slugs
-		labels = append(labels, params.GetFilterLabel(gt, strings.Join(values, ",")))
 		switch gt {
 		case MetaFilter:
 			ids, err = v.Queries.ListLinkIdsByMetadata(ctx, sqlc.ListLinkIdsByMetadataParams{
@@ -120,11 +127,17 @@ func (v *Views) GetLinkSetHTML(ctx Context, host string, params FilterValueGette
 		goto end
 	}
 	links = linksFromLinkSet(ll)
-		apiURL:   makeURL(host),
-		rawQuery: rawQuery,
-		Links:    links,
-		Label:    strings.Join(labels, " && "),
+	queryJSON, err = params.GetFilterJSON()
+	if err != nil {
+		slog.Error("Failed to get filter JSON", "err", err.Error())
+		queryJSON = "{}"
+	}
 	html, err = linkSetTemplate.ExecuteToHTML(linkSet{
+		apiURL:     makeURL(host),
+		Links:      links,
+		Label:      params.GetFilterLabels(),
+		requestURI: requestURI,
+		queryJSON:  queryJSON,
 	})
 	if err != nil {
 		goto end

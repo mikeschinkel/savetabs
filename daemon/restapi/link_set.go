@@ -3,8 +3,10 @@ package restapi
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/google/safehtml"
 	"savetabs/shared"
@@ -23,10 +25,27 @@ func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 		a.sendError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
-	linkIds, ok := r.Form["link_id"]
+	_, ok := r.Form["link_id"]
 	if !ok {
 		a.sendError(w, r, http.StatusBadRequest, ErrNoLinkIdsSubmitted.Error())
 		return
+	}
+	linkIds := make([]int64, len(r.Form["link_id"]))
+	for i, id := range r.Form["link_id"] {
+		linkIds[i], err = strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			slog.Error("Invalid, expected integer", "link_id", id)
+		}
+	}
+	queryJSONs, ok := r.Form["query_json"]
+	if !ok {
+		queryJSONs = []string{"{}"}
+	}
+	queryJSON := strings.Join(queryJSONs, "")
+	params, err := GetHtmlLinksetParamsFromJSON(queryJSON)
+	if err != nil {
+		slog.Error(err.Error())
+		params, _ = GetHtmlLinksetParamsFromJSON("{}")
 	}
 	msg, err = storage.UpsertLinkSet(ctx, linkSetAction{
 		Action:  shared.ActionType(r.Form.Get("action")),
@@ -58,12 +77,23 @@ func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 	}
 end:
 }
+func (a *API) urlsForMsg(ctx Context, linkIds []int64) []string {
+	linkURLs, err := a.Queries.GetLinkURLs(ctx, linkIds)
+	if err != nil {
+		slog.Error("Failed to get link URLs for %v", linkIds)
+	}
+	if len(linkURLs) > 3 {
+		linkURLs = linkURLs[:4]
+		linkURLs[3] = "..."
+	}
+	return linkURLs
+}
 
 var _ storage.LinkSetActionGetter = (*linkSetAction)(nil)
 
 type linkSetAction struct {
 	Action  shared.ActionType
-	LinkIds []string
+	LinkIds []int64
 }
 
 func (l linkSetAction) GetAction() shared.ActionType {
@@ -71,16 +101,5 @@ func (l linkSetAction) GetAction() shared.ActionType {
 }
 
 func (a linkSetAction) GetLinkIds() (ids []int64, err error) {
-	var linkId int64
-
-	ids = make([]int64, len(a.LinkIds))
-	for i, id := range a.LinkIds {
-		linkId, err = strconv.ParseInt(id, 10, 64)
-		if err != nil {
-			goto end
-		}
-		ids[i] = linkId
-	}
-end:
-	return ids, err
+	return a.LinkIds, err
 }

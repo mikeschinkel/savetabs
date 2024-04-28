@@ -1,42 +1,60 @@
 package restapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"savetabs/ui"
 )
 
-var _ ui.FilterValueGetter = (*GetHtmlLinksetParams)(nil)
+var _ ui.FilterGetter = (*GetHtmlLinksetParams)(nil)
 
-func (p GetHtmlLinksetParams) RawQuery() string {
-	//TODO implement me
-	panic("implement me")
+func GetHtmlLinksetParamsFromJSON(j string) (ui.FilterGetter, error) {
+	var p GetHtmlLinksetParams
+	err := json.Unmarshal([]byte(j), &p)
+	return p, err
 }
 
-func (p GetHtmlLinksetParams) GetFilterLabel(typ, value string) string {
+func (p GetHtmlLinksetParams) GetFilterJSON() (string, error) {
+	b, err := json.Marshal(p)
+	return string(b), err
+}
+
+func (p GetHtmlLinksetParams) GetFilterLabels() string {
 	var name string
-	switch strings.ToUpper(typ) {
-	case "GT":
-		name = "Group Type"
-	case "B":
-		name = "Bookmark"
-	case "C":
-		name = "Categories"
-	case "G":
-		name = "Tab Group"
-	case "K":
-		name = "Keyword"
-	case "T":
-		name = "Tag"
-	case "M":
-		name = "Meta"
-	default:
-		name = fmt.Sprintf("Unexpected[%s]", typ)
+	sb := strings.Builder{}
+	for _, ft := range ui.FilterTypes {
+		switch strings.ToUpper(ft) {
+		case "GT":
+			name = "Group Type"
+		case "B":
+			name = "Bookmark"
+		case "C":
+			name = "Categories"
+		case "G":
+			name = "Tab Group"
+		case "K":
+			name = "Keyword"
+		case "T":
+			name = "Tag"
+		case "M":
+			name = "Meta"
+		default:
+			name = fmt.Sprintf("Unexpected[%s]", ft)
+		}
+		values := p.GetFilterValues(ft)
+		if len(values) == 0 {
+			continue
+		}
+		sb.WriteString(fmt.Sprintf("%s(s): %s && ", name, values))
 	}
-	// TODO: Remove (s) when only one value.
-	//       That means `value string` needs to be `values []string`
-	return fmt.Sprintf("%s(s): %s", name, value)
+	if sb.Len() == 0 {
+		return ""
+	}
+	labels := sb.String()
+	// Strip off trailing ' && ' with -4
+	return labels[:len(labels)-4]
 }
 
 func (p GetHtmlLinksetParams) GetFilterValues(typ string) (filters []string) {
@@ -67,11 +85,24 @@ func (p GetHtmlLinksetParams) GetFilterValues(typ string) (filters []string) {
 		filters = make([]string, len(*p.M))
 		i := 0
 		for key, value := range *p.M {
-			filters[i] = fmt.Sprintf("%typ=%typ", key, value)
+			filters[i] = fmt.Sprintf("%s=%s", key, value)
 		}
 	default:
 		filters = []string{}
 	}
 end:
 	return filters
+}
+
+func (f MetadataFilter) String() (s string) {
+	sb := strings.Builder{}
+	for k, v := range f {
+		sb.WriteString(fmt.Sprintf("key[%s]=%s", k, v))
+		sb.WriteByte('&')
+	}
+	s = sb.String()
+	if len(s) == 0 {
+		return ""
+	}
+	return s[:len(s)-1]
 }

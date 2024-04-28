@@ -12,6 +12,8 @@ import (
 )
 
 const archiveLinks = `-- name: ArchiveLinks :exec
+;
+
 UPDATE link
 SET archived=1
 WHERE id IN (/*SLICE:link_ids*/?)
@@ -33,6 +35,8 @@ func (q *Queries) ArchiveLinks(ctx context.Context, linkIds []int64) error {
 }
 
 const deleteLinks = `-- name: DeleteLinks :exec
+;
+
 UPDATE link
 SET deleted=1
 WHERE id IN (/*SLICE:link_ids*/?)
@@ -62,7 +66,47 @@ func (q *Queries) DeleteVar(ctx context.Context, id int64) error {
 	return err
 }
 
+const getLinkURLs = `-- name: GetLinkURLs :many
+SELECT CAST(ifnull(url,'<invalid>') AS TEXT) FROM link
+WHERE id IN (/*SLICE:link_ids*/?)
+`
+
+func (q *Queries) GetLinkURLs(ctx context.Context, linkIds []int64) ([]string, error) {
+	query := getLinkURLs
+	var queryParams []interface{}
+	if len(linkIds) > 0 {
+		for _, v := range linkIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_ids*/?", strings.Repeat(",?", len(linkIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var column_1 string
+		if err := rows.Scan(&column_1); err != nil {
+			return nil, err
+		}
+		items = append(items, column_1)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listFilteredLinks = `-- name: ListFilteredLinks :many
+;
+
 SELECT
    l.id,
    l.original_url,

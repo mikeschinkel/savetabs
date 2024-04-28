@@ -11,6 +11,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
+	"savetabs/sqlc"
 )
 
 type swagger = openapi3.T
@@ -20,19 +21,22 @@ var _ ServerInterface = (*API)(nil)
 var _ Persister = (*API)(nil)
 
 type API struct {
-	Port    string
-	Mux     *http.ServeMux
-	Swagger *swagger
-	Handler http.Handler
-	Server  *http.Server
-	Lock    sync.Mutex
-	Views   Viewer
+	Port      string
+	Mux       *http.ServeMux
+	Swagger   *swagger
+	Handler   http.Handler
+	Server    *http.Server
+	Lock      sync.Mutex
+	Views     Viewer
+	DataStore sqlc.DataStore
+	Queries   *sqlc.Queries
 }
 
 type APIArgs struct {
-	Port    string
-	Swagger *swagger
-	Views   Viewer
+	Port      string
+	Swagger   *swagger
+	Views     Viewer
+	DataStore sqlc.DataStore
 }
 
 func NewAPI(args APIArgs) *API {
@@ -40,10 +44,12 @@ func NewAPI(args APIArgs) *API {
 		args.Port = DefaultPort
 	}
 	api := &API{
-		Port:    args.Port,
-		Swagger: args.Swagger,
-		Views:   args.Views,
-		Mux:     http.NewServeMux(),
+		Port:      args.Port,
+		Swagger:   args.Swagger,
+		Views:     args.Views,
+		Mux:       http.NewServeMux(),
+		DataStore: args.DataStore,
+		Queries:   args.DataStore.Queries(),
 	}
 
 	// We now register our api above as the handler for the interface

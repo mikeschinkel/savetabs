@@ -14,10 +14,10 @@ type MenuItemable interface {
 	LinksQueryParams() string
 }
 
-type FilterValueGetter interface {
-	GetFilterLabel(string, string) string
+type FilterGetter interface {
+	GetFilterJSON() (string, error)
+	GetFilterLabels() string
 	GetFilterValues(string) []string
-	RawQuery() string
 }
 
 type Viewer interface {
