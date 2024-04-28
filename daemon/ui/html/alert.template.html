@@ -1,6 +1,16 @@
 <div x-data="dismissibleAlert" class="alert alert-{{.AlertType}} shadow-lg flex items-center justify-between py-4 mt-3 min-w-full">
-  <div class="flex items-center flex-1">{{.IconHTML}}
-    <span class="text-white font-bold text-lg">{{.Message}}.</span>
+  <div class="flex flex-1 flex-col">
+    <div class="flex items-center">
+      {{.IconHTML}}
+      <span class="text-white font-bold text-lg">{{.Message.Text}}</span>
+    </div>
+    {{if .Message.HasItems}}
+      <ul class="ml-10 list-disc text-white font-bold text-md pl-8">
+        {{range .Message.Items}}
+          <li>{{.}}</li>
+        {{end}}
+      </ul>
+    {{end}}
   </div>
-  <close-icon @click="dismiss"></close-icon>
+  <close-icon @click="dismiss" class="ml-4"></close-icon>
 </div>

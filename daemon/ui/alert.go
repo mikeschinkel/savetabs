@@ -6,9 +6,18 @@ import (
 	"github.com/google/safehtml"
 )
 
+type Message struct {
+	Text  string
+	Items []string
+}
+
+func (m *Message) HasItems() bool {
+	return len(m.Items) > 0
+}
+
 type Alert struct {
 	alertType  AlertType
-	Message    string
+	Message    Message
 	HTTPStatus int
 }
 
@@ -22,14 +31,6 @@ const (
 	WarningAlert     AlertType = "warning"
 	ErrorAlert       AlertType = "error"
 )
-
-func NewAlert(typ AlertType, msg string, code int) *Alert {
-	return &Alert{
-		alertType:  typ,
-		Message:    msg,
-		HTTPStatus: code,
-	}
-}
 
 func (a *Alert) IconHTML() safehtml.HTML {
 	var name safehtml.HTML
@@ -76,6 +77,7 @@ func (a *Alert) AlertType() (id safehtml.Identifier) {
 }
 
 var alertTemplate = GetTemplate("alert")
+var alertOOBTemplate = GetTemplate("alert-oob")
 
 func (*Views) GetAlertHTML(_ Context, typ AlertType, msg Message) (html safehtml.HTML, _ int, err error) {
 	alert := &Alert{
@@ -89,4 +91,24 @@ func (*Views) GetAlertHTML(_ Context, typ AlertType, msg Message) (html safehtml
 	}
 end:
 	return html, alert.HTTPStatus, err
+}
+
+func (v *Views) GetOOBAlertHTML(ctx Context, typ AlertType, msg Message) (html safehtml.HTML, status int, err error) {
+	html, status, err = v.GetAlertHTML(ctx, typ, msg)
+	if err != nil {
+		goto end
+	}
+	html, err = alertOOBTemplate.ExecuteToHTML(struct {
+		AlertHTML safehtml.HTML
+	}{
+		AlertHTML: html,
+	})
+	if err != nil {
+		goto end
+	}
+	if status == 0 {
+		status = http.StatusOK
+	}
+end:
+	return html, status, err
 }
