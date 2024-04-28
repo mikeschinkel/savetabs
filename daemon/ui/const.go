@@ -17,6 +17,8 @@ const (
 	NoFilter FilterType = "_"
 )
 
+// FilterTypes is a convenience array to allow processing filter types.
+// Note that it does not include `NoFilter`
 var FilterTypes = []FilterType{
 	GroupTypeFilter,
 	TagFilter,
