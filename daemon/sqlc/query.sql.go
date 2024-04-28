@@ -107,34 +107,31 @@ func (q *Queries) GetLinkURLs(ctx context.Context, linkIds []int64) ([]string, e
 const listFilteredLinks = `-- name: ListFilteredLinks :many
 ;
 
+
 SELECT
-   l.id,
-   l.original_url,
-   l.created_time,
-   l.visited_time,
-   c.id AS content_id,
-   c.title,
-   c.body
+   id,
+   original_url,
+   created_time,
+   visited_time,
+   title,
+   scheme,
+   subdomain,
+   sld,
+   tld,
+   path,
+   query,
+   fragment,
+   port,
+   archived,
+   deleted
 FROM
-   link l
-    LEFT JOIN content c ON c.link_id=l.id
+   link
 WHERE true
-   AND l.id IN (/*SLICE:ids*/?)
+   AND id IN (/*SLICE:ids*/?)
    AND archived IN (/*SLICE:links_archived*/?)
    AND deleted IN (/*SLICE:links_deleted*/?)
-GROUP BY
-   l.id,
-   l.original_url,
-   l.created_time,
-   l.visited_time,
-   c.id,
-   c.title,
-   c.body
-HAVING 1=0
-   OR c.created=max(c.created)
-   OR count(c.id)=0
 ORDER BY
-   l.original_url
+   original_url
 `
 
 type ListFilteredLinksParams struct {
@@ -148,9 +145,17 @@ type ListFilteredLinksRow struct {
 	OriginalUrl string         `json:"original_url"`
 	CreatedTime sql.NullString `json:"created_time"`
 	VisitedTime sql.NullString `json:"visited_time"`
-	ContentID   sql.NullInt64  `json:"content_id"`
-	Title       sql.NullString `json:"title"`
-	Body        sql.NullString `json:"body"`
+	Title       string         `json:"title"`
+	Scheme      string         `json:"scheme"`
+	Subdomain   string         `json:"subdomain"`
+	Sld         string         `json:"sld"`
+	Tld         string         `json:"tld"`
+	Path        string         `json:"path"`
+	Query       string         `json:"query"`
+	Fragment    string         `json:"fragment"`
+	Port        string         `json:"port"`
+	Archived    int64          `json:"archived"`
+	Deleted     int64          `json:"deleted"`
 }
 
 func (q *Queries) ListFilteredLinks(ctx context.Context, arg ListFilteredLinksParams) ([]ListFilteredLinksRow, error) {
@@ -193,9 +198,17 @@ func (q *Queries) ListFilteredLinks(ctx context.Context, arg ListFilteredLinksPa
 			&i.OriginalUrl,
 			&i.CreatedTime,
 			&i.VisitedTime,
-			&i.ContentID,
 			&i.Title,
-			&i.Body,
+			&i.Scheme,
+			&i.Subdomain,
+			&i.Sld,
+			&i.Tld,
+			&i.Path,
+			&i.Query,
+			&i.Fragment,
+			&i.Port,
+			&i.Archived,
+			&i.Deleted,
 		); err != nil {
 			return nil, err
 		}
@@ -688,7 +701,7 @@ func (q *Queries) ListLinkIdsNotInGroupType(ctx context.Context, arg ListLinkIds
 const listLinks = `-- name: ListLinks :many
 ;
 
-SELECT id, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited, archived, deleted
+SELECT id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited, archived, deleted
 FROM link
 WHERE true
    AND archived IN (/*SLICE:links_archived*/?)
@@ -731,6 +744,7 @@ func (q *Queries) ListLinks(ctx context.Context, arg ListLinksParams) ([]Link, e
 		var i Link
 		if err := rows.Scan(
 			&i.ID,
+			&i.Title,
 			&i.Scheme,
 			&i.Subdomain,
 			&i.Sld,
@@ -762,7 +776,7 @@ func (q *Queries) ListLinks(ctx context.Context, arg ListLinksParams) ([]Link, e
 }
 
 const listMetadata = `-- name: ListMetadata :many
-SELECT m.id, link_id, "key", value, kv_pair, m.created_time, modified_time, m.created, modified, l.id, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, l.created_time, visited_time, l.created, visited, archived, deleted
+SELECT m.id, link_id, "key", value, kv_pair, m.created_time, modified_time, m.created, modified, l.id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, l.created_time, visited_time, l.created, visited, archived, deleted
 FROM metadata m
    JOIN link l ON m.link_id = l.id
 WHERE true
@@ -787,6 +801,7 @@ type ListMetadataRow struct {
 	Created       sql.NullInt64  `json:"created"`
 	Modified      sql.NullInt64  `json:"modified"`
 	ID_2          int64          `json:"id_2"`
+	Title         string         `json:"title"`
 	Scheme        string         `json:"scheme"`
 	Subdomain     string         `json:"subdomain"`
 	Sld           string         `json:"sld"`
@@ -843,6 +858,7 @@ func (q *Queries) ListMetadata(ctx context.Context, arg ListMetadataParams) ([]L
 			&i.Created,
 			&i.Modified,
 			&i.ID_2,
+			&i.Title,
 			&i.Scheme,
 			&i.Subdomain,
 			&i.Sld,
@@ -996,8 +1012,37 @@ func (q *Queries) LoadGroupsBySlug(ctx context.Context, arg LoadGroupsBySlugPara
 	return i, err
 }
 
+const loadLatestContent = `-- name: LoadLatestContent :one
+SELECT
+   id, link_id, title, body, created_time, created
+FROM
+   content
+WHERE
+   link_id = ?
+GROUP BY
+   link_id,
+   created
+HAVING
+   created=max(created)
+`
+
+// TODO: Untested, ensure query works
+func (q *Queries) LoadLatestContent(ctx context.Context, linkID int64) (Content, error) {
+	row := q.db.QueryRowContext(ctx, loadLatestContent, linkID)
+	var i Content
+	err := row.Scan(
+		&i.ID,
+		&i.LinkID,
+		&i.Title,
+		&i.Body,
+		&i.CreatedTime,
+		&i.Created,
+	)
+	return i, err
+}
+
 const loadLink = `-- name: LoadLink :one
-SELECT id, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited, archived, deleted
+SELECT id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited, archived, deleted
 FROM link
 WHERE true
    AND id = ?
@@ -1036,6 +1081,7 @@ func (q *Queries) LoadLink(ctx context.Context, arg LoadLinkParams) (Link, error
 	var i Link
 	err := row.Scan(
 		&i.ID,
+		&i.Title,
 		&i.Scheme,
 		&i.Subdomain,
 		&i.Sld,
@@ -1060,6 +1106,7 @@ const updateLinkParts = `-- name: UpdateLinkParts :exec
 
 UPDATE link
 SET
+   title = ?,
    scheme = ?,
    subdomain = ?,
    sld = ?,
@@ -1073,6 +1120,7 @@ WHERE
 `
 
 type UpdateLinkPartsParams struct {
+	Title       string `json:"title"`
 	Scheme      string `json:"scheme"`
 	Subdomain   string `json:"subdomain"`
 	Sld         string `json:"sld"`
@@ -1087,6 +1135,7 @@ type UpdateLinkPartsParams struct {
 // LIMIT was chosen as slice len == slice cap for 8
 func (q *Queries) UpdateLinkParts(ctx context.Context, arg UpdateLinkPartsParams) error {
 	_, err := q.db.ExecContext(ctx, updateLinkParts,
+		arg.Title,
 		arg.Scheme,
 		arg.Subdomain,
 		arg.Sld,

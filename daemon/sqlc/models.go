@@ -53,6 +53,7 @@ type History struct {
 
 type Link struct {
 	ID          int64          `json:"id"`
+	Title       string         `json:"title"`
 	Scheme      string         `json:"scheme"`
 	Subdomain   string         `json:"subdomain"`
 	Sld         string         `json:"sld"`

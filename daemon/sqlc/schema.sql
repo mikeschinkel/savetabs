@@ -181,15 +181,16 @@ END
 CREATE TABLE IF NOT EXISTS link
 (
    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-   scheme       VARCHAR(5)  NOT NULL,
-   subdomain    VARCHAR(32) NOT NULL,
-   sld          VARCHAR(32) NOT NULL,
-   tld          VARCHAR(10) NOT NULL,
-   port         VARCHAR(6) NOT NULL,
-   path         VARCHAR(64) NOT NULL,
-   query        VARCHAR(64) NOT NULL,
-   fragment     VARCHAR(64) NOT NULL,
-   original_url VARCHAR(256) NOT NULL,
+   title        VARCHAR(128) NOT NULL DEFAULT '',
+   scheme       VARCHAR(5)  NOT NULL DEFAULT '',
+   subdomain    VARCHAR(32) NOT NULL DEFAULT '',
+   sld          VARCHAR(32) NOT NULL DEFAULT '',
+   tld          VARCHAR(10) NOT NULL DEFAULT '',
+   port         VARCHAR(6) NOT NULL DEFAULT '',
+   path         VARCHAR(64) NOT NULL DEFAULT '',
+   query        VARCHAR(64) NOT NULL DEFAULT '',
+   fragment     VARCHAR(64) NOT NULL DEFAULT '',
+   original_url VARCHAR(256) NOT NULL DEFAULT '',
    url          VARCHAR(256) GENERATED ALWAYS AS (scheme||'://'
       ||CASE WHEN sld='' THEN sld ELSE sld||'.'||tld END
       ||CASE WHEN port='' THEN '' ELSE ':'||port END
@@ -209,12 +210,16 @@ CREATE TABLE IF NOT EXISTS link
 DROP INDEX IF EXISTS idx_link__original_url;
 CREATE UNIQUE INDEX idx_link__original_url ON link(original_url);
 
+--DROP TRIGGER IF  EXISTS update_link_visited
 CREATE TRIGGER IF NOT EXISTS update_link_visited
    AFTER UPDATE
    ON link
    FOR EACH ROW
 BEGIN
-   UPDATE link SET visited = STRFTIME('%s', 'now') WHERE id = old.id;
+   UPDATE link
+   SET visited = STRFTIME('%s', 'now'),
+      title = CASE WHEN title='' THEN url ELSE title END
+   WHERE id = old.id;
 END
 ;
 

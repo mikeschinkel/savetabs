@@ -53,9 +53,16 @@ func (ls linkSet) TableHeaderFooterHTML() safehtml.HTML {
 	</label>
 </th>
 <th class="p-0.5 text-center">Link</th>
+<th class="p-0.5 max-w-[10vw]">Domain</th>
+<th class="p-0.5 max-w-[15vw]">/Path</th>
+<th class="p-0.5 max-w-[20vw]">?Query</th>
+<th class="p-0.5 max-w-[20vw]">#Fragment</th>
+<th class="p-0.5 max-w-[20vw]">Title</th>
+<th class="p-0.5">Scheme</th>
 <th class="p-0.5 text-right">Sub</th>
-<th class="p-0.5">Domain</th>
-<th class="p-0.5">Title</th>
+<th class="p-0.5">SLD</th>
+<th class="p-0.5">TLD</th>
+<th class="p-0.5">:Port</th>
 `)
 }
 
@@ -149,7 +156,7 @@ end:
 func linksFromLinkSet(ll []sqlc.ListFilteredLinksRow) (links []link) {
 	links = make([]link, len(ll))
 	for i, l := range ll {
-		title := l.Title.String
+		title := l.Title
 		u, err := url.Parse(l.OriginalUrl)
 		if err != nil {
 			title = "ERROR: " + err.Error()
@@ -157,7 +164,15 @@ func linksFromLinkSet(ll []sqlc.ListFilteredLinksRow) (links []link) {
 		link := newLink(u)
 		link.Id = l.ID
 		link.rowId = i + 1
-		link.title = title
+		link.scheme = title
+		link.scheme = l.Scheme
+		link.subdomain = l.Subdomain
+		link.sld = l.Sld
+		link.tld = l.Tld
+		link.port = l.Port
+		link.path = l.Path
+		link.query = l.Query
+		link.fragment = l.Fragment
 		links[i] = link
 	}
 	return links

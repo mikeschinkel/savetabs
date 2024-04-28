@@ -13,7 +13,7 @@
             <collapse-icon x-show="expanded" @click="toggle" class="clickable"></collapse-icon>
           </span>
         {{end}}
-        <span class="grow p-2 cursor-pointer" hx-get="{{$.HTMLLinksURL}}{{.LinksQueryParams}}" hx-target="#links-section">{{.Label}}</span>
+        <div class="w-full p-2 cursor-pointer" hx-get="{{$.HTMLLinksURL}}{{.LinksQueryParams}}" hx-target="#links-section">{{.Label}}</div>
       </summary>
       <div id="{{.HTMLId}}-kids" class="p-0 m-0"></div>
     </details>

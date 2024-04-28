@@ -103,35 +103,46 @@ SET deleted=1
 WHERE id IN (sqlc.slice('link_ids'))
 ;
 
+
 -- name: ListFilteredLinks :many
 SELECT
-   l.id,
-   l.original_url,
-   l.created_time,
-   l.visited_time,
-   c.id AS content_id,
-   c.title,
-   c.body
+   id,
+   original_url,
+   created_time,
+   visited_time,
+   title,
+   scheme,
+   subdomain,
+   sld,
+   tld,
+   path,
+   query,
+   fragment,
+   port,
+   archived,
+   deleted
 FROM
-   link l
-    LEFT JOIN content c ON c.link_id=l.id
+   link
 WHERE true
-   AND l.id IN (sqlc.slice('ids'))
+   AND id IN (sqlc.slice('ids'))
    AND archived IN (sqlc.slice('links_archived'))
    AND deleted IN (sqlc.slice('links_deleted'))
-GROUP BY
-   l.id,
-   l.original_url,
-   l.created_time,
-   l.visited_time,
-   c.id,
-   c.title,
-   c.body
-HAVING 1=0
-   OR c.created=max(c.created)
-   OR count(c.id)=0
 ORDER BY
-   l.original_url;
+   original_url;
+
+-- name: LoadLatestContent :one
+-- TODO: Untested, ensure query works
+SELECT
+   *
+FROM
+   content
+WHERE
+   link_id = ?
+GROUP BY
+   link_id,
+   created
+HAVING
+   created=max(created);
 
 -- name: ListLatestUnparsedLinkURLs :many
 SELECT
@@ -149,6 +160,7 @@ LIMIT 8; -- LIMIT was chosen as slice len == slice cap for 8
 -- name: UpdateLinkParts :exec
 UPDATE link
 SET
+   title = ?,
    scheme = ?,
    subdomain = ?,
    sld = ?,

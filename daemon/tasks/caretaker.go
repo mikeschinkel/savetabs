@@ -40,10 +40,10 @@ func (c Caretaker) Run(ctx context.Context) (err error) {
 			slog.Error(err.Error(), "url", link.OriginalUrl)
 			continue
 		}
-		var host Host
-		host = parseHost(u)
 
+		host := parseHost(u)
 		parts := sqlc.UpdateLinkPartsParams{
+			Title:       u.String(), // TODO: Change this to real title
 			Scheme:      u.Scheme,
 			Subdomain:   host.Subdomain(),
 			Sld:         host.Sld,

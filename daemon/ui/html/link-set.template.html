@@ -52,9 +52,16 @@
              aria-label="{{.ARIALabel}}"
           >Open</a>
         </td>
+        <td class="p-0.5 max-w-[10vw]">{{.Domain}}</td>
+        <td class="p-0.5 max-w-[15vw] break-word">{{.Path}}</td>
+        <td class="p-0.5 max-w-[20vw] whitespace-nowrap">{{.Query}}</td>
+        <td class="p-0.5 max-w-[20vw] whitespace-nowrap">{{.Fragment}}</td>
+        <td class="p-0.5 max-w-[20vw] break-word">{{.Title}}</td>
+        <td class="p-0.5">{{.Scheme}}</td>
         <td class="p-0.5 text-right">{{.Subdomain}}</td>
         <td class="p-0.5">{{.SecondLevelDomain}}</td>
-        <td class="p-0.5">{{.Title}}</td>
+        <td class="p-0.5">{{.TopLevelDomain}}</td>
+        <td class="p-0.5">{{.Port}}</td>
       </tr>
       {{end}}
       </tbody>
