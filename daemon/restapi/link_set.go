@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/google/safehtml"
 	"savetabs/shared"
 	"savetabs/storage"
 	"savetabs/ui"
@@ -13,6 +14,7 @@ import (
 
 func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 	var msg string
+	var status int
 
 	ctx := context.TODO()
 
@@ -32,9 +34,19 @@ func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 	})
 	switch {
 	case err == nil:
-		var html []byte
-		html, _, err = a.Views.GetAlertHTML(ctx, ui.SuccessAlert, msg)
-		a.sendHTML(w, html)
+		var linksHTML safehtml.HTML
+		linksHTML, status, err = a.Views.GetLinkSetHTML(ctx, r.Host, r.RequestURI, params)
+		if err != nil {
+			if status == 0 {
+				status = http.StatusInternalServerError
+			}
+			a.sendError(w, r, status, err.Error())
+		}
+		alertHTML, _, _ := a.Views.GetOOBAlertHTML(ctx, ui.SuccessAlert, ui.Message{
+			Text:  msg,
+			Items: a.urlsForMsg(ctx, linkIds),
+		})
+		a.sendHTML(w, safehtml.HTMLConcat(linksHTML, alertHTML))
 		goto end
 	case errors.Is(err, ErrFailedToUnmarshal):
 		a.sendError(w, r, http.StatusBadRequest, err.Error())

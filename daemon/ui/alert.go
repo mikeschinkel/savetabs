@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"bytes"
 	"net/http"
 
 	"github.com/google/safehtml"
@@ -78,18 +77,16 @@ func (a *Alert) AlertType() (id safehtml.Identifier) {
 
 var alertTemplate = GetTemplate("alert")
 
-func (*Views) GetAlertHTML(_ Context, typ AlertType, msg string) (html []byte, _ int, err error) {
-	var out bytes.Buffer
+func (*Views) GetAlertHTML(_ Context, typ AlertType, msg Message) (html safehtml.HTML, _ int, err error) {
 	alert := &Alert{
 		alertType:  typ,
 		Message:    msg,
 		HTTPStatus: http.StatusOK, // TODO: Might need more than this
 	}
-	err = alertTemplate.Execute(&out, alert)
+	html, err = alertTemplate.ExecuteToHTML(alert)
 	if err != nil {
 		goto end
 	}
-	html = out.Bytes()
 end:
 	return html, alert.HTTPStatus, err
 }

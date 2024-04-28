@@ -21,9 +21,10 @@ type FilterValueGetter interface {
 }
 
 type Viewer interface {
-	GetAlertHTML(Context, AlertType, string) ([]byte, int, error)
-	GetErrorHTML(Context, error) ([]byte, int, error)
-	GetMenuHTML(Context, string) ([]byte, int, error)
-	GetLinkSetHTML(Context, string, FilterValueGetter, string) ([]byte, int, error)
-	GetMenuItemHTML(Context, string, string) ([]byte, int, error)
+	GetAlertHTML(Context, AlertType, Message) (safehtml.HTML, int, error)
+	GetOOBAlertHTML(Context, AlertType, Message) (safehtml.HTML, int, error)
+	GetErrorHTML(Context, error) (safehtml.HTML, int, error)
+	GetMenuHTML(Context, string) (safehtml.HTML, int, error)
+	GetLinkSetHTML(ctx Context, host, requestURI string, g FilterGetter) (safehtml.HTML, int, error)
+	GetMenuItemHTML(Context, string, string) (safehtml.HTML, int, error)
 }

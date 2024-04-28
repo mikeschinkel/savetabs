@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"net/http"
@@ -130,22 +129,20 @@ func (a allLinks) MenuItemType() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant(`A`)
 }
 
-func (v *Views) GetMenuItemHTML(ctx Context, host, item string) (html []byte, status int, err error) {
-	var out bytes.Buffer
+func (v *Views) GetMenuItemHTML(ctx Context, host, item string) (html safehtml.HTML, status int, err error) {
 	var items []menuItem
 
 	items, err = v.getMenuItemsForType(ctx, host, item)
 	if err != nil {
 		goto end
 	}
-	err = menuTemplate.Execute(&out, menu{
+	html, err = menuTemplate.ExecuteToHTML(menu{
 		apiURL:    makeURL(host),
 		MenuItems: items,
 	})
 	if err != nil {
 		goto end
 	}
-	html = out.Bytes()
 end:
 	return html, http.StatusInternalServerError, err
 }

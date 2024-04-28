@@ -1,9 +1,10 @@
 package ui
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
+
+	"github.com/google/safehtml"
 )
 
 type menu struct {
@@ -21,8 +22,7 @@ func (m menu) HTMLLinksURL() string {
 
 var menuTemplate = GetTemplate("menu")
 
-func (v *Views) GetMenuHTML(ctx Context, host string) (html []byte, status int, err error) {
-	var out bytes.Buffer
+func (v *Views) GetMenuHTML(ctx Context, host string) (html safehtml.HTML, status int, err error) {
 	var items []menuItem
 
 	gts, err := v.Queries.ListGroupsType(ctx)
@@ -30,14 +30,13 @@ func (v *Views) GetMenuHTML(ctx Context, host string) (html []byte, status int, 
 		goto end
 	}
 	items = menuItemsFromListGroupTypesRows(host, gts)
-	err = menuTemplate.Execute(&out, menu{
+	html, err = menuTemplate.ExecuteToHTML(menu{
 		apiURL:    makeURL(host),
 		MenuItems: items,
 	})
 	if err != nil {
 		goto end
 	}
-	html = out.Bytes()
 end:
 	return html, http.StatusInternalServerError, err
 }

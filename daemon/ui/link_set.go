@@ -107,7 +107,7 @@ func (v *Views) GetLinkSetHTML(ctx Context, host string, params FilterValueGette
 		linkIds = append(linkIds, ids...)
 	}
 	if len(linkIds) == 0 {
-		html = []byte("<div>No links for selection</div>")
+		html = safehtml.HTMLFromConstant("<div>No links for selection</div>")
 		goto end
 	} else {
 		ll, err = v.Queries.ListFilteredLinks(ctx, sqlc.ListFilteredLinksParams{
@@ -120,16 +120,15 @@ func (v *Views) GetLinkSetHTML(ctx Context, host string, params FilterValueGette
 		goto end
 	}
 	links = linksFromLinkSet(ll)
-	err = linkSetTemplate.Execute(&out, linkSet{
 		apiURL:   makeURL(host),
 		rawQuery: rawQuery,
 		Links:    links,
 		Label:    strings.Join(labels, " && "),
+	html, err = linkSetTemplate.ExecuteToHTML(linkSet{
 	})
 	if err != nil {
 		goto end
 	}
-	html = out.Bytes()
 end:
 	return html, http.StatusInternalServerError, err
 }

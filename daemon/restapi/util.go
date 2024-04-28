@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/google/safehtml"
 )
 
 type Context = context.Context
@@ -26,7 +28,7 @@ func (a *API) sendError(w http.ResponseWriter, r *http.Request, code int, msg st
 	w.WriteHeader(code)
 	msg = fmt.Sprintf("ERROR[%d]: '%s' from %s.", code, msg, urlForRequest(r))
 	html, _, _ := a.Views.GetErrorHTML(nil, errors.New(msg))
-	_, _ = w.Write(html)
+	_, _ = fmt.Fprint(w, html.String())
 }
 
 // sendJSON sends a success code and json encoded content
@@ -36,10 +38,10 @@ func sendJSON(w http.ResponseWriter, code int, content any) {
 }
 
 // sendHTML sends a success code of 200 and the HTML content provided
-func (a *API) sendHTML(w http.ResponseWriter, html []byte) {
+func (a *API) sendHTML(w http.ResponseWriter, html safehtml.HTML) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(html)
+	_, _ = fmt.Fprint(w, html.String())
 }
 
 //goland:noinspection GoUnusedFunction
@@ -50,7 +52,7 @@ func deleteElement[T any](slice []T, index int) []T {
 	return slice[:len(slice)-1]
 }
 
-func (a *API) sendView(ctx Context, w http.ResponseWriter, r *http.Request, fn func(ctx Context) ([]byte, int, error)) {
+func (a *API) sendView(ctx Context, w http.ResponseWriter, r *http.Request, fn func(ctx Context) (safehtml.HTML, int, error)) {
 	out, status, err := fn(ctx)
 	if err != nil {
 		a.sendError(w, r, status, err.Error())

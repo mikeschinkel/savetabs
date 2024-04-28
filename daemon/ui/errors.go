@@ -1,9 +1,10 @@
 package ui
 
 import (
-	"bytes"
 	"errors"
 	"net/http"
+
+	"github.com/google/safehtml"
 )
 
 var (
@@ -24,19 +25,17 @@ func NewHTTPError(code int, msg string) HttpError {
 
 var errorTemplate = GetTemplate("error")
 
-func (*Views) GetErrorHTML(_ Context, err error) (html []byte, _ int, _ error) {
-	var out bytes.Buffer
+func (*Views) GetErrorHTML(_ Context, err error) (html safehtml.HTML, _ int, _ error) {
 	var httpErr HttpError
 	statusCode := http.StatusInternalServerError
 
 	if errors.As(err, &httpErr) {
 		statusCode = httpErr.StatusCode
 	}
-	err = errorTemplate.Execute(&out, err)
+	html, err = errorTemplate.ExecuteToHTML(err)
 	if err != nil {
 		goto end
 	}
-	html = out.Bytes()
 end:
 	return html, statusCode, err
 }
