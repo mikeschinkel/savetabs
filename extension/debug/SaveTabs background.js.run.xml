@@ -1,5 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="SaveTabs background.js" type="JavascriptDebugType" uri="chrome-extension://jnnlfckgpfafkiiefolamnaakfeepagh/background.js" useFirstLineBreakpoints="true">
+  <configuration default="false" name="SaveTabs background.js" type="JavascriptDebugType" editBeforeRun="true" uri="chrome-extension://jnnlfckgpfafkiiefolamnaakfeepagh/html/scripts/background.js" useFirstLineBreakpoints="true">
+    <mapping url="chrome-extension://jnnlfckgpfafkiiefolamnaakfeepagh/html/scripts" local-file="$PROJECT_DIR$/html/scripts/content.js" />
+    <mapping url="chrome-extension://jnnlfckgpfafkiiefolamnaakfeepagh/html/scripts" local-file="$PROJECT_DIR$/html/scripts/api.js" />
+    <mapping url="chrome-extension://jnnlfckgpfafkiiefolamnaakfeepagh/html/scripts" local-file="$PROJECT_DIR$/html/scripts/chromeUtils.js" />
     <method v="2" />
   </configuration>
 </component>
