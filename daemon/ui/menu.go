@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/safehtml"
+	"savetabs/sqlc"
 )
 
 type menu struct {
@@ -24,8 +25,13 @@ var menuTemplate = GetTemplate("menu")
 
 func (v *Views) GetMenuHTML(ctx Context, host string) (html safehtml.HTML, status int, err error) {
 	var items []menuItem
+	var gts []sqlc.ListGroupsTypeRow
 
-	gts, err := v.Queries.ListGroupsType(ctx)
+	db := sqlc.GetNestedDBTX(v.DataStore)
+	err = db.Exec(func(dbtx sqlc.DBTX) (err error) {
+		gts, err = v.Queries(dbtx).ListGroupsType(ctx)
+		return err
+	})
 	if err != nil {
 		goto end
 	}

@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 
@@ -9,19 +8,13 @@ import (
 	"savetabs/sqlc"
 )
 
-func UpsertLinkSet(ctx Context, lsa LinkSetActionGetter) (msg string, err error) {
+func UpsertLinkSet(ctx Context, ds sqlc.DataStore, lsa LinkSetActionGetter) (msg string, err error) {
 	var db *sqlc.NestedDBTX
-	var ok bool
 	var linkIds []int64
 	var action string
 	var descr = "link"
-	var ds = sqlc.GetDatastore()
 
-	db, ok = ds.DB().(*sqlc.NestedDBTX)
-	if !ok {
-		err = ErrDBNotANestedDCTX
-		goto end
-	}
+	db = sqlc.GetNestedDBTX(ds)
 	linkIds, err = lsa.GetLinkIds()
 	if err != nil {
 		goto end
@@ -29,8 +22,8 @@ func UpsertLinkSet(ctx Context, lsa LinkSetActionGetter) (msg string, err error)
 	if len(linkIds) > 1 {
 		descr += "s"
 	}
-	err = db.Exec(func(tx *sql.Tx) (err error) {
-		q := ds.Queries().WithTx(tx)
+	err = db.Exec(func(tx sqlc.DBTX) (err error) {
+		q := ds.Queries(tx)
 		switch lsa.GetAction() {
 		case shared.ArchiveAction:
 			err = execForLinkdIds(ctx, q, lsa, func(context Context, int64s []int64) error {

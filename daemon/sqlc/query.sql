@@ -41,8 +41,6 @@ ON CONFLICT (name,type)
    DO UPDATE
    SET latest = strftime('%s','now');
 
-SELECT * FROM group_type WHERE type = ? LIMIT 1;
-
 -- name: ListGroupsType :many
 SELECT DISTINCT
    gt.type,
@@ -67,8 +65,30 @@ GROUP BY
 ORDER BY
    gt.sort;
 
+-- name: LoadLinkIdByUrl :one
+SELECT 
+   id
+FROM link
+WHERE true
+   AND original_url = ?
+LIMIT 1
+;
 -- name: LoadLink :one
-SELECT *
+SELECT
+   id,
+   original_url,
+   created_time,
+   visited_time,
+   scheme,
+   subdomain,
+   sld,
+   tld,
+   path,
+   query,
+   fragment,
+   port,
+   url,
+   title
 FROM link
 WHERE true
    AND id = ?
@@ -76,6 +96,33 @@ WHERE true
    AND deleted IN (sqlc.slice('links_deleted'))
 LIMIT 1
 ;
+
+-- name: UpsertLink :one
+INSERT INTO link
+   (original_url,title,visited)
+VALUES
+   (?,?,strftime('%s','now'))
+ON CONFLICT (original_url)
+   DO UPDATE
+      SET
+         title = excluded.title,
+         visited = strftime('%s','now')
+RETURNING id
+;
+-- name: UpsertLinkMetaFromVarJSON :exec
+INSERT INTO meta (link_id,key,value)
+SELECT
+   CAST(json_extract(r.value,'$.link_id') AS INTEGER),
+   CAST(json_extract(r.value,'$.key') AS TEXT),
+   CAST(json_extract(r.value,'$.value') AS TEXT)
+FROM var
+  JOIN json_each( var.value ) r ON var.key='json'
+WHERE var.id = ?
+ON CONFLICT (link_id,key)
+   DO UPDATE
+   SET modified = strftime('%s','now');
+
+
 
 -- name: ListLinks :many
 SELECT *
@@ -102,7 +149,6 @@ UPDATE link
 SET deleted=1
 WHERE id IN (sqlc.slice('link_ids'))
 ;
-
 
 -- name: ListFilteredLinks :many
 SELECT
@@ -185,9 +231,9 @@ WHERE true
    AND l.deleted IN (sqlc.slice('links_deleted'))
 ;
 
--- name: ListLinkIdsByMetadata :many
+-- name: ListLinkIdsByMeta :many
 SELECT CAST(m.link_id AS INTEGER) AS link_id
-FROM metadata m
+FROM meta m
    JOIN link l ON l.id=m.link_id
 WHERE true
    AND m.kv_pair IN (sqlc.slice('kv_pairs'))
@@ -248,17 +294,17 @@ ON CONFLICT (key) DO UPDATE SET value = excluded.value;
 -- name: DeleteVar :exec
 DELETE FROM var WHERE id = ?;
 
--- name: ListMetadata :many
+-- name: ListMeta :many
 SELECT *
-FROM metadata m
+FROM meta m
    JOIN link l ON m.link_id = l.id
 WHERE true
    AND archived IN (sqlc.slice('links_archived'))
    AND deleted IN (sqlc.slice('links_deleted'))
 ORDER BY link_id,key DESC;
 
--- name: UpsertMetadataFromVarJSON :exec
-INSERT INTO metadata (link_id, key, value)
+-- name: UpsertMetaFromVarJSON :exec
+INSERT INTO meta (link_id, key, value)
 SELECT
    r.id,
    json_extract(kv.value,'$.key'),

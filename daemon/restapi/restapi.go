@@ -29,7 +29,6 @@ type API struct {
 	Lock      sync.Mutex
 	Views     Viewer
 	DataStore sqlc.DataStore
-	Queries   *sqlc.Queries
 }
 
 type APIArgs struct {
@@ -49,7 +48,6 @@ func NewAPI(args APIArgs) *API {
 		Views:     args.Views,
 		Mux:       http.NewServeMux(),
 		DataStore: args.DataStore,
-		Queries:   args.DataStore.Queries(),
 	}
 
 	// We now register our api above as the handler for the interface

@@ -82,7 +82,7 @@ type LinkGroup struct {
 	Latest      sql.NullInt64  `json:"latest"`
 }
 
-type Metadatum struct {
+type Meta struct {
 	ID           int64          `json:"id"`
 	LinkID       int64          `json:"link_id"`
 	Key          string         `json:"key"`

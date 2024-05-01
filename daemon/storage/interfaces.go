@@ -29,8 +29,12 @@ type LinkSetGetSetter interface {
 type LinkGetSetter interface {
 	GetId() int64
 	SetId(int64)
+	GetTitle() string
+	SetTitle(string)
 	GetOriginalURL() string
 	SetOriginalURL(string)
+	GetMetaMap() map[string]string
+	SetMetaMap(map[string]string)
 }
 
 type LinkSetActionGetter interface {

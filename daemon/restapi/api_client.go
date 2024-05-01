@@ -112,10 +112,16 @@ type ClientInterface interface {
 	// GetHtmlMenuMenuItem request
 	GetHtmlMenuMenuItem(ctx context.Context, menuItem MenuItem, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PutLinksByUrlLinkUrl request
+	PutLinksByUrlLinkUrl(ctx context.Context, linkUrl LinkUrl, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// PostLinksWithGroupsWithBody request with any body
 	PostLinksWithGroupsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostLinksWithGroups(ctx context.Context, body PostLinksWithGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetLinksLinkId request
+	GetLinksLinkId(ctx context.Context, linkId LinkId, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetReadyz request
 	GetReadyz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -217,6 +223,18 @@ func (c *Client) GetHtmlMenuMenuItem(ctx context.Context, menuItem MenuItem, req
 	return c.Client.Do(req)
 }
 
+func (c *Client) PutLinksByUrlLinkUrl(ctx context.Context, linkUrl LinkUrl, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutLinksByUrlLinkUrlRequest(c.Server, linkUrl)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) PostLinksWithGroupsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostLinksWithGroupsRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -231,6 +249,18 @@ func (c *Client) PostLinksWithGroupsWithBody(ctx context.Context, contentType st
 
 func (c *Client) PostLinksWithGroups(ctx context.Context, body PostLinksWithGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostLinksWithGroupsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetLinksLinkId(ctx context.Context, linkId LinkId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLinksLinkIdRequest(c.Server, linkId)
 	if err != nil {
 		return nil, err
 	}
@@ -640,6 +670,40 @@ func NewGetHtmlMenuMenuItemRequest(server string, menuItem MenuItem) (*http.Requ
 	return req, nil
 }
 
+// NewPutLinksByUrlLinkUrlRequest generates requests for PutLinksByUrlLinkUrl
+func NewPutLinksByUrlLinkUrlRequest(server string, linkUrl LinkUrl) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "link_url", runtime.ParamLocationPath, linkUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/links/by-url/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewPostLinksWithGroupsRequest calls the generic PostLinksWithGroups builder with application/json body
 func NewPostLinksWithGroupsRequest(server string, body PostLinksWithGroupsJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -676,6 +740,40 @@ func NewPostLinksWithGroupsRequestWithBody(server string, contentType string, bo
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetLinksLinkIdRequest generates requests for GetLinksLinkId
+func NewGetLinksLinkIdRequest(server string, linkId LinkId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "link_id", runtime.ParamLocationPath, linkId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/links/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -773,10 +871,16 @@ type ClientWithResponsesInterface interface {
 	// GetHtmlMenuMenuItemWithResponse request
 	GetHtmlMenuMenuItemWithResponse(ctx context.Context, menuItem MenuItem, reqEditors ...RequestEditorFn) (*GetHtmlMenuMenuItemResponse, error)
 
+	// PutLinksByUrlLinkUrlWithResponse request
+	PutLinksByUrlLinkUrlWithResponse(ctx context.Context, linkUrl LinkUrl, reqEditors ...RequestEditorFn) (*PutLinksByUrlLinkUrlResponse, error)
+
 	// PostLinksWithGroupsWithBodyWithResponse request with any body
 	PostLinksWithGroupsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostLinksWithGroupsResponse, error)
 
 	PostLinksWithGroupsWithResponse(ctx context.Context, body PostLinksWithGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostLinksWithGroupsResponse, error)
+
+	// GetLinksLinkIdWithResponse request
+	GetLinksLinkIdWithResponse(ctx context.Context, linkId LinkId, reqEditors ...RequestEditorFn) (*GetLinksLinkIdResponse, error)
 
 	// GetReadyzWithResponse request
 	GetReadyzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetReadyzResponse, error)
@@ -929,6 +1033,30 @@ func (r GetHtmlMenuMenuItemResponse) StatusCode() int {
 	return 0
 }
 
+type PutLinksByUrlLinkUrlResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *IdObject
+	JSON201      *IdObject
+	JSONDefault  *UnexpectedError
+}
+
+// Status returns HTTPResponse.Status
+func (r PutLinksByUrlLinkUrlResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutLinksByUrlLinkUrlResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type PostLinksWithGroupsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -946,6 +1074,29 @@ func (r PostLinksWithGroupsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostLinksWithGroupsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetLinksLinkIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Link
+	JSONDefault  *UnexpectedError
+}
+
+// Status returns HTTPResponse.Status
+func (r GetLinksLinkIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetLinksLinkIdResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1044,6 +1195,15 @@ func (c *ClientWithResponses) GetHtmlMenuMenuItemWithResponse(ctx context.Contex
 	return ParseGetHtmlMenuMenuItemResponse(rsp)
 }
 
+// PutLinksByUrlLinkUrlWithResponse request returning *PutLinksByUrlLinkUrlResponse
+func (c *ClientWithResponses) PutLinksByUrlLinkUrlWithResponse(ctx context.Context, linkUrl LinkUrl, reqEditors ...RequestEditorFn) (*PutLinksByUrlLinkUrlResponse, error) {
+	rsp, err := c.PutLinksByUrlLinkUrl(ctx, linkUrl, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutLinksByUrlLinkUrlResponse(rsp)
+}
+
 // PostLinksWithGroupsWithBodyWithResponse request with arbitrary body returning *PostLinksWithGroupsResponse
 func (c *ClientWithResponses) PostLinksWithGroupsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostLinksWithGroupsResponse, error) {
 	rsp, err := c.PostLinksWithGroupsWithBody(ctx, contentType, body, reqEditors...)
@@ -1059,6 +1219,15 @@ func (c *ClientWithResponses) PostLinksWithGroupsWithResponse(ctx context.Contex
 		return nil, err
 	}
 	return ParsePostLinksWithGroupsResponse(rsp)
+}
+
+// GetLinksLinkIdWithResponse request returning *GetLinksLinkIdResponse
+func (c *ClientWithResponses) GetLinksLinkIdWithResponse(ctx context.Context, linkId LinkId, reqEditors ...RequestEditorFn) (*GetLinksLinkIdResponse, error) {
+	rsp, err := c.GetLinksLinkId(ctx, linkId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLinksLinkIdResponse(rsp)
 }
 
 // GetReadyzWithResponse request returning *GetReadyzResponse
@@ -1182,6 +1351,46 @@ func ParseGetHtmlMenuMenuItemResponse(rsp *http.Response) (*GetHtmlMenuMenuItemR
 	return response, nil
 }
 
+// ParsePutLinksByUrlLinkUrlResponse parses an HTTP response from a PutLinksByUrlLinkUrlWithResponse call
+func ParsePutLinksByUrlLinkUrlResponse(rsp *http.Response) (*PutLinksByUrlLinkUrlResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutLinksByUrlLinkUrlResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest IdObject
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest IdObject
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest UnexpectedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParsePostLinksWithGroupsResponse parses an HTTP response from a PostLinksWithGroupsWithResponse call
 func ParsePostLinksWithGroupsResponse(rsp *http.Response) (*PostLinksWithGroupsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -1202,6 +1411,39 @@ func ParsePostLinksWithGroupsResponse(rsp *http.Response) (*PostLinksWithGroupsR
 			return nil, err
 		}
 		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest UnexpectedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetLinksLinkIdResponse parses an HTTP response from a GetLinksLinkIdWithResponse call
+func ParseGetLinksLinkIdResponse(rsp *http.Response) (*GetLinksLinkIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLinksLinkIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Link
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest UnexpectedError

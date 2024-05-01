@@ -94,7 +94,7 @@ end:
 	return filters
 }
 
-func (f MetadataFilter) String() (s string) {
+func (f MetaFilter) String() (s string) {
 	sb := strings.Builder{}
 	for k, v := range f {
 		sb.WriteString(fmt.Sprintf("key[%s]=%s", k, v))

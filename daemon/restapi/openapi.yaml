@@ -39,7 +39,7 @@ paths:
       - $ref: '#/components/parameters/TagFilter'
       - $ref: '#/components/parameters/KeywordFilter'
       - $ref: '#/components/parameters/BookmarkFilter'
-      - $ref: '#/components/parameters/MetadataFilter'
+      - $ref: '#/components/parameters/MetaFilter'
       responses:
         '200':
           $ref: '#/components/responses/HtmlResponse'
@@ -102,6 +102,62 @@ paths:
         default:
           $ref: '#/components/responses/UnexpectedError'
 
+  /links/by-url/{link_url}:
+    put:
+      summary: Send URL information to be stored
+      parameters:
+      - $ref: '#/components/parameters/LinkUrl'
+      responses:
+        '200':
+          description: The link was updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdObject'
+        '201':
+          description: The link were created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdObject'
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '409':
+          description: Conflict
+        '412':
+          description: Precondition Failed
+        '415':
+          description: Unsupported Media Type
+        '422':
+          description: Unprocessable Entity (WebDAV)
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+
+  /links/{link_id}:
+    get:
+      summary: Get information about a Link (URL)
+      parameters:
+      - $ref: '#/components/parameters/LinkId'
+      responses:
+        '200':
+          description: The link was updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '400':
+          description: Bad Request
+        '404':
+          description: Not Found
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+
   /healthz:
     get:
       summary: Health Check
@@ -123,6 +179,20 @@ paths:
 
 components:
   parameters:
+    LinkId:
+      name: link_id
+      in: path
+      description: ID for the link
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+    LinkUrl:
+      name: link_url
+      in: path
+      description: URL for a link
+      required: true
+      schema:
+        type: string
     GroupTypeFilter:
       in: query
       name: gt
@@ -183,7 +253,7 @@ components:
       description: Bookmark filter for Links
       style: form
       explode: true
-    MetadataFilter:
+    MetaFilter:
       in: query
       name: m
       schema:
@@ -192,7 +262,7 @@ components:
           type: string
       style: form
       explode: true
-      description: Key/Value metadata filter for Links
+      description: Key/Value meta filter for Links
     AlertType:
       in: query
       name: typ

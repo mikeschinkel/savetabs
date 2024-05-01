@@ -93,14 +93,16 @@ end:
 	return html, alert.HTTPStatus, err
 }
 
+type alertOOB struct {
+	AlertHTML safehtml.HTML
+}
+
 func (v *Views) GetOOBAlertHTML(ctx Context, typ AlertType, msg Message) (html safehtml.HTML, status int, err error) {
 	html, status, err = v.GetAlertHTML(ctx, typ, msg)
 	if err != nil {
 		goto end
 	}
-	html, err = alertOOBTemplate.ExecuteToHTML(struct {
-		AlertHTML safehtml.HTML
-	}{
+	html, err = alertOOBTemplate.ExecuteToHTML(alertOOB{
 		AlertHTML: html,
 	})
 	if err != nil {

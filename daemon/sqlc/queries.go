@@ -2,43 +2,43 @@ package sqlc
 
 import (
 	"context"
-	"database/sql"
 )
 
-func UpsertLinks(ctx context.Context, ds DataStore, linksJSON string) (err error) {
-	return upsertFromJSON(ctx, ds, linksJSON, func(ctx context.Context, q *Queries, id int64) error {
+func UpsertLinks(ctx context.Context, db *NestedDBTX, linksJSON string) (err error) {
+	return upsertFromJSON(ctx, db, linksJSON, func(ctx context.Context, q *Queries, id int64) error {
 		return q.UpsertLinksFromVarJSON(ctx, id)
 	})
 }
 
-func UpsertGroups(ctx context.Context, ds DataStore, groupsJSON string) (err error) {
-	return upsertFromJSON(ctx, ds, groupsJSON, func(ctx context.Context, q *Queries, id int64) error {
+func UpsertLinkMeta(ctx context.Context, db *NestedDBTX, metaJSON string) (err error) {
+	return upsertFromJSON(ctx, db, metaJSON, func(ctx context.Context, q *Queries, id int64) error {
+		return q.UpsertLinkMetaFromVarJSON(ctx, id)
+	})
+}
+
+func UpsertGroups(ctx context.Context, db *NestedDBTX, groupsJSON string) (err error) {
+	return upsertFromJSON(ctx, db, groupsJSON, func(ctx context.Context, q *Queries, id int64) error {
 		return q.UpsertGroupsFromVarJSON(ctx, id)
 	})
 }
 
-func UpsertLinkGroups(ctx context.Context, ds DataStore, rgsJSON string) (err error) {
-	return upsertFromJSON(ctx, ds, rgsJSON, func(ctx context.Context, q *Queries, id int64) error {
+func UpsertLinkGroups(ctx context.Context, db *NestedDBTX, rgsJSON string) (err error) {
+	return upsertFromJSON(ctx, db, rgsJSON, func(ctx context.Context, q *Queries, id int64) error {
 		return q.UpsertLinkGroupsFromVarJSON(ctx, id)
 	})
 }
 
-func UpsertMetadata(ctx context.Context, ds DataStore, metadataJSON string) (err error) {
-	return upsertFromJSON(ctx, ds, metadataJSON, func(ctx context.Context, q *Queries, id int64) error {
-		return q.UpsertMetadataFromVarJSON(ctx, id)
+func UpsertMeta(ctx context.Context, db *NestedDBTX, metaJSON string) (err error) {
+	return upsertFromJSON(ctx, db, metaJSON, func(ctx context.Context, q *Queries, id int64) error {
+		return q.UpsertMetaFromVarJSON(ctx, id)
 	})
 }
 
-func upsertFromJSON(ctx context.Context, ds DataStore, j string, fn func(ctx context.Context, q *Queries, id int64) error) (err error) {
-	db, ok := ds.DB().(*NestedDBTX)
-	if !ok {
-		err = ErrDBNotANestedDBTX
-		goto end
-	}
-	err = db.Exec(func(tx *sql.Tx) (err error) {
+func upsertFromJSON(ctx context.Context, db *NestedDBTX, j string, fn func(ctx context.Context, q *Queries, id int64) error) (err error) {
+	err = db.Exec(func(tx DBTX) (err error) {
 		var varId int64
 
-		q := ds.Queries().WithTx(tx)
+		q := ds.Queries(tx)
 		varId, err = q.UpsertVar(ctx, UpsertVarParams{
 			Key:   "json",
 			Value: NewNullString(j),
@@ -57,6 +57,6 @@ func upsertFromJSON(ctx context.Context, ds DataStore, j string, fn func(ctx con
 	end:
 		return err
 	})
-end:
+
 	return err
 }

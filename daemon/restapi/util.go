@@ -33,6 +33,7 @@ func (a *API) sendError(w http.ResponseWriter, r *http.Request, code int, msg st
 
 // sendJSON sends a success code and json encoded content
 func sendJSON(w http.ResponseWriter, code int, content any) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(content)
 }

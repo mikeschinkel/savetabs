@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 
+	"savetabs/sqlc"
 	"savetabs/storage"
 )
 
@@ -25,7 +26,10 @@ func (a *API) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 		a.sendError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
-	err = storage.UpsertLinksWithGroups(ctx, linksWithGroups(links))
+	db := sqlc.GetNestedDBTX(sqlc.GetDatastore())
+	err = db.Exec(func(dbtx sqlc.DBTX) error {
+		return storage.UpsertLinksWithGroups(ctx, db, linksWithGroups(links))
+	})
 	switch {
 	case err == nil:
 		goto end

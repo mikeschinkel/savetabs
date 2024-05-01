@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,11 +16,93 @@ import (
 )
 
 // UpsertLinksWithGroups converts type for slice to type
-func UpsertLinksWithGroups(ctx Context, gs LinksWithGroupsGetSetter) error {
-	return LinksWithGroups(gs.GetLinksWithGroups()).Upsert(ctx)
+func UpsertLinksWithGroups(ctx Context, db *sqlc.NestedDBTX, gs LinksWithGroupsGetSetter) error {
+	return UpsertLinks(ctx, db, LinksWithGroups(gs.GetLinksWithGroups()))
 }
 
 type LinksWithGroups []LinkWithGroupGetSetter
+type LinkWithGroup struct {
+	LinkWithGroupGetSetter
+}
+
+func (links LinksWithGroups) Upsert(ctx context.Context, db *sqlc.NestedDBTX) error {
+	var groupBytes []byte
+	var metaBytes []byte
+	var linkGroupBytes []byte
+	var gg []group
+	var rgs []linkGroup
+	var mm []Meta
+	var me = shared.NewMultiErr()
+
+	slog.Info("Received from Chrome extension", "num_links", len(links))
+
+	urls := links.urls()
+
+	urlBytes, err := json.Marshal(urls)
+	if err != nil {
+		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "link"))
+	}
+
+	throttle()
+	gg = links.groups()
+	groupBytes, err = json.Marshal(gg)
+	if err != nil {
+		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "group"))
+	}
+
+	throttle()
+	rgs = links.linkGroups()
+	linkGroupBytes, err = json.Marshal(rgs)
+	if err != nil {
+		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "link_group"))
+	}
+
+	throttle()
+	mm, err = links.metaFromURLs(urls)
+	if err != nil {
+		me.Add(err, ErrFailedToExtractMeta)
+	}
+
+	throttle()
+	err = db.Exec(func(tx sqlc.DBTX) (err error) {
+		// TODO: Need to use tx, somehow
+		err = sqlc.UpsertLinks(ctx, db, string(urlBytes))
+		if err != nil {
+			me.Add(err, ErrFailedUpsertLinks)
+		}
+
+		throttle()
+		err = sqlc.UpsertLinkGroups(ctx, db, string(linkGroupBytes))
+		if err != nil {
+			me.Add(err, ErrFailedUpsertLinkGroups)
+		}
+
+		throttle()
+		err = sqlc.UpsertGroups(ctx, db, string(groupBytes))
+		if err != nil {
+			me.Add(err, ErrFailedUpsertGroups)
+		}
+
+		metaBytes, err = json.Marshal(mm)
+		if err != nil {
+			me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "meta"))
+		}
+
+		throttle()
+		err = sqlc.UpsertMeta(ctx, db, string(metaBytes))
+		if err != nil {
+			me.Add(err, ErrFailedUpsertMeta)
+		}
+		slog.Info("Saved",
+			"num_links", len(links),
+			"num_link_groups", len(rgs),
+			"num_groups", len(gg),
+			"num_meta", len(mm),
+		)
+		return err
+	})
+	return me.Err()
+}
 
 func (links LinksWithGroups) urls() []string {
 	var appended = make(map[string]struct{})
@@ -110,109 +191,27 @@ func (links LinksWithGroups) linkGroups() []linkGroup {
 	return rgs
 }
 
-func (links LinksWithGroups) UpsertLinks(ctx context.Context, ds sqlc.DataStore) error {
-	var groupBytes []byte
-	var metadataBytes []byte
-	var linkGroupBytes []byte
-	var gg []group
-	var rgs []linkGroup
-	var mm []metadata
-	var me = shared.NewMultiErr()
-
-	slog.Info("Received from Chrome extension", "num_links", len(links))
-
-	urls := links.urls()
-
-	urlBytes, err := json.Marshal(urls)
-	if err != nil {
-		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "link"))
-	}
-
-	throttle()
-	gg = links.groups()
-	groupBytes, err = json.Marshal(gg)
-	if err != nil {
-		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "group"))
-	}
-
-	throttle()
-	rgs = links.linkGroups()
-	linkGroupBytes, err = json.Marshal(rgs)
-	if err != nil {
-		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "link_group"))
-	}
-
-	throttle()
-	mm, err = links.metadataFromURLs(urls)
-	if err != nil {
-		me.Add(err, ErrFailedToExtractMetadata)
-	}
-
-	throttle()
-	err = sqlc.UpsertLinks(ctx, ds, string(urlBytes))
-	if err != nil {
-		me.Add(err, ErrFailedUpsertLinks)
-	}
-
-	throttle()
-	err = sqlc.UpsertLinkGroups(ctx, ds, string(linkGroupBytes))
-	if err != nil {
-		me.Add(err, ErrFailedUpsertLinkGroups)
-	}
-
-	throttle()
-	err = sqlc.UpsertGroups(ctx, ds, string(groupBytes))
-	if err != nil {
-		me.Add(err, ErrFailedUpsertGroups)
-	}
-
-	metadataBytes, err = json.Marshal(mm)
-	if err != nil {
-		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "metadata"))
-	}
-
-	throttle()
-	err = sqlc.UpsertMetadata(ctx, ds, string(metadataBytes))
-	if err != nil {
-		me.Add(err, ErrFailedUpsertMetadata)
-	}
-	slog.Info("Saved",
-		"num_links", len(links),
-		"num_link_groups", len(rgs),
-		"num_groups", len(gg),
-		"num_meta", len(mm),
-	)
-
-	return me.Err()
-}
-
-type metadata struct {
-	Url   *string `json:"url"`
-	Key   string  `json:"key"`
-	Value string  `json:"value"`
-}
-
-func appendMetadataIfNotEmpty(kvs []metadata, u *string, key, value string) []metadata {
+func appendMetaIfNotEmpty(kvs []Meta, u string, key, value string) []Meta {
 	if key == "" {
 		return kvs
 	}
 	if value == "" {
 		return kvs
 	}
-	return append(kvs, metadata{
+	return append(kvs, Meta{
 		Url:   u,
 		Key:   key,
 		Value: value,
 	})
 }
 
-func (links LinksWithGroups) metadata() (kvs []metadata, err error) {
-	return links.metadataFromURLs(links.urls())
+func (links LinksWithGroups) meta() (kvs []Meta, err error) {
+	return links.metaFromURLs(links.urls())
 }
 
-func (links LinksWithGroups) metadataFromURLs(urls []string) (kvs []metadata, err error) {
+func (links LinksWithGroups) metaFromURLs(urls []string) (kvs []Meta, err error) {
 	var urlObj *url.URL
-	kvs = make([]metadata, 0)
+	kvs = make([]Meta, 0)
 	for _, u := range urls {
 		if u == "" {
 			continue
@@ -224,30 +223,30 @@ func (links LinksWithGroups) metadataFromURLs(urls []string) (kvs []metadata, er
 		if !urlObj.IsAbs() {
 			err = errors.Join(ErrUrlNotAbsolute, fmt.Errorf("url=%s", u))
 		}
-		kvs = appendMetadataIfNotEmpty(kvs, &u, "scheme", urlObj.Scheme)
+		kvs = appendMetaIfNotEmpty(kvs, u, "scheme", urlObj.Scheme)
 		host := urlObj.Hostname()
 		tld, sld, sub := extractDomains(host)
-		kvs = append(kvs, []metadata{
+		kvs = append(kvs, []Meta{
 			{
-				Url:   &u,
+				Url:   u,
 				Key:   "tld",
 				Value: tld,
 			},
 			{
-				Url:   &u,
+				Url:   u,
 				Key:   "sld",
 				Value: sld,
 			},
 			{
-				Url:   &u,
+				Url:   u,
 				Key:   "hostname",
 				Value: host,
 			},
 		}...)
-		kvs = appendMetadataIfNotEmpty(kvs, &u, "subdomain", sub)
-		kvs = appendMetadataIfNotEmpty(kvs, &u, "path", urlObj.RawPath)
-		kvs = appendMetadataIfNotEmpty(kvs, &u, "query", urlObj.RawQuery)
-		kvs = appendMetadataIfNotEmpty(kvs, &u, "fragment", urlObj.RawFragment)
+		kvs = appendMetaIfNotEmpty(kvs, u, "subdomain", sub)
+		kvs = appendMetaIfNotEmpty(kvs, u, "path", urlObj.RawPath)
+		kvs = appendMetaIfNotEmpty(kvs, u, "query", urlObj.RawQuery)
+		kvs = appendMetaIfNotEmpty(kvs, u, "fragment", urlObj.RawFragment)
 	}
 end:
 	return kvs, err
@@ -274,50 +273,63 @@ end:
 	return tld, sld, sub
 }
 
-func sanitizeLinksWithGroups(data LinksWithGroups) (_ LinksWithGroups, err error) {
-	for i := 0; i < len(data); i++ {
-		rg := data[i]
-		if rg.GetOriginalURL() == "" {
-			if err == nil {
-				err = errors.Join(ErrUrlNotSpecified, fmt.Errorf("error found in link index %d", i))
-			} else {
-				err = errors.Join(err, fmt.Errorf("error found in link index %d", i))
-			}
-			data = slices.Delete(data, i, i)
-			i--
+func sanitizeLinksWithGroups(links LinksWithGroups) (_ LinksWithGroups, err error) {
+	var _err error
+	for i := 0; i < len(links); i++ {
+		var lwg LinkWithGroup
+		lwg, _err = sanitizeLinkWithGroup(LinkWithGroup{links[i]})
+		if _err == nil {
+			links[i] = lwg.LinkWithGroupGetSetter
 			continue
 		}
-		if rg.GetId() == 0 {
-			data[i].SetId(0)
-		}
-		if rg.GetGroup == nil || rg.GetGroup() == "" {
-			data[i].SetGroup("none")
-		}
-		if rg.GetGroupType == nil || rg.GetGroupType() == "" {
-			data[i].SetGroupType("invalid")
+		links = slices.Delete(links, i, i)
+		i--
+		_err = errors.Join(ErrFoundInLink, fmt.Errorf("index=%d", i), _err)
+		if err == nil {
+			err = _err
+		} else {
+			err = errors.Join(err, _err)
 		}
 	}
-	return data, err
+	return links, err
 }
 
-func (links LinksWithGroups) Upsert(ctx Context) error {
-	var ds sqlc.DataStore
-	var db *sqlc.NestedDBTX
-	var ok bool
+func sanitizeLinkWithGroup(link LinkWithGroup) (_ LinkWithGroup, err error) {
+	var _link LinkGetSetter
+	_link, err = sanitizeLink(link)
+	if err != nil {
+		goto end
+	}
+	link = _link.(LinkWithGroup)
+	if link.GetGroup == nil || link.GetGroup() == "" {
+		link.SetGroup("none")
+	}
+	if link.GetGroupType == nil || link.GetGroupType() == "" {
+		link.SetGroupType("invalid")
+	}
+end:
+	return link, err
+}
 
+func sanitizeLink(link LinkGetSetter) (_ LinkGetSetter, err error) {
+	if link.GetOriginalURL() == "" {
+		err = ErrUrlNotSpecified
+		goto end
+	}
+	if link.GetId() == 0 {
+		link.SetId(0)
+	}
+end:
+	return link, err
+}
+
+func UpsertLinks(ctx Context, db *sqlc.NestedDBTX, links LinksWithGroups) error {
 	links, err := sanitizeLinksWithGroups(links)
 	if err != nil {
 		goto end
 	}
-	ds = sqlc.GetDatastore()
-	db, ok = ds.DB().(*sqlc.NestedDBTX)
-	if !ok {
-		err = ErrDBNotANestedDCTX
-		goto end
-	}
-	err = db.Exec(func(tx *sql.Tx) (err error) {
-		// TODO: Need to use tx, somehow
-		return excludeUnwantedLinks(links).UpsertLinks(ctx, ds)
+	err = db.Exec(func(dbtx sqlc.DBTX) error {
+		return excludeUnwantedLinks(links).Upsert(ctx, db)
 	})
 end:
 	return err

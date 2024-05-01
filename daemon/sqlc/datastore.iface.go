@@ -9,6 +9,5 @@ type DataStore interface {
 	Query(ctx context.Context, sql string) error
 	DB() DBTX
 	Initialize(ctx context.Context) error
-	Queries() *Queries
-	SetQueries(*Queries)
+	Queries(tx DBTX) *Queries
 }

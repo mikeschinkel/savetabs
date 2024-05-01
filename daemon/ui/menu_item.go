@@ -159,29 +159,40 @@ var matchMenuItemKey = regexp.MustCompile(`^(gt|grp)-(.+)$`)
 func (v *Views) getMenuItemsForType(ctx Context, host, key string) (items []menuItem, err error) {
 	var keys []string
 	var gt sqlc.GroupType
+	var gs []sqlc.Group
+	var db *sqlc.NestedDBTX
 
 	if !matchMenuItemKey.MatchString(key) {
 		err = errors.Join(ErrInvalidKeyFormat, fmt.Errorf(`key=%s`, key))
 		goto end
 	}
 	keys = matchMenuItemKey.FindStringSubmatch(key)
-	switch keys[1] {
-	case GroupTypeItemType: // Group Type
-		var gs []sqlc.Group
-		gs, err = v.Queries.ListGroupsByType(ctx, sqlc.ListGroupsByTypeParams{
-			Type:           strings.ToUpper(keys[2]),
-			GroupsArchived: sqlc.NotArchived,
-			GroupsDeleted:  sqlc.NotDeleted,
-		})
-		if err != nil {
-			goto end
-		}
-		gt, err = v.Queries.LoadGroupType(ctx, strings.ToUpper(keys[2]))
-		if err != nil {
-			goto end
+
+	db = sqlc.GetNestedDBTX(v.DataStore)
+	err = db.Exec(func(dbtx sqlc.DBTX) (err error) {
+		q := v.Queries(dbtx)
+		switch keys[1] {
+		case GroupTypeItemType: // Group Type
+			gs, err = q.ListGroupsByType(ctx, sqlc.ListGroupsByTypeParams{
+				Type:           strings.ToUpper(keys[2]),
+				GroupsArchived: sqlc.NotArchived,
+				GroupsDeleted:  sqlc.NotDeleted,
+			})
+			if err != nil {
+				goto end
+			}
+			gt, err = q.LoadGroupType(ctx, strings.ToUpper(keys[2]))
+			if err != nil {
+				goto end
+			}
 		}
 		err = nil
 		items = menuItemsFromGroups(host, gt.Plural.String, gs)
+	end:
+		return err
+	})
+	if err != nil {
+		goto end
 	}
 end:
 	return items, err

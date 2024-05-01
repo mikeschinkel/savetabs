@@ -2,28 +2,29 @@ package sqlc
 
 import (
 	"database/sql"
-	"log"
+	"errors"
 	"log/slog"
 )
 
 type NestedDBTX struct {
 	DBTX
-	tx    *sql.Tx
-	level int
+	tx        *sql.Tx
+	level     int
+	DataStore DataStore
 }
 
-func NewNestedDBTX(db DBTX) DBTX {
+func NewNestedDBTX(ds DataStore) *NestedDBTX {
 	return &NestedDBTX{
-		DBTX: db,
+		DataStore: ds,
+		DBTX:      ds.DB(),
 	}
 }
 
-func (dbtx *NestedDBTX) Begin() (tx *sql.Tx, err error) {
+func (dbtx *NestedDBTX) Begin() (_ *sql.Tx, err error) {
 	var db *sql.DB
 	var ok bool
-
-	if dbtx.level > 0 {
-		dbtx.level++
+	dbtx.level++
+	if dbtx.level > 1 {
 		goto end
 	}
 	db, ok = dbtx.DBTX.(*sql.DB)
@@ -31,6 +32,9 @@ func (dbtx *NestedDBTX) Begin() (tx *sql.Tx, err error) {
 		panic("dbtx not a *sql.DB")
 	}
 	dbtx.tx, err = db.Begin()
+	if err != nil {
+		goto end
+	}
 end:
 	return dbtx.tx, err
 }
@@ -58,27 +62,27 @@ func (dbtx *NestedDBTX) Rollback() (err error) {
 // Exec is a method which abstracts a sql transaction
 //
 // See: https://stackoverflow.com/a/44522218/102699
-func (dbtx *NestedDBTX) Exec(fn func(*sql.Tx) error) (err error) {
-	var tx *sql.Tx
-	tx, err = dbtx.Begin()
-	if err != nil {
-		return err
-	}
+func (dbtx *NestedDBTX) Exec(fn func(DBTX) error) (err error) {
+	_, err = dbtx.Begin()
 	defer func() {
 		if err != nil {
 			slog.Error("NestedDBTX", "error", err.Error())
-			err = tx.Rollback()
-			if err != nil {
+			_err := dbtx.Rollback()
+			if _err != nil {
 				// If this happens, figure out how to make more robust
-				log.Fatal(err.Error())
+				slog.Error(_err.Error())
+				err = errors.Join(err, _err)
 			}
 			return
 		}
-		err = tx.Commit()
+		err = dbtx.Commit()
 	}()
+	if err != nil {
+		return err
+	}
 
 	// run transaction
-	err = fn(tx)
+	err = fn(dbtx)
 
 	return err
 }

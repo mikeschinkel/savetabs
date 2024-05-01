@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS history
 )
 ;
 
-CREATE TABLE IF NOT EXISTS metadata
+CREATE TABLE IF NOT EXISTS meta
 (
    id            INTEGER PRIMARY KEY AUTOINCREMENT,
    link_id       INTEGER      NOT NULL,
@@ -39,18 +39,18 @@ CREATE TABLE IF NOT EXISTS metadata
 )
 ;
 
-DROP INDEX IF EXISTS idx_metadata__kv_pair
+DROP INDEX IF EXISTS idx_meta__kv_pair
 ;
 
-CREATE INDEX idx_metadata__kv_pair ON metadata (kv_pair)
+CREATE INDEX idx_meta__kv_pair ON meta (kv_pair)
 ;
 
-CREATE TRIGGER IF NOT EXISTS update_metadata_modified
+CREATE TRIGGER IF NOT EXISTS update_meta_modified
    AFTER UPDATE
-   ON metadata
+   ON meta
    FOR EACH ROW
 BEGIN
-   UPDATE metadata
+   UPDATE meta
    SET
       modified = CASE
                     WHEN old.value = new.value THEN modified

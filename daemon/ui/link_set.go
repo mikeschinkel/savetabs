@@ -76,104 +76,113 @@ func (v *Views) GetLinkSetHTML(ctx Context, host, requestURI string, params Filt
 	var values []string
 	var queryJSON string
 
-	for _, gt := range FilterTypes {
-		values = params.GetFilterValues(gt)
-		if len(values) == 0 {
-			continue
-		}
-		switch gt {
-		case MetaFilter:
-			ids, err = v.Queries.ListLinkIdsByMetadata(ctx, sqlc.ListLinkIdsByMetadataParams{
-				KvPairs:       values,
-				LinksArchived: sqlc.NotArchived,
-				LinksDeleted:  sqlc.NotDeleted,
-			})
-		case GroupTypeFilter:
-			ids, err = v.Queries.ListLinkIdsByGroupType(ctx, sqlc.ListLinkIdsByGroupTypeParams{
-				GroupTypes:    values,
-				LinksArchived: sqlc.NotArchived,
-				LinksDeleted:  sqlc.NotDeleted,
-			})
-		default:
-			switch {
-			case slices.Contains(values, "none"):
-				ids, err = v.Queries.ListLinkIdsNotInGroupType(ctx, sqlc.ListLinkIdsNotInGroupTypeParams{
-					GroupTypes:    []string{gt},
+	db := sqlc.GetNestedDBTX(v.DataStore)
+	err = db.Exec(func(tx sqlc.DBTX) (err error) {
+		for _, gt := range FilterTypes {
+			values = params.GetFilterValues(gt)
+			if len(values) == 0 {
+				continue
+			}
+			switch gt {
+			case MetaFilter:
+				ids, err = v.Queries(tx).ListLinkIdsByMeta(ctx, sqlc.ListLinkIdsByMetaParams{
+					KvPairs:       values,
+					LinksArchived: sqlc.NotArchived,
+					LinksDeleted:  sqlc.NotDeleted,
+				})
+			case GroupTypeFilter:
+				ids, err = v.Queries(tx).ListLinkIdsByGroupType(ctx, sqlc.ListLinkIdsByGroupTypeParams{
+					GroupTypes:    values,
 					LinksArchived: sqlc.NotArchived,
 					LinksDeleted:  sqlc.NotDeleted,
 				})
 			default:
-				ids, err = v.Queries.ListLinkIdsByGroupSlugs(ctx, sqlc.ListLinkIdsByGroupSlugsParams{
-					Slugs:         values,
-					LinksArchived: sqlc.NotArchived,
-					LinksDeleted:  sqlc.NotDeleted,
-				})
+				switch {
+				case slices.Contains(values, "none"):
+					ids, err = v.Queries(tx).ListLinkIdsNotInGroupType(ctx, sqlc.ListLinkIdsNotInGroupTypeParams{
+						GroupTypes:    []string{gt},
+						LinksArchived: sqlc.NotArchived,
+						LinksDeleted:  sqlc.NotDeleted,
+					})
+				default:
+					ids, err = v.Queries(tx).ListLinkIdsByGroupSlugs(ctx, sqlc.ListLinkIdsByGroupSlugsParams{
+						Slugs:         values,
+						LinksArchived: sqlc.NotArchived,
+						LinksDeleted:  sqlc.NotDeleted,
+					})
+				}
 			}
+			if err != nil {
+				goto end
+			}
+			if len(ids) == 0 {
+				continue
+			}
+			// TODO: Once the UI supports calling API with multiple values this needs to be
+			//       refactored to support AND logic vs. the OR logic it now has by default.
+			linkIds = append(linkIds, ids...)
+		}
+		if len(linkIds) == 0 {
+			html = safehtml.HTMLFromConstant("<div>No links for selection</div>")
+			goto end
+		} else {
+			ll, err = v.Queries(tx).ListFilteredLinks(ctx, sqlc.ListFilteredLinksParams{
+				Ids:           linkIds,
+				LinksArchived: sqlc.NotArchived,
+				LinksDeleted:  sqlc.NotDeleted,
+			})
 		}
 		if err != nil {
 			goto end
 		}
-		if len(ids) == 0 {
-			continue
+		links = linksFromLinkSet(ll)
+		queryJSON, err = params.GetFilterJSON()
+		if err != nil {
+			slog.Error("Failed to get filter JSON", "err", err.Error())
+			queryJSON = "{}"
 		}
-		// TODO: Once the UI supports calling API with multiple values this needs to be
-		//       refactored to support AND logic vs. the OR logic it now has by default.
-		linkIds = append(linkIds, ids...)
-	}
-	if len(linkIds) == 0 {
-		html = safehtml.HTMLFromConstant("<div>No links for selection</div>")
-		goto end
-	} else {
-		ll, err = v.Queries.ListFilteredLinks(ctx, sqlc.ListFilteredLinksParams{
-			Ids:           linkIds,
-			LinksArchived: sqlc.NotArchived,
-			LinksDeleted:  sqlc.NotDeleted,
+		html, err = linkSetTemplate.ExecuteToHTML(linkSet{
+			apiURL:     makeURL(host),
+			Links:      links,
+			Label:      params.GetFilterLabels(),
+			requestURI: requestURI,
+			queryJSON:  queryJSON,
 		})
-	}
-	if err != nil {
-		goto end
-	}
-	links = linksFromLinkSet(ll)
-	queryJSON, err = params.GetFilterJSON()
-	if err != nil {
-		slog.Error("Failed to get filter JSON", "err", err.Error())
-		queryJSON = "{}"
-	}
-	html, err = linkSetTemplate.ExecuteToHTML(linkSet{
-		apiURL:     makeURL(host),
-		Links:      links,
-		Label:      params.GetFilterLabels(),
-		requestURI: requestURI,
-		queryJSON:  queryJSON,
+		if err != nil {
+			goto end
+		}
+	end:
+		return err
 	})
-	if err != nil {
-		goto end
-	}
-end:
 	return html, http.StatusInternalServerError, err
 }
 
 func linksFromLinkSet(ll []sqlc.ListFilteredLinksRow) (links []link) {
 	links = make([]link, len(ll))
 	for i, l := range ll {
-		title := l.Title
-		u, err := url.Parse(l.OriginalUrl)
-		if err != nil {
-			title = "ERROR: " + err.Error()
-		}
-		link := newLink(u)
-		link.Id = l.ID
+		link := linkFromSetLink(l)
 		link.rowId = i + 1
-		link.scheme = title
-		link.scheme = l.Scheme
-		link.subdomain = l.Subdomain
-		link.sld = l.Sld
-		link.tld = l.Tld
-		link.port = l.Port
-		link.path = l.Path
-		link.query = l.Query
-		link.fragment = l.Fragment
-		links[i] = link
+		links[i] = linkFromSetLink(l)
 	}
 	return links
+}
+
+func linkFromSetLink(sl sqlc.ListFilteredLinksRow) (link link) {
+	title := sl.Title
+	u, err := url.Parse(sl.OriginalUrl)
+	if err != nil {
+		title = "ERROR: " + err.Error()
+	}
+	link = newLink(u)
+	link.Id = sl.ID
+	link.scheme = title
+	link.scheme = sl.Scheme
+	link.subdomain = sl.Subdomain
+	link.sld = sl.Sld
+	link.tld = sl.Tld
+	link.port = sl.Port
+	link.path = sl.Path
+	link.query = sl.Query
+	link.fragment = sl.Fragment
+	return link
 }

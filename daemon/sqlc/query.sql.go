@@ -107,7 +107,6 @@ func (q *Queries) GetLinkURLs(ctx context.Context, linkIds []int64) ([]string, e
 const listFilteredLinks = `-- name: ListFilteredLinks :many
 ;
 
-
 SELECT
    id,
    original_url,
@@ -562,11 +561,11 @@ func (q *Queries) ListLinkIdsByGroupType(ctx context.Context, arg ListLinkIdsByG
 	return items, nil
 }
 
-const listLinkIdsByMetadata = `-- name: ListLinkIdsByMetadata :many
+const listLinkIdsByMeta = `-- name: ListLinkIdsByMeta :many
 ;
 
 SELECT CAST(m.link_id AS INTEGER) AS link_id
-FROM metadata m
+FROM meta m
    JOIN link l ON l.id=m.link_id
 WHERE true
    AND m.kv_pair IN (/*SLICE:kv_pairs*/?)
@@ -574,14 +573,14 @@ WHERE true
    AND deleted IN (/*SLICE:links_deleted*/?)
 `
 
-type ListLinkIdsByMetadataParams struct {
+type ListLinkIdsByMetaParams struct {
 	KvPairs       []string `json:"kv_pairs"`
 	LinksArchived []int64  `json:"links_archived"`
 	LinksDeleted  []int64  `json:"links_deleted"`
 }
 
-func (q *Queries) ListLinkIdsByMetadata(ctx context.Context, arg ListLinkIdsByMetadataParams) ([]int64, error) {
-	query := listLinkIdsByMetadata
+func (q *Queries) ListLinkIdsByMeta(ctx context.Context, arg ListLinkIdsByMetaParams) ([]int64, error) {
+	query := listLinkIdsByMeta
 	var queryParams []interface{}
 	if len(arg.KvPairs) > 0 {
 		for _, v := range arg.KvPairs {
@@ -699,8 +698,6 @@ func (q *Queries) ListLinkIdsNotInGroupType(ctx context.Context, arg ListLinkIds
 }
 
 const listLinks = `-- name: ListLinks :many
-;
-
 SELECT id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited, archived, deleted
 FROM link
 WHERE true
@@ -775,9 +772,9 @@ func (q *Queries) ListLinks(ctx context.Context, arg ListLinksParams) ([]Link, e
 	return items, nil
 }
 
-const listMetadata = `-- name: ListMetadata :many
+const listMeta = `-- name: ListMeta :many
 SELECT m.id, link_id, "key", value, kv_pair, m.created_time, modified_time, m.created, modified, l.id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, l.created_time, visited_time, l.created, visited, archived, deleted
-FROM metadata m
+FROM meta m
    JOIN link l ON m.link_id = l.id
 WHERE true
    AND archived IN (/*SLICE:links_archived*/?)
@@ -785,12 +782,12 @@ WHERE true
 ORDER BY link_id,key DESC
 `
 
-type ListMetadataParams struct {
+type ListMetaParams struct {
 	LinksArchived []int64 `json:"links_archived"`
 	LinksDeleted  []int64 `json:"links_deleted"`
 }
 
-type ListMetadataRow struct {
+type ListMetaRow struct {
 	ID            int64          `json:"id"`
 	LinkID        int64          `json:"link_id"`
 	Key           string         `json:"key"`
@@ -820,8 +817,8 @@ type ListMetadataRow struct {
 	Deleted       int64          `json:"deleted"`
 }
 
-func (q *Queries) ListMetadata(ctx context.Context, arg ListMetadataParams) ([]ListMetadataRow, error) {
-	query := listMetadata
+func (q *Queries) ListMeta(ctx context.Context, arg ListMetaParams) ([]ListMetaRow, error) {
+	query := listMeta
 	var queryParams []interface{}
 	if len(arg.LinksArchived) > 0 {
 		for _, v := range arg.LinksArchived {
@@ -844,9 +841,9 @@ func (q *Queries) ListMetadata(ctx context.Context, arg ListMetadataParams) ([]L
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListMetadataRow
+	var items []ListMetaRow
 	for rows.Next() {
-		var i ListMetadataRow
+		var i ListMetaRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.LinkID,
@@ -1042,7 +1039,22 @@ func (q *Queries) LoadLatestContent(ctx context.Context, linkID int64) (Content,
 }
 
 const loadLink = `-- name: LoadLink :one
-SELECT id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited, archived, deleted
+;
+SELECT
+   id,
+   original_url,
+   created_time,
+   visited_time,
+   scheme,
+   subdomain,
+   sld,
+   tld,
+   path,
+   query,
+   fragment,
+   port,
+   url,
+   title
 FROM link
 WHERE true
    AND id = ?
@@ -1057,7 +1069,24 @@ type LoadLinkParams struct {
 	LinksDeleted  []int64 `json:"links_deleted"`
 }
 
-func (q *Queries) LoadLink(ctx context.Context, arg LoadLinkParams) (Link, error) {
+type LoadLinkRow struct {
+	ID          int64          `json:"id"`
+	OriginalUrl string         `json:"original_url"`
+	CreatedTime sql.NullString `json:"created_time"`
+	VisitedTime sql.NullString `json:"visited_time"`
+	Scheme      string         `json:"scheme"`
+	Subdomain   string         `json:"subdomain"`
+	Sld         string         `json:"sld"`
+	Tld         string         `json:"tld"`
+	Path        string         `json:"path"`
+	Query       string         `json:"query"`
+	Fragment    string         `json:"fragment"`
+	Port        string         `json:"port"`
+	Url         sql.NullString `json:"url"`
+	Title       string         `json:"title"`
+}
+
+func (q *Queries) LoadLink(ctx context.Context, arg LoadLinkParams) (LoadLinkRow, error) {
 	query := loadLink
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.ID)
@@ -1078,28 +1107,40 @@ func (q *Queries) LoadLink(ctx context.Context, arg LoadLinkParams) (Link, error
 		query = strings.Replace(query, "/*SLICE:links_deleted*/?", "NULL", 1)
 	}
 	row := q.db.QueryRowContext(ctx, query, queryParams...)
-	var i Link
+	var i LoadLinkRow
 	err := row.Scan(
 		&i.ID,
-		&i.Title,
+		&i.OriginalUrl,
+		&i.CreatedTime,
+		&i.VisitedTime,
 		&i.Scheme,
 		&i.Subdomain,
 		&i.Sld,
 		&i.Tld,
-		&i.Port,
 		&i.Path,
 		&i.Query,
 		&i.Fragment,
-		&i.OriginalUrl,
+		&i.Port,
 		&i.Url,
-		&i.CreatedTime,
-		&i.VisitedTime,
-		&i.Created,
-		&i.Visited,
-		&i.Archived,
-		&i.Deleted,
+		&i.Title,
 	)
 	return i, err
+}
+
+const loadLinkIdByUrl = `-- name: LoadLinkIdByUrl :one
+SELECT 
+   id
+FROM link
+WHERE true
+   AND original_url = ?
+LIMIT 1
+`
+
+func (q *Queries) LoadLinkIdByUrl(ctx context.Context, originalUrl string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, loadLinkIdByUrl, originalUrl)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const updateLinkParts = `-- name: UpdateLinkParts :exec
@@ -1168,6 +1209,33 @@ func (q *Queries) UpsertGroupsFromVarJSON(ctx context.Context, id int64) error {
 	return err
 }
 
+const upsertLink = `-- name: UpsertLink :one
+;
+
+INSERT INTO link
+   (original_url,title,visited)
+VALUES
+   (?,?,strftime('%s','now'))
+ON CONFLICT (original_url)
+   DO UPDATE
+      SET
+         title = excluded.title,
+         visited = strftime('%s','now')
+RETURNING id
+`
+
+type UpsertLinkParams struct {
+	OriginalUrl string `json:"original_url"`
+	Title       string `json:"title"`
+}
+
+func (q *Queries) UpsertLink(ctx context.Context, arg UpsertLinkParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, upsertLink, arg.OriginalUrl, arg.Title)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const upsertLinkGroupsFromVarJSON = `-- name: UpsertLinkGroupsFromVarJSON :exec
 INSERT INTO link_group (group_id, link_id)
 SELECT g.id, r.id
@@ -1188,6 +1256,26 @@ func (q *Queries) UpsertLinkGroupsFromVarJSON(ctx context.Context, id int64) err
 	return err
 }
 
+const upsertLinkMetaFromVarJSON = `-- name: UpsertLinkMetaFromVarJSON :exec
+;
+INSERT INTO meta (link_id,key,value)
+SELECT
+   CAST(json_extract(r.value,'$.link_id') AS INTEGER),
+   CAST(json_extract(r.value,'$.key') AS TEXT),
+   CAST(json_extract(r.value,'$.value') AS TEXT)
+FROM var
+  JOIN json_each( var.value ) r ON var.key='json'
+WHERE var.id = ?
+ON CONFLICT (link_id,key)
+   DO UPDATE
+   SET modified = strftime('%s','now')
+`
+
+func (q *Queries) UpsertLinkMetaFromVarJSON(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, upsertLinkMetaFromVarJSON, id)
+	return err
+}
+
 const upsertLinksFromVarJSON = `-- name: UpsertLinksFromVarJSON :exec
 INSERT INTO link (original_url)
 SELECT r.value AS url
@@ -1204,8 +1292,8 @@ func (q *Queries) UpsertLinksFromVarJSON(ctx context.Context, id int64) error {
 	return err
 }
 
-const upsertMetadataFromVarJSON = `-- name: UpsertMetadataFromVarJSON :exec
-INSERT INTO metadata (link_id, key, value)
+const upsertMetaFromVarJSON = `-- name: UpsertMetaFromVarJSON :exec
+INSERT INTO meta (link_id, key, value)
 SELECT
    r.id,
    json_extract(kv.value,'$.key'),
@@ -1219,8 +1307,8 @@ WHERE var.id = ?
       SET value = excluded.value
 `
 
-func (q *Queries) UpsertMetadataFromVarJSON(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, upsertMetadataFromVarJSON, id)
+func (q *Queries) UpsertMetaFromVarJSON(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, upsertMetaFromVarJSON, id)
 	return err
 }
 

@@ -13,9 +13,8 @@ import (
 var _ DataStore = (*SqliteDataStore)(nil)
 
 type SqliteDataStore struct {
-	queries  *Queries
 	Filepath string
-	db       DBTX
+	db       *sql.DB
 }
 
 func NewSqliteDataStore(dbFile string) DataStore {
@@ -48,12 +47,6 @@ end:
 
 func (ds *SqliteDataStore) Open() (err error) {
 	ds.db, err = sql.Open("sqlite3", ds.Filepath)
-	if err != nil {
-		goto end
-	}
-	ds.db = NewNestedDBTX(ds.db)
-	ds.queries = New(ds.db)
-end:
 	return err
 }
 
@@ -62,14 +55,12 @@ func (ds *SqliteDataStore) Query(ctx context.Context, sql string) (err error) {
 	return err
 }
 
-func (ds *SqliteDataStore) Queries() *Queries {
-	return ds.queries
+func (ds *SqliteDataStore) Queries(dbtx DBTX) *Queries {
+	return &Queries{
+		db: dbtx,
+	}
 }
 
 func (ds *SqliteDataStore) DB() DBTX {
 	return ds.db
-}
-
-func (ds *SqliteDataStore) SetQueries(q *Queries) {
-	ds.queries = q
 }

@@ -60,3 +60,10 @@ func (link LinkWithGroup) GetOriginalURL() string {
 func (link LinkWithGroup) SetOriginalURL(s string) {
 	link.Url = &s
 }
+func (link LinkWithGroup) GetMetaMap() map[string]string {
+	panic("LinkWithGroup.GetMeta() not yet implemented")
+	return nil
+}
+func (link LinkWithGroup) SetMetaMap(m map[string]string) {
+	panic("LinkWithGroup.SetMeta() not yet implemented")
+}

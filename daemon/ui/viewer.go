@@ -12,15 +12,16 @@ var _ Viewer = (*Views)(nil)
 
 type Views struct {
 	DataStore sqlc.DataStore
-	Queries   *sqlc.Queries
+}
+
+func (v *Views) Queries(dbtx sqlc.DBTX) *sqlc.Queries {
+	return v.DataStore.Queries(dbtx)
 }
 
 func NewViews(ds sqlc.DataStore) *Views {
-	v := &Views{
+	return &Views{
 		DataStore: ds,
 	}
-	v.Queries = ds.Queries()
-	return v
 }
 
 //go:embed html/*.template.html

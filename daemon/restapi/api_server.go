@@ -35,9 +35,15 @@ type ServerInterface interface {
 	// Return the HTML for the Menu
 	// (GET /html/menu/{menuItem})
 	GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request, menuItem MenuItem)
+	// Send URL information to be stored
+	// (PUT /links/by-url/{link_url})
+	PutLinksByUrlLinkUrl(w http.ResponseWriter, r *http.Request, linkUrl LinkUrl)
 	// Adds multiple links, each with group info
 	// (POST /links/with-groups)
 	PostLinksWithGroups(w http.ResponseWriter, r *http.Request)
+	// Get information about a Link (URL)
+	// (GET /links/{link_id})
+	GetLinksLinkId(w http.ResponseWriter, r *http.Request, linkId LinkId)
 	// Readiness Check
 	// (GET /readyz)
 	GetReadyz(w http.ResponseWriter, r *http.Request)
@@ -263,12 +269,64 @@ func (siw *ServerInterfaceWrapper) GetHtmlMenuMenuItem(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// PutLinksByUrlLinkUrl operation middleware
+func (siw *ServerInterfaceWrapper) PutLinksByUrlLinkUrl(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "link_url" -------------
+	var linkUrl LinkUrl
+
+	err = runtime.BindStyledParameterWithOptions("simple", "link_url", r.PathValue("link_url"), &linkUrl, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "link_url", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutLinksByUrlLinkUrl(w, r, linkUrl)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // PostLinksWithGroups operation middleware
 func (siw *ServerInterfaceWrapper) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostLinksWithGroups(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetLinksLinkId operation middleware
+func (siw *ServerInterfaceWrapper) GetLinksLinkId(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "link_id" -------------
+	var linkId LinkId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "link_id", r.PathValue("link_id"), &linkId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "link_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLinksLinkId(w, r, linkId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -414,7 +472,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("POST "+options.BaseURL+"/html/linkset", wrapper.PostHtmlLinkset)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu", wrapper.GetHtmlMenu)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu/{menuItem}", wrapper.GetHtmlMenuMenuItem)
+	m.HandleFunc("PUT "+options.BaseURL+"/links/by-url/{link_url}", wrapper.PutLinksByUrlLinkUrl)
 	m.HandleFunc("POST "+options.BaseURL+"/links/with-groups", wrapper.PostLinksWithGroups)
+	m.HandleFunc("GET "+options.BaseURL+"/links/{link_id}", wrapper.GetLinksLinkId)
 	m.HandleFunc("GET "+options.BaseURL+"/readyz", wrapper.GetReadyz)
 
 	return m
