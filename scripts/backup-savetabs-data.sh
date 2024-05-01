@@ -24,10 +24,10 @@ function main {
 
   if [ "${srcHash}" == "${latestHash}" ] ; then
     # No change in source file, no need to backup again
-    echo "Skipping ${srcFile} backup."
+    # echo "Skipping ${srcFile} backup."
     return
   fi
-  echo "Backing up ${srcFile}"
+  # echo "Backing up ${srcFile}"
   cp "${srcFile}" "${dstFile}" >> "${logFile}" 2>&1
 
 }
