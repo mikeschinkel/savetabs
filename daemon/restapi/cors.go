@@ -16,6 +16,9 @@ func (a *API) addCORSHeaders(handler http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Methods", strings.Join([]string{
 			http.MethodGet,
 			http.MethodPost,
+			http.MethodPut,
+			http.MethodDelete,
+			http.MethodPatch,
 			http.MethodOptions,
 		}, ", "))
 
