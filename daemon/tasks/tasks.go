@@ -11,8 +11,8 @@ const (
 	// task execution.
 	// TODO: Change to 1 hour(?) after implementation and debugging
 	// TODO: Make this a user-configurable setting
-	BackgroundTick = 1 * time.Minute
-	//BackgroundTick = 10 * time.Second
+	//BackgroundTick = 1 * time.Minute
+	BackgroundTick = 10 * time.Second
 )
 
 type Context = context.Context

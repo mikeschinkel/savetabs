@@ -33,7 +33,10 @@ func (c Caretaker) Run(ctx context.Context) (err error) {
 	defer slog.Info("Caretaker run complete")
 
 	db := sqlc.GetNestedDBTX(c.DataStore)
-	ll, err = c.Queries(db).ListLatestUnparsedLinkURLs(ctx, sqlc.ListLatestUnparsedLinkURLsParams{})
+	ll, err = c.Queries(db).ListLatestUnparsedLinkURLs(ctx, sqlc.ListLatestUnparsedLinkURLsParams{
+		LinksArchived: sqlc.ArchivedOrNot,
+		LinksDeleted:  sqlc.ArchivedOrNot,
+	})
 	if err != nil {
 		goto end
 	}
@@ -66,8 +69,8 @@ func (c Caretaker) processUnparsedLink(ctx Context, db *sqlc.NestedDBTX, link sq
 		parts = sqlc.UpdateLinkPartsParams{
 			Title:       u.String(), // TODO: Change this to real title
 			Scheme:      u.Scheme,
-			Subdomain:   host.Subdomain(),
-			Sld:         host.Sld,
+			Subdomain:   host.Subdomain,
+			Sld:         host.SLD,
 			Tld:         host.TLD(),
 			Port:        u.Port(),
 			Path:        u.Path,

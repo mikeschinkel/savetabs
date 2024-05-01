@@ -697,6 +697,109 @@ func (q *Queries) ListLinkIdsNotInGroupType(ctx context.Context, arg ListLinkIds
 	return items, nil
 }
 
+const listLinkMeta = `-- name: ListLinkMeta :many
+SELECT m.id, m.link_id, m."key", m.value, m.kv_pair, m.created_time, m.modified_time, m.created, m.modified
+FROM meta m
+   JOIN link l ON m.link_id = l.id
+WHERE true
+   AND archived IN (/*SLICE:links_archived*/?)
+   AND deleted IN (/*SLICE:links_deleted*/?)
+ORDER BY link_id,key DESC
+`
+
+type ListLinkMetaParams struct {
+	LinksArchived []int64 `json:"links_archived"`
+	LinksDeleted  []int64 `json:"links_deleted"`
+}
+
+func (q *Queries) ListLinkMeta(ctx context.Context, arg ListLinkMetaParams) ([]Meta, error) {
+	query := listLinkMeta
+	var queryParams []interface{}
+	if len(arg.LinksArchived) > 0 {
+		for _, v := range arg.LinksArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:links_archived*/?", strings.Repeat(",?", len(arg.LinksArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:links_archived*/?", "NULL", 1)
+	}
+	if len(arg.LinksDeleted) > 0 {
+		for _, v := range arg.LinksDeleted {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:links_deleted*/?", strings.Repeat(",?", len(arg.LinksDeleted))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:links_deleted*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Meta
+	for rows.Next() {
+		var i Meta
+		if err := rows.Scan(
+			&i.ID,
+			&i.LinkID,
+			&i.Key,
+			&i.Value,
+			&i.KvPair,
+			&i.CreatedTime,
+			&i.ModifiedTime,
+			&i.Created,
+			&i.Modified,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLinkMetaForLinkId = `-- name: ListLinkMetaForLinkId :many
+;
+
+SELECT m.key,m.value
+FROM meta m
+   JOIN link l ON m.link_id = l.id
+WHERE link_id = ?
+`
+
+type ListLinkMetaForLinkIdRow struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+func (q *Queries) ListLinkMetaForLinkId(ctx context.Context, linkID int64) ([]ListLinkMetaForLinkIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, listLinkMetaForLinkId, linkID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLinkMetaForLinkIdRow
+	for rows.Next() {
+		var i ListLinkMetaForLinkIdRow
+		if err := rows.Scan(&i.Key, &i.Value); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listLinks = `-- name: ListLinks :many
 SELECT id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited, archived, deleted
 FROM link
@@ -755,120 +858,6 @@ func (q *Queries) ListLinks(ctx context.Context, arg ListLinksParams) ([]Link, e
 			&i.CreatedTime,
 			&i.VisitedTime,
 			&i.Created,
-			&i.Visited,
-			&i.Archived,
-			&i.Deleted,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listMeta = `-- name: ListMeta :many
-SELECT m.id, link_id, "key", value, kv_pair, m.created_time, modified_time, m.created, modified, l.id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, l.created_time, visited_time, l.created, visited, archived, deleted
-FROM meta m
-   JOIN link l ON m.link_id = l.id
-WHERE true
-   AND archived IN (/*SLICE:links_archived*/?)
-   AND deleted IN (/*SLICE:links_deleted*/?)
-ORDER BY link_id,key DESC
-`
-
-type ListMetaParams struct {
-	LinksArchived []int64 `json:"links_archived"`
-	LinksDeleted  []int64 `json:"links_deleted"`
-}
-
-type ListMetaRow struct {
-	ID            int64          `json:"id"`
-	LinkID        int64          `json:"link_id"`
-	Key           string         `json:"key"`
-	Value         string         `json:"value"`
-	KvPair        string         `json:"kv_pair"`
-	CreatedTime   sql.NullString `json:"created_time"`
-	ModifiedTime  sql.NullString `json:"modified_time"`
-	Created       sql.NullInt64  `json:"created"`
-	Modified      sql.NullInt64  `json:"modified"`
-	ID_2          int64          `json:"id_2"`
-	Title         string         `json:"title"`
-	Scheme        string         `json:"scheme"`
-	Subdomain     string         `json:"subdomain"`
-	Sld           string         `json:"sld"`
-	Tld           string         `json:"tld"`
-	Port          string         `json:"port"`
-	Path          string         `json:"path"`
-	Query         string         `json:"query"`
-	Fragment      string         `json:"fragment"`
-	OriginalUrl   string         `json:"original_url"`
-	Url           sql.NullString `json:"url"`
-	CreatedTime_2 sql.NullString `json:"created_time_2"`
-	VisitedTime   sql.NullString `json:"visited_time"`
-	Created_2     sql.NullInt64  `json:"-"`
-	Visited       sql.NullInt64  `json:"visited"`
-	Archived      int64          `json:"archived"`
-	Deleted       int64          `json:"deleted"`
-}
-
-func (q *Queries) ListMeta(ctx context.Context, arg ListMetaParams) ([]ListMetaRow, error) {
-	query := listMeta
-	var queryParams []interface{}
-	if len(arg.LinksArchived) > 0 {
-		for _, v := range arg.LinksArchived {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:links_archived*/?", strings.Repeat(",?", len(arg.LinksArchived))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:links_archived*/?", "NULL", 1)
-	}
-	if len(arg.LinksDeleted) > 0 {
-		for _, v := range arg.LinksDeleted {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:links_deleted*/?", strings.Repeat(",?", len(arg.LinksDeleted))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:links_deleted*/?", "NULL", 1)
-	}
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListMetaRow
-	for rows.Next() {
-		var i ListMetaRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.LinkID,
-			&i.Key,
-			&i.Value,
-			&i.KvPair,
-			&i.CreatedTime,
-			&i.ModifiedTime,
-			&i.Created,
-			&i.Modified,
-			&i.ID_2,
-			&i.Title,
-			&i.Scheme,
-			&i.Subdomain,
-			&i.Sld,
-			&i.Tld,
-			&i.Port,
-			&i.Path,
-			&i.Query,
-			&i.Fragment,
-			&i.OriginalUrl,
-			&i.Url,
-			&i.CreatedTime_2,
-			&i.VisitedTime,
-			&i.Created_2,
 			&i.Visited,
 			&i.Archived,
 			&i.Deleted,
@@ -1058,16 +1047,8 @@ SELECT
 FROM link
 WHERE true
    AND id = ?
-   AND archived IN (/*SLICE:links_archived*/?)
-   AND deleted IN (/*SLICE:links_deleted*/?)
 LIMIT 1
 `
-
-type LoadLinkParams struct {
-	ID            int64   `json:"id"`
-	LinksArchived []int64 `json:"links_archived"`
-	LinksDeleted  []int64 `json:"links_deleted"`
-}
 
 type LoadLinkRow struct {
 	ID          int64          `json:"id"`
@@ -1086,27 +1067,8 @@ type LoadLinkRow struct {
 	Title       string         `json:"title"`
 }
 
-func (q *Queries) LoadLink(ctx context.Context, arg LoadLinkParams) (LoadLinkRow, error) {
-	query := loadLink
-	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ID)
-	if len(arg.LinksArchived) > 0 {
-		for _, v := range arg.LinksArchived {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:links_archived*/?", strings.Repeat(",?", len(arg.LinksArchived))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:links_archived*/?", "NULL", 1)
-	}
-	if len(arg.LinksDeleted) > 0 {
-		for _, v := range arg.LinksDeleted {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:links_deleted*/?", strings.Repeat(",?", len(arg.LinksDeleted))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:links_deleted*/?", "NULL", 1)
-	}
-	row := q.db.QueryRowContext(ctx, query, queryParams...)
+func (q *Queries) LoadLink(ctx context.Context, id int64) (LoadLinkRow, error) {
+	row := q.db.QueryRowContext(ctx, loadLink, id)
 	var i LoadLinkRow
 	err := row.Scan(
 		&i.ID,
@@ -1293,6 +1255,8 @@ func (q *Queries) UpsertLinksFromVarJSON(ctx context.Context, id int64) error {
 }
 
 const upsertMetaFromVarJSON = `-- name: UpsertMetaFromVarJSON :exec
+;
+
 INSERT INTO meta (link_id, key, value)
 SELECT
    r.id,

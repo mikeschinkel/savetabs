@@ -8,34 +8,20 @@ import (
 
 type Host struct {
 	url          *url.URL
-	Sld          string
+	Subdomain    string
+	SLD          string
 	Port         string
 	IsIP         bool
 	IsLocal      bool
 	HasSubdomain bool
 }
 
-func (h Host) Subdomain() (sub string) {
-	var host string
-	var end int
-
-	if h.IsIP {
-		goto end
-	}
-	host = h.url.Hostname()
-	end = len(host) - len(h.Sld)
-	if end == 0 {
-		goto end
-	}
-	sub = host[0 : end-1]
-end:
-	return sub
-}
-
 // TLD returns the Top Level Domain for the host e.g. `com`, `net`, `org`, `edu`
 // TODO: Handle `co.uk`, etc.
 func (h Host) TLD() (tld string) {
 	var idx int
+	var hn string
+
 	if h.IsIP {
 		// No TLD for an IP address
 		goto end
@@ -44,8 +30,9 @@ func (h Host) TLD() (tld string) {
 		// No TLD for a local name like 'localhost' or 'my_mac'
 		goto end
 	}
-	idx = strings.LastIndex(h.Sld, ".")
-	tld = h.Sld[idx+1:]
+	hn = h.url.Hostname()
+	idx = strings.LastIndex(h.url.Hostname(), ".")
+	tld = hn[idx+1:]
 end:
 	return tld
 }
@@ -65,18 +52,19 @@ func parseHost(u *url.URL) (host Host) {
 	case cnt == 0:
 		// When host is like 'localhost', or 'my_app'
 		host.IsLocal = true
-		host.Sld = h
+		host.SLD = h
 	case cnt == 1:
 		// No subdomain
-		host.Sld, _, _ = strings.Cut(h, ".")
+		host.SLD, _, _ = strings.Cut(h, ".")
 	case cnt == 3 && matchIPv4Address.MatchString(h):
 		// Is an IP address
 		host.IsIP = true
-		host.Sld = h
+		host.SLD = h
 	default:
 		// Has subdomain(s)
 		segments := strings.Split(h, ".")
-		host.Sld = segments[len(segments)-2]
+		host.Subdomain = segments[len(segments)-3]
+		host.SLD = segments[len(segments)-2 : len(segments)-1][0]
 		host.HasSubdomain = true
 	}
 	return host

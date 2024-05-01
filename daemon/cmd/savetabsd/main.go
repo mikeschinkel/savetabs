@@ -26,12 +26,12 @@ import (
 )
 
 const (
-	defaultPort = "8642"
+	defaultPort = restapi.DefaultPort
 	DBFile      = "./data/savetabs.db"
 )
 
 func main() {
-	port := flag.String("port", defaultPort, "Port for test HTTP server")
+	port := flag.Int("port", defaultPort, "Port for test HTTP server")
 	flag.Parse()
 
 	err := runServer(port)
@@ -40,7 +40,7 @@ func main() {
 	}
 }
 
-func runServer(port *string) (err error) {
+func runServer(port *int) (err error) {
 	var swagger *openapi3.T
 	var api *restapi.API
 	var ds sqlc.DataStore

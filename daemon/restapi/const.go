@@ -1,5 +1,5 @@
 package restapi
 
 const (
-	DefaultPort = "8642"
+	DefaultPort = 8642
 )

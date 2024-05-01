@@ -92,8 +92,6 @@ SELECT
 FROM link
 WHERE true
    AND id = ?
-   AND archived IN (sqlc.slice('links_archived'))
-   AND deleted IN (sqlc.slice('links_deleted'))
 LIMIT 1
 ;
 
@@ -294,14 +292,22 @@ ON CONFLICT (key) DO UPDATE SET value = excluded.value;
 -- name: DeleteVar :exec
 DELETE FROM var WHERE id = ?;
 
--- name: ListMeta :many
-SELECT *
+-- name: ListLinkMeta :many
+SELECT m.*
 FROM meta m
    JOIN link l ON m.link_id = l.id
 WHERE true
    AND archived IN (sqlc.slice('links_archived'))
    AND deleted IN (sqlc.slice('links_deleted'))
-ORDER BY link_id,key DESC;
+ORDER BY link_id,key DESC
+;
+
+-- name: ListLinkMetaForLinkId :many
+SELECT m.key,m.value
+FROM meta m
+   JOIN link l ON m.link_id = l.id
+WHERE link_id = ?
+;
 
 -- name: UpsertMetaFromVarJSON :exec
 INSERT INTO meta (link_id, key, value)

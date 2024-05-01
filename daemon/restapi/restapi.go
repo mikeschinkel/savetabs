@@ -3,9 +3,11 @@
 package restapi
 
 import (
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -20,8 +22,12 @@ type swagger = openapi3.T
 var _ ServerInterface = (*API)(nil)
 var _ Persister = (*API)(nil)
 
+func RootURL() string {
+	return fmt.Sprintf("http://localhost:%d", DefaultPort)
+}
+
 type API struct {
-	Port      string
+	Port      int
 	Mux       *http.ServeMux
 	Swagger   *swagger
 	Handler   http.Handler
@@ -32,14 +38,14 @@ type API struct {
 }
 
 type APIArgs struct {
-	Port      string
+	Port      int
 	Swagger   *swagger
 	Views     Viewer
 	DataStore sqlc.DataStore
 }
 
 func NewAPI(args APIArgs) *API {
-	if args.Port == "" {
+	if args.Port == 0 {
 		args.Port = DefaultPort
 	}
 	api := &API{
@@ -64,7 +70,7 @@ func NewAPI(args APIArgs) *API {
 	api.Handler = api.addRequestLogging(h)
 	api.Server = &http.Server{
 		Handler: api.Handler,
-		Addr:    net.JoinHostPort("0.0.0.0", api.Port),
+		Addr:    net.JoinHostPort("0.0.0.0", strconv.Itoa(api.Port)),
 	}
 	return api
 }

@@ -26,9 +26,8 @@ end:
 }
 
 func (link Link) Upsert(ctx Context, db *sqlc.NestedDBTX) (linkId int64, err error) {
-	var u string
 
-	u = link.GetOriginalURL()
+	u := link.GetOriginalURL()
 	err = db.Exec(func(dbtx sqlc.DBTX) (err error) {
 		var mj string
 

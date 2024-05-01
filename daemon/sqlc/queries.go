@@ -35,10 +35,10 @@ func UpsertMeta(ctx context.Context, db *NestedDBTX, metaJSON string) (err error
 }
 
 func upsertFromJSON(ctx context.Context, db *NestedDBTX, j string, fn func(ctx context.Context, q *Queries, id int64) error) (err error) {
-	err = db.Exec(func(tx DBTX) (err error) {
+	err = db.Exec(func(dbtx DBTX) (err error) {
 		var varId int64
 
-		q := ds.Queries(tx)
+		q := ds.Queries(dbtx)
 		varId, err = q.UpsertVar(ctx, UpsertVarParams{
 			Key:   "json",
 			Value: NewNullString(j),
