@@ -1,68 +1,67 @@
-import {getApiServerUrl,getHttpOptions} from './api.js';
-import {getAllLinks,setChromeObject,addRecentlySubmittedLinks} from './chromeUtils.js';
+import { apiPostLinksWithGroups } from './api.js';
+import {
+   getAllLinksWithGroups,
+   setChromeObject,
+   addRuntimeMessageListener,
+} from './chromeUtils.js';
 
-console.log("SaveTabs loaded");
+console.log("SaveTabs background.js loaded");
 let intervalHandle;
 
 setChromeObject(chrome)
 
-function apiLinksWithGroupsEndpoint() {
-   return `${getApiServerUrl()}/links/with-groups`
-}
-
-function postLinksWithGroups(lwgs){
-   if (lwgs.length===0) {
-      return
-   }
-   const options = getHttpOptions('POST',lwgs)
-   fetch(apiLinksWithGroupsEndpoint(), options)
-      .then(async response => {
-         console.dir(response)
-         if (!response.ok) {
-            // Handle HTTP errors (status codes other than 200-299)
-            return response.text().then(err => {
-               // Handle any errors (including HTTP errors)
-               let status = `${response.status} - ${response.statusText}`
-               console.log('Error: postLinksWithGroups(): ', status, err);
-               throw new Error(`HTTP Error: ${status}. Details: ${JSON.stringify(err)}`);
-            });
-         }
-         let text = await response.text()
-         return text !== "" ? JSON.stringify(text) : {};
-      })
-      .then(data => {
-         addRecentlySubmittedLinks(lwgs)
-         console.log('Response from server:', data); // Handle the successful response
-      })
-      .catch(err => {
-         console.log('Error: postLinksWithGroups(): ', err); // Handle any errors (including HTTP errors)
-      });
-}
-
-function collectLinks() {
-   getAllLinks()
-      .then(links => {
-         if (links === undefined) {
-            console.log('No new links to post');
-            return
-         }
-         if (!Array.isArray(links)) {
-            console.log('WARNING: Links not an array');
-            return
-         }
-         if (links.length === 0) {
-            console.log('No new links to post');
-            return
-         }
-         console.log('Links:', links);
-         postLinksWithGroups(links)
-      })
-      .catch(error => {
-         // Handle errors
-         console.log('Error: collectLinks(): ', error);
-      });
+/**
+ * Collect all links periodically to submit, in inidividual ones failed to capture them
+ * TODO: Refactor most logic into ./api.js
+ */
+function collectLinksWithGroups() {
+   getAllLinksWithGroups()
+         .then(links => {
+            if (links === undefined) {
+               console.log('No new links to post');
+               return
+            }
+            if (!Array.isArray(links)) {
+               console.log('WARNING: Links not an array');
+               return
+            }
+            if (links.length === 0) {
+               console.log('No new links to post');
+               return
+            }
+            console.log('Links:', links);
+            apiPostLinksWithGroups(links)
+         })
+         .catch(error => {
+            // Handle errors
+            console.log('Error: collectLinks(): ', error);
+         });
    // clearInterval(intervalHandle);
 }
 
-intervalHandle = setInterval(collectLinks, 60 * 1000);
-collectLinks()
+// See https://medium.com/@otiai10/how-to-use-es6-import-with-chrome-extension-bd5217b9c978
+intervalHandle = setInterval(collectLinksWithGroups, 60 * 1000);
+collectLinksWithGroups()
+
+/**
+ * Capture message from content.js which replies with the Chrome Tab it was sent
+ * from because Chrome won't let content scripts access tabs, Doh!
+ */
+addRuntimeMessageListener((message, sender, sendResponse) => {
+   if (message.action !== "savetabs:getActiveTab") {
+      return
+   }
+   sendResponse(sender.tab);
+});
+
+// addTabsCreatedListener(tab => {
+//    putLinkByUrl(tab)
+// });
+
+// addTabsUpdatedListener((tabId, changeInfo, tab) => {
+//    if (changeInfo.status !== 'complete') {
+//       return
+//    }
+//    putLinkByUrl(tab)
+//    console.log(`Tab updated: ${tab.title} - URL: ${tab.url}`);
+// });

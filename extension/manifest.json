@@ -8,8 +8,28 @@
   "permissions": [
     "tabs",
     "tabGroups",
-    "bookmarks"
+    "bookmarks",
+    "activeTab"
   ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["./html/scripts/content-loader.js"],
+      "run_at": "document_idle",
+      "type": "module"
+    }
+  ],
+  "web_accessible_resources": [{
+    "matches": ["http://*/*", "https://*/*"],
+    "resources": [
+      "html/scripts/content.js",
+      "html/scripts/api.js",
+      "html/scripts/chromeUtils.js"
+    ]
+  }],
   "background": {
     "service_worker": "./html/scripts/background.js",
     "type": "module"
