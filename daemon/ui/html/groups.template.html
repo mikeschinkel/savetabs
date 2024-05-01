@@ -1,6 +1,0 @@
-{{range .Groups}}
-<li id="{{.HTMLId}}" hx-get="{{$.Host}}{{.Url}}" hx-trigger="click consume" hx-target="#{{.Target}}" hx-sync="closest li:drop" class="bg-base-200 py-0.5"><span class="text-xl">{{.Name}}</span> <span class="text-sm">— {{.LinkCount}} links</span>
-  <ul id="{{.Target}}"></ul>
-</li>
-{{end}}
-
