@@ -104,6 +104,24 @@ func (q *Queries) GetLinkURLs(ctx context.Context, linkIds []int64) ([]string, e
 	return items, nil
 }
 
+const insertContent = `-- name: InsertContent :exec
+INSERT INTO content
+   (link_id,head,body)
+VALUES
+   (?,?,?)
+`
+
+type InsertContentParams struct {
+	LinkID int64  `json:"link_id"`
+	Head   string `json:"head"`
+	Body   string `json:"body"`
+}
+
+func (q *Queries) InsertContent(ctx context.Context, arg InsertContentParams) error {
+	_, err := q.db.ExecContext(ctx, insertContent, arg.LinkID, arg.Head, arg.Body)
+	return err
+}
+
 const listFilteredLinks = `-- name: ListFilteredLinks :many
 ;
 
@@ -364,12 +382,13 @@ func (q *Queries) ListGroupsType(ctx context.Context) ([]ListGroupsTypeRow, erro
 }
 
 const listLatestUnparsedLinkURLs = `-- name: ListLatestUnparsedLinkURLs :many
+;
 SELECT
    id,
    original_url
 FROM link
 WHERE true
-   AND sld == ''
+   AND parsed = 0
    AND archived IN (/*SLICE:links_archived*/?)
    AND deleted IN (/*SLICE:links_deleted*/?)
 ORDER BY
@@ -801,7 +820,9 @@ func (q *Queries) ListLinkMetaForLinkId(ctx context.Context, linkID int64) ([]Li
 }
 
 const listLinks = `-- name: ListLinks :many
-SELECT id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited, archived, deleted
+;
+
+SELECT id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited, archived, deleted, parsed
 FROM link
 WHERE true
    AND archived IN (/*SLICE:links_archived*/?)
@@ -861,6 +882,7 @@ func (q *Queries) ListLinks(ctx context.Context, arg ListLinksParams) ([]Link, e
 			&i.Visited,
 			&i.Archived,
 			&i.Deleted,
+			&i.Parsed,
 		); err != nil {
 			return nil, err
 		}
@@ -1000,7 +1022,7 @@ func (q *Queries) LoadGroupsBySlug(ctx context.Context, arg LoadGroupsBySlugPara
 
 const loadLatestContent = `-- name: LoadLatestContent :one
 SELECT
-   id, link_id, title, body, created_time, created
+   id, link_id, title, body, head, created_time, created
 FROM
    content
 WHERE
@@ -1021,6 +1043,7 @@ func (q *Queries) LoadLatestContent(ctx context.Context, linkID int64) (Content,
 		&i.LinkID,
 		&i.Title,
 		&i.Body,
+		&i.Head,
 		&i.CreatedTime,
 		&i.Created,
 	)
@@ -1105,7 +1128,7 @@ func (q *Queries) LoadLinkIdByUrl(ctx context.Context, originalUrl string) (int6
 	return id, err
 }
 
-const updateLinkParts = `-- name: UpdateLinkParts :exec
+const updateParsedLink = `-- name: UpdateParsedLink :exec
 
 UPDATE link
 SET
@@ -1117,12 +1140,13 @@ SET
    port = ?,
    path = ?,
    query = ?,
-   fragment = ?
+   fragment = ?,
+   parsed = 1
 WHERE
    original_url = ?
 `
 
-type UpdateLinkPartsParams struct {
+type UpdateParsedLinkParams struct {
 	Title       string `json:"title"`
 	Scheme      string `json:"scheme"`
 	Subdomain   string `json:"subdomain"`
@@ -1136,8 +1160,8 @@ type UpdateLinkPartsParams struct {
 }
 
 // LIMIT was chosen as slice len == slice cap for 8
-func (q *Queries) UpdateLinkParts(ctx context.Context, arg UpdateLinkPartsParams) error {
-	_, err := q.db.ExecContext(ctx, updateLinkParts,
+func (q *Queries) UpdateParsedLink(ctx context.Context, arg UpdateParsedLinkParams) error {
+	_, err := q.db.ExecContext(ctx, updateParsedLink,
 		arg.Title,
 		arg.Scheme,
 		arg.Subdomain,
@@ -1199,18 +1223,20 @@ func (q *Queries) UpsertLink(ctx context.Context, arg UpsertLinkParams) (int64, 
 }
 
 const upsertLinkGroupsFromVarJSON = `-- name: UpsertLinkGroupsFromVarJSON :exec
+;
+
 INSERT INTO link_group (group_id, link_id)
 SELECT g.id, r.id
 FROM var
-   JOIN json_each( var.value ) j ON var.key='json'
-   JOIN link r ON r.original_url=json_extract(j.value,'$.link_url')
-   JOIN ` + "`" + `group` + "`" + ` g ON true
+        JOIN json_each( var.value ) j ON var.key='json'
+        JOIN link r ON r.original_url=json_extract(j.value,'$.link_url')
+        JOIN ` + "`" + `group` + "`" + ` g ON true
       AND g.name=json_extract(j.value,'$.group_name')
       AND g.type=json_extract(j.value,'$.group_type')
 WHERE var.id = ?
 ON CONFLICT (group_id, link_id)
    DO UPDATE
-            SET latest = strftime('%s','now')
+   SET latest = strftime('%s','now')
 `
 
 func (q *Queries) UpsertLinkGroupsFromVarJSON(ctx context.Context, id int64) error {
@@ -1220,13 +1246,14 @@ func (q *Queries) UpsertLinkGroupsFromVarJSON(ctx context.Context, id int64) err
 
 const upsertLinkMetaFromVarJSON = `-- name: UpsertLinkMetaFromVarJSON :exec
 ;
+
 INSERT INTO meta (link_id,key,value)
 SELECT
    CAST(json_extract(r.value,'$.link_id') AS INTEGER),
    CAST(json_extract(r.value,'$.key') AS TEXT),
    CAST(json_extract(r.value,'$.value') AS TEXT)
 FROM var
-  JOIN json_each( var.value ) r ON var.key='json'
+        JOIN json_each( var.value ) r ON var.key='json'
 WHERE var.id = ?
 ON CONFLICT (link_id,key)
    DO UPDATE
@@ -1239,14 +1266,21 @@ func (q *Queries) UpsertLinkMetaFromVarJSON(ctx context.Context, id int64) error
 }
 
 const upsertLinksFromVarJSON = `-- name: UpsertLinksFromVarJSON :exec
-INSERT INTO link (original_url)
-SELECT r.value AS url
+;
+
+INSERT INTO link (original_url,title,visited)
+SELECT
+   json_extract(r.value,'$.original_url'),
+   json_extract(r.value,'$.title'),
+   strftime('%s','now')
 FROM var
    JOIN json_each( var.value ) r ON var.key='json'
 WHERE var.id = ?
 ON CONFLICT (original_url)
    DO UPDATE
-            SET visited = strftime('%s','now')
+   SET
+      title = excluded.title,
+      visited = strftime('%s','now')
 `
 
 func (q *Queries) UpsertLinksFromVarJSON(ctx context.Context, id int64) error {

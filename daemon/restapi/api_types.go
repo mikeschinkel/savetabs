@@ -44,11 +44,12 @@ type JSONError struct {
 
 // Link defines model for Link.
 type Link struct {
+	Html *string `json:"html,omitempty"`
+
 	// Id Primary key identifier
 	Id          *Id     `json:"id,omitempty"`
 	OriginalUrl *string `json:"originalUrl,omitempty"`
 	Title       *string `json:"title,omitempty"`
-	Url         *string `json:"url,omitempty"`
 }
 
 // LinkWithGroup defines model for LinkWithGroup.
@@ -56,12 +57,12 @@ type LinkWithGroup struct {
 	Group     *string `json:"group,omitempty"`
 	GroupId   *int64  `json:"groupId,omitempty"`
 	GroupType *string `json:"groupType,omitempty"`
+	Html      *string `json:"html,omitempty"`
 
 	// Id Primary key identifier
 	Id          *Id     `json:"id,omitempty"`
 	OriginalUrl *string `json:"originalUrl,omitempty"`
 	Title       *string `json:"title,omitempty"`
-	Url         *string `json:"url,omitempty"`
 }
 
 // LinksWithGroups defines model for LinksWithGroups.

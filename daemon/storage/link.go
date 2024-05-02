@@ -26,10 +26,11 @@ end:
 }
 
 func (link Link) Upsert(ctx Context, db *sqlc.NestedDBTX) (linkId int64, err error) {
+	var c *Content
 
 	u := link.GetOriginalURL()
 	err = db.Exec(func(dbtx sqlc.DBTX) (err error) {
-		var mj string
+		//var mj string
 
 		q := db.DataStore.Queries(dbtx)
 		linkId, err = q.UpsertLink(ctx, sqlc.UpsertLinkParams{
@@ -48,12 +49,22 @@ func (link Link) Upsert(ctx Context, db *sqlc.NestedDBTX) (linkId int64, err err
 			goto end
 		}
 		link.SetId(linkId)
-		mj = link.MetaJSON()
-		err = sqlc.UpsertLinkMeta(ctx, db, mj)
+		c = link.Content()
+		err = q.InsertContent(ctx, sqlc.InsertContentParams{
+			LinkID: link.GetId(),
+			Head:   c.Head,
+			Body:   c.Body,
+		})
 		if err != nil {
-			err = errors.Join(ErrFailedUpsertLinkMeta, fmt.Errorf("meta_json=%s", mj), err)
+			err = errors.Join(ErrFailedUpsertLink, err)
 			goto end
 		}
+		//mj = link.MetaJSON()
+		//err = sqlc.UpsertLinkMeta(ctx, db, mj)
+		//if err != nil {
+		//	err = errors.Join(ErrFailedUpsertLinkMeta, fmt.Errorf("meta_json=%s", mj), err)
+		//	goto end
+		//}
 	end:
 		return err
 	})
@@ -87,4 +98,12 @@ func (l Link) MetaJSON() string {
 		)
 	}
 	return string(j)
+}
+
+func (l Link) Content() *Content {
+	c := &Content{
+		LinkId: l.GetId(),
+	}
+	c.setRawContent(l.GetContent())
+	return c
 }

@@ -51,14 +51,23 @@ func (link LinkWithGroup) GetTitle() string {
 func (link LinkWithGroup) SetTitle(s string) {
 	link.Title = &s
 }
-func (link LinkWithGroup) GetOriginalURL() string {
-	if link.Url == nil {
+func (link LinkWithGroup) GetContent() string {
+	if link.Html == nil {
 		return ""
 	}
-	return *link.Url
+	return *link.Html
+}
+func (link LinkWithGroup) SetContent(s string) {
+	link.Html = &s
+}
+func (link LinkWithGroup) GetOriginalURL() string {
+	if link.OriginalUrl == nil {
+		return ""
+	}
+	return *link.OriginalUrl
 }
 func (link LinkWithGroup) SetOriginalURL(s string) {
-	link.Url = &s
+	link.OriginalUrl = &s
 }
 func (link LinkWithGroup) GetMetaMap() map[string]string {
 	panic("LinkWithGroup.GetMeta() not yet implemented")

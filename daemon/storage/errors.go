@@ -18,4 +18,5 @@ var (
 	ErrUrlNotAbsolute         = errors.New("url is not absolute")
 	ErrFailedToArchiveLinks   = errors.New("failed to archive links")
 	ErrFoundInLink            = errors.New("error found in link")
+	ErrHTMLNotParsed          = errors.New("html not parsed")
 )

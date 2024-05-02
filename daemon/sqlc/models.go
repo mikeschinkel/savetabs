@@ -18,6 +18,7 @@ type Content struct {
 	LinkID      int64          `json:"link_id"`
 	Title       string         `json:"title"`
 	Body        string         `json:"body"`
+	Head        string         `json:"head"`
 	CreatedTime sql.NullString `json:"created_time"`
 	Created     sql.NullInt64  `json:"created"`
 }
@@ -70,6 +71,7 @@ type Link struct {
 	Visited     sql.NullInt64  `json:"visited"`
 	Archived    int64          `json:"archived"`
 	Deleted     int64          `json:"deleted"`
+	Parsed      int64          `json:"parsed"`
 }
 
 type LinkGroup struct {

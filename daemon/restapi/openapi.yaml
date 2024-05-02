@@ -383,11 +383,9 @@ components:
           type: string
           format: uri
           nullable: false
-        url:
-          type: string
-          format: uri
-          nullable: false
         title:
+          type: string
+        html:
           type: string
     LinkWithGroup:
       allOf:

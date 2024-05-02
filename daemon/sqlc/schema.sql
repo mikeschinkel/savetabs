@@ -65,11 +65,30 @@ CREATE TABLE IF NOT EXISTS content
    id           INTEGER PRIMARY KEY AUTOINCREMENT,
    link_id      INTEGER     NOT NULL,
    title        VARCHAR(64) NOT NULL,
-   body         TEXT        NOT NULL,
+   body         TEXT        NOT NULL DEFAULT '',
+   head         TEXT        NOT NULL DEFAULT '',
    created_time TEXT GENERATED ALWAYS AS (DATETIME(created, 'unixepoch')) VIRTUAL,
    created      INTEGER DEFAULT (STRFTIME('%s', 'now'))
 )
 ;
+
+DROP TRIGGER IF EXISTS update_content_prevent
+;
+
+-- Trigger to prevent updates
+CREATE TRIGGER IF NOT EXISTS update_content_prevent
+   BEFORE UPDATE ON content
+BEGIN
+   SELECT RAISE(FAIL, 'Updates are not allowed on content table');
+END;
+
+-- -- Trigger to prevent deletes
+-- CREATE TRIGGER delete_content_prevent
+--    BEFORE DELETE ON content
+-- BEGIN
+--    SELECT RAISE(FAIL, 'Deletes are not allowed on content table');
+-- END;
+
 
 CREATE TRIGGER IF NOT EXISTS update_content_modified
    AFTER UPDATE
@@ -202,8 +221,8 @@ CREATE TABLE IF NOT EXISTS link
    created      INTEGER DEFAULT (STRFTIME('%s', 'now')),
    visited      INTEGER DEFAULT (STRFTIME('%s', 'now')),
    archived     INTEGER NOT NULL DEFAULT 0,
-   deleted      INTEGER NOT NULL DEFAULT 0
-
+   deleted      INTEGER NOT NULL DEFAULT 0,
+   parsed       INTEGER NOT NULL DEFAULT 0
 )
 ;
 

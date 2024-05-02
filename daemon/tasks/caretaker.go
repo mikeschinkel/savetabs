@@ -55,7 +55,7 @@ end:
 func (c Caretaker) processUnparsedLink(ctx Context, db *sqlc.NestedDBTX, link sqlc.ListLatestUnparsedLinkURLsRow) error {
 	var u *url.URL
 	var host Host
-	var parts sqlc.UpdateLinkPartsParams
+	var parsed sqlc.UpdateParsedLinkParams
 
 	return db.Exec(func(dbtx sqlc.DBTX) (err error) {
 		slog.Info("Processing", "url", link.OriginalUrl) // TODO: Change to slog.Debug()
@@ -66,7 +66,7 @@ func (c Caretaker) processUnparsedLink(ctx Context, db *sqlc.NestedDBTX, link sq
 		}
 
 		host = parseHost(u)
-		parts = sqlc.UpdateLinkPartsParams{
+		parsed = sqlc.UpdateParsedLinkParams{
 			Title:       u.String(), // TODO: Change this to real title
 			Scheme:      u.Scheme,
 			Subdomain:   host.Subdomain,
@@ -78,8 +78,8 @@ func (c Caretaker) processUnparsedLink(ctx Context, db *sqlc.NestedDBTX, link sq
 			Fragment:    strings.ReplaceAll(u.Fragment, "%20", "+"),
 			OriginalUrl: link.OriginalUrl,
 		}
-		slog.Debug("Updating link", "url", link.OriginalUrl, "parts", parts)
-		err = c.Queries(db).UpdateLinkParts(ctx, parts)
+		slog.Debug("Updating link", "link", parsed)
+		err = c.Queries(db).UpdateParsedLink(ctx, parsed)
 		if err != nil {
 			slog.Error(err.Error(), "url", link.OriginalUrl)
 			goto end

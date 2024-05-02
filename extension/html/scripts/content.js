@@ -12,6 +12,7 @@ sendRuntimeMessage("", {action:"savetabs:getActiveTab"}, {}, (tab) => {
       console.log("ERROR:", err)
       return
    }
+   tab.html = document.documentElement.outerHTML
    console.log("Tab:", tab)
    apiPutLinkByTab(tab)
 });

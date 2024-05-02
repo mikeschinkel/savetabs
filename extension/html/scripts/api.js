@@ -65,7 +65,7 @@ function apiPutLink(link) {
             console.log('Success:', data)
          })
          .catch((error) => {
-            console.error('Error:', error)
+            console.log('Error:', error)
          });
 }
 
@@ -74,14 +74,7 @@ export function newLinkFromTab(tab) {
       tab_id: tab.id,
       original_url: tab.url,
       title: document.title,
-      meta: {
-         "description": document.querySelector('meta[name="description"]')?.content,
-         "og:title": document.querySelector('meta[property="og:title"]')?.content,
-         "og:description": document.querySelector('meta[property="og:description"]')?.content,
-         "twitter:title": document.querySelector('meta[name="twitter:title"]')?.content,
-         "twitter:description": document.querySelector('meta[name="twitter:description"]')?.content,
-         // Add more social and schema.org metadata extraction as required
-      }
+      html: tab.html
    };
 }
 

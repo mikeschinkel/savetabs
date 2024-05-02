@@ -107,6 +107,38 @@ ON CONFLICT (original_url)
          visited = strftime('%s','now')
 RETURNING id
 ;
+
+-- name: UpsertLinksFromVarJSON :exec
+INSERT INTO link (original_url,title,visited)
+SELECT
+   json_extract(r.value,'$.original_url'),
+   json_extract(r.value,'$.title'),
+   strftime('%s','now')
+FROM var
+   JOIN json_each( var.value ) r ON var.key='json'
+WHERE var.id = ?
+ON CONFLICT (original_url)
+   DO UPDATE
+   SET
+      title = excluded.title,
+      visited = strftime('%s','now')
+;
+
+-- name: UpsertLinkGroupsFromVarJSON :exec
+INSERT INTO link_group (group_id, link_id)
+SELECT g.id, r.id
+FROM var
+        JOIN json_each( var.value ) j ON var.key='json'
+        JOIN link r ON r.original_url=json_extract(j.value,'$.link_url')
+        JOIN `group` g ON true
+      AND g.name=json_extract(j.value,'$.group_name')
+      AND g.type=json_extract(j.value,'$.group_type')
+WHERE var.id = ?
+ON CONFLICT (group_id, link_id)
+   DO UPDATE
+   SET latest = strftime('%s','now')
+;
+
 -- name: UpsertLinkMetaFromVarJSON :exec
 INSERT INTO meta (link_id,key,value)
 SELECT
@@ -114,13 +146,12 @@ SELECT
    CAST(json_extract(r.value,'$.key') AS TEXT),
    CAST(json_extract(r.value,'$.value') AS TEXT)
 FROM var
-  JOIN json_each( var.value ) r ON var.key='json'
+        JOIN json_each( var.value ) r ON var.key='json'
 WHERE var.id = ?
 ON CONFLICT (link_id,key)
    DO UPDATE
-   SET modified = strftime('%s','now');
-
-
+   SET modified = strftime('%s','now')
+;
 
 -- name: ListLinks :many
 SELECT *
@@ -188,20 +219,26 @@ GROUP BY
 HAVING
    created=max(created);
 
+-- name: InsertContent :exec
+INSERT INTO content
+   (link_id,head,body)
+VALUES
+   (?,?,?)
+;
 -- name: ListLatestUnparsedLinkURLs :many
 SELECT
    id,
    original_url
 FROM link
 WHERE true
-   AND sld == ''
+   AND parsed = 0
    AND archived IN (sqlc.slice('links_archived'))
    AND deleted IN (sqlc.slice('links_deleted'))
 ORDER BY
    id DESC
 LIMIT 8; -- LIMIT was chosen as slice len == slice cap for 8
 
--- name: UpdateLinkParts :exec
+-- name: UpdateParsedLink :exec
 UPDATE link
 SET
    title = ?,
@@ -212,10 +249,10 @@ SET
    port = ?,
    path = ?,
    query = ?,
-   fragment = ?
+   fragment = ?,
+   parsed = 1
 WHERE
    original_url = ?;
-
 
 -- name: ListLinkIdsByGroupSlugs :many
 SELECT CAST(l.id AS INTEGER) AS link_id
@@ -260,30 +297,6 @@ WHERE TRUE
         JOIN `group` g ON lg.group_id = g.id
       WHERE g.type IN (sqlc.slice('groupTypes'))
    );
-
--- name: UpsertLinksFromVarJSON :exec
-INSERT INTO link (original_url)
-SELECT r.value AS url
-FROM var
-   JOIN json_each( var.value ) r ON var.key='json'
-WHERE var.id = ?
-ON CONFLICT (original_url)
-   DO UPDATE
-            SET visited = strftime('%s','now');
-
--- name: UpsertLinkGroupsFromVarJSON :exec
-INSERT INTO link_group (group_id, link_id)
-SELECT g.id, r.id
-FROM var
-   JOIN json_each( var.value ) j ON var.key='json'
-   JOIN link r ON r.original_url=json_extract(j.value,'$.link_url')
-   JOIN `group` g ON true
-      AND g.name=json_extract(j.value,'$.group_name')
-      AND g.type=json_extract(j.value,'$.group_type')
-WHERE var.id = ?
-ON CONFLICT (group_id, link_id)
-   DO UPDATE
-            SET latest = strftime('%s','now');
 
 -- name: UpsertVar :execlastid
 INSERT INTO var (key,value) VALUES (?,?)

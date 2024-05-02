@@ -8,7 +8,7 @@ type Modifier interface {
 	UpsertLinksWithGroups(Context, LinksWithGroups) error
 }
 
-type LinksWithGroupsGetSetter interface {
+type LinksWithGroupsGetter interface {
 	GetLinkCount() int
 	GetLinksWithGroups() []LinkWithGroupGetSetter
 }
@@ -22,15 +22,18 @@ type LinkWithGroupGetSetter interface {
 	SetGroupType(string)
 }
 
-type LinkSetGetSetter interface {
+type LinkSetGetter interface {
 	GetLinkCount() int
 	GetLinks() []LinkGetSetter
 }
+
 type LinkGetSetter interface {
 	GetId() int64
 	SetId(int64)
 	GetTitle() string
 	SetTitle(string)
+	GetContent() string
+	SetContent(string)
 	GetOriginalURL() string
 	SetOriginalURL(string)
 	GetMetaMap() map[string]string

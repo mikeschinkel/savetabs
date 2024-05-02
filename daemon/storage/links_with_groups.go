@@ -16,22 +16,36 @@ import (
 )
 
 // UpsertLinksWithGroups converts type for slice to type
-func UpsertLinksWithGroups(ctx Context, db *sqlc.NestedDBTX, gs LinksWithGroupsGetSetter) error {
+func UpsertLinksWithGroups(ctx Context, db *sqlc.NestedDBTX, gs LinksWithGroupsGetter) error {
 	return UpsertLinks(ctx, db, LinksWithGroups(gs.GetLinksWithGroups()))
 }
 
+var _ LinkSetGetter = (*LinksWithGroups)(nil)
+
 type LinksWithGroups []LinkWithGroupGetSetter
+
+func (links LinksWithGroups) GetLinkCount() int {
+	return len(links)
+}
+func (links LinksWithGroups) GetLinks() []LinkGetSetter {
+	ll := make([]LinkGetSetter, len(links))
+	for i, l := range links {
+		ll[i] = l
+	}
+	return ll
+}
+
 type LinkWithGroup struct {
 	LinkWithGroupGetSetter
 }
 
 func (links LinksWithGroups) Upsert(ctx context.Context, db *sqlc.NestedDBTX) error {
 	var groupBytes []byte
-	var metaBytes []byte
+	//var metaBytes []byte
 	var linkGroupBytes []byte
 	var gg []group
 	var rgs []linkGroup
-	var mm []Meta
+	//var mm []Meta
 	var me = shared.NewMultiErr()
 
 	slog.Info("Received from Chrome extension", "num_links", len(links))
@@ -57,15 +71,17 @@ func (links LinksWithGroups) Upsert(ctx context.Context, db *sqlc.NestedDBTX) er
 		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "link_group"))
 	}
 
-	throttle()
-	mm, err = links.metaFromURLs(urls)
-	if err != nil {
-		me.Add(err, ErrFailedToExtractMeta)
-	}
+	//throttle()
+	//mm, err = links.metaFromURLs(urls)
+	//if err != nil {
+	//	me.Add(err, ErrFailedToExtractMeta)
+	//}
 
 	throttle()
 	err = db.Exec(func(tx sqlc.DBTX) (err error) {
-		// TODO: Need to use tx, somehow
+
+		// TODO: Remove throttle from transaction
+
 		err = sqlc.UpsertLinks(ctx, db, string(urlBytes))
 		if err != nil {
 			me.Add(err, ErrFailedUpsertLinks)
@@ -83,42 +99,47 @@ func (links LinksWithGroups) Upsert(ctx context.Context, db *sqlc.NestedDBTX) er
 			me.Add(err, ErrFailedUpsertGroups)
 		}
 
-		metaBytes, err = json.Marshal(mm)
-		if err != nil {
-			me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "meta"))
-		}
-
-		throttle()
-		err = sqlc.UpsertMeta(ctx, db, string(metaBytes))
-		if err != nil {
-			me.Add(err, ErrFailedUpsertMeta)
-		}
+		//metaBytes, err = json.Marshal(mm)
+		//if err != nil {
+		//	me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "meta"))
+		//}
+		//
+		//throttle()
+		//err = sqlc.UpsertMeta(ctx, db, string(metaBytes))
+		//if err != nil {
+		//	me.Add(err, ErrFailedUpsertMeta)
+		//}
 		slog.Info("Saved",
 			"num_links", len(links),
 			"num_link_groups", len(rgs),
 			"num_groups", len(gg),
-			"num_meta", len(mm),
+			//"num_meta", len(mm),
 		)
 		return err
 	})
 	return me.Err()
 }
 
-func (links LinksWithGroups) urls() []string {
+func (links LinksWithGroups) urls() []sqlc.UpsertLinkParams {
 	var appended = make(map[string]struct{})
-	var urls = make([]string, 0)
+	var lnkParams = make([]sqlc.UpsertLinkParams, len(links))
 	for _, r := range links {
-		if r.GetOriginalURL() == "" {
+		u := r.GetOriginalURL()
+		if u == "" {
 			continue
 		}
-		_, seen := appended[r.GetOriginalURL()]
+		_, seen := appended[u]
 		if seen {
+			// De-dup URL from multiple tab groups.
 			continue
 		}
-		appended[r.GetOriginalURL()] = struct{}{}
-		urls = append(urls, r.GetOriginalURL())
+		appended[u] = struct{}{}
+		lnkParams = append(lnkParams, sqlc.UpsertLinkParams{
+			OriginalUrl: u,
+			Title:       r.GetTitle(),
+		})
 	}
-	return urls
+	return lnkParams
 }
 
 func (links LinksWithGroups) groups() []group {
@@ -209,10 +230,11 @@ func (links LinksWithGroups) meta() (kvs []Meta, err error) {
 	return links.metaFromURLs(links.urls())
 }
 
-func (links LinksWithGroups) metaFromURLs(urls []string) (kvs []Meta, err error) {
+func (links LinksWithGroups) metaFromURLs(lnkParams []sqlc.UpsertLinkParams) (kvs []Meta, err error) {
 	var urlObj *url.URL
 	kvs = make([]Meta, 0)
-	for _, u := range urls {
+	for _, lp := range lnkParams {
+		u := lp.OriginalUrl
 		if u == "" {
 			continue
 		}
@@ -223,30 +245,7 @@ func (links LinksWithGroups) metaFromURLs(urls []string) (kvs []Meta, err error)
 		if !urlObj.IsAbs() {
 			err = errors.Join(ErrUrlNotAbsolute, fmt.Errorf("url=%s", u))
 		}
-		kvs = appendMetaIfNotEmpty(kvs, u, "scheme", urlObj.Scheme)
-		host := urlObj.Hostname()
-		tld, sld, sub := extractDomains(host)
-		kvs = append(kvs, []Meta{
-			{
-				Url:   u,
-				Key:   "tld",
-				Value: tld,
-			},
-			{
-				Url:   u,
-				Key:   "sld",
-				Value: sld,
-			},
-			{
-				Url:   u,
-				Key:   "hostname",
-				Value: host,
-			},
-		}...)
-		kvs = appendMetaIfNotEmpty(kvs, u, "subdomain", sub)
-		kvs = appendMetaIfNotEmpty(kvs, u, "path", urlObj.RawPath)
-		kvs = appendMetaIfNotEmpty(kvs, u, "query", urlObj.RawQuery)
-		kvs = appendMetaIfNotEmpty(kvs, u, "fragment", urlObj.RawFragment)
+		// TODO: Add Meta from HTML <head>
 	}
 end:
 	return kvs, err
@@ -316,26 +315,34 @@ func sanitizeLink(link LinkGetSetter) (_ LinkGetSetter, err error) {
 		err = ErrUrlNotSpecified
 		goto end
 	}
-	if link.GetId() == 0 {
-		link.SetId(0)
-	}
 end:
 	return link, err
 }
 
-func UpsertLinks(ctx Context, db *sqlc.NestedDBTX, links LinksWithGroups) error {
-	links, err := sanitizeLinksWithGroups(links)
+func UpsertLinks(ctx Context, db *sqlc.NestedDBTX, links LinksWithGroups) (err error) {
+	links, err = sanitizeLinksWithGroups(links)
 	if err != nil {
 		goto end
 	}
 	err = db.Exec(func(dbtx sqlc.DBTX) error {
-		return excludeUnwantedLinks(links).Upsert(ctx, db)
+		gs := ExcludeUnwantedLinks(links)
+		return linksWithGroupsFromLinkSetGetters(gs).Upsert(ctx, db)
 	})
 end:
 	return err
 }
 
-// excludeUnwantedLinks removes unwanted URLs such as "about:blank" and "chrome://*"
+func linksWithGroupsFromLinkSetGetters(gs []LinkGetSetter) (links LinksWithGroups) {
+	links = make(LinksWithGroups, len(gs))
+	for i, link := range gs {
+		links[i] = LinkWithGroup{
+			LinkWithGroupGetSetter: link.(LinkWithGroupGetSetter),
+		}
+	}
+	return links
+}
+
+// ExcludeUnwantedLinks removes unwanted URLs such as "about:blank" and "chrome://*"
 // TODO: Enhance to be end-user scriptable, ideally using two or more approaches:
 //
 //	https://github.com/expr-lang/expr | https://expr-lang.org/
@@ -354,22 +361,28 @@ end:
 //	https://github.com/elsaland/elsa
 //	https://github.com/antonvolkoff/goluajit
 //	https://github.com/risor-io/risor
-func excludeUnwantedLinks(links LinksWithGroups) LinksWithGroups {
-	wanted := make(LinksWithGroups, len(links))
+func ExcludeUnwantedLinks(linkset LinkSetGetter) []LinkGetSetter {
+	wanted := make([]LinkGetSetter, linkset.GetLinkCount())
 	index := 0
-	for _, link := range links {
-		if link.GetOriginalURL == nil {
-			continue
-		}
-		u := link.GetOriginalURL()
-		switch {
-		case u == "about:blank":
-			continue
-		case strings.HasPrefix(u, "chrome://"):
+	for _, link := range linkset.GetLinks() {
+		if !IncludeURL(link.GetOriginalURL()) {
 			continue
 		}
 		wanted[index] = link
 		index++
 	}
-	return wanted
+	return wanted[:index]
+}
+
+func IncludeURL(u string) (include bool) {
+	switch {
+	case u == "about:blank":
+	case strings.HasPrefix(u, "chrome:"):
+	case strings.HasPrefix(u, "edge:"):
+	case strings.HasPrefix(u, "view-source:"):
+	case strings.HasPrefix(u, "chrome://"):
+	default:
+		include = true
+	}
+	return include
 }

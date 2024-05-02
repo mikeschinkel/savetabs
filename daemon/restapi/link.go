@@ -29,6 +29,7 @@ type link struct {
 	Path        string            `json:"path,omitempty"`
 	Query       string            `json:"query,omitempty"`
 	Fragment    string            `json:"fragment,omitempty"`
+	HTML        string            `json:"html,omitempty"`
 }
 
 func (l *link) GetId() int64 {
@@ -45,6 +46,14 @@ func (l *link) GetTitle() string {
 
 func (l *link) SetTitle(t string) {
 	l.Title = t
+}
+
+func (l *link) GetContent() string {
+	return l.HTML
+}
+
+func (l *link) SetContent(h string) {
+	l.HTML = h
 }
 
 func (l *link) GetOriginalURL() string {

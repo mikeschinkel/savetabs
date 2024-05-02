@@ -11,6 +11,36 @@ import (
 	"savetabs/storage"
 )
 
+var _ storage.LinksWithGroupsGetter = (*linksWithGroups)(nil)
+
+type linksWithGroupsForJSON []linkWithGroupForJSON
+
+func (links linksWithGroupsForJSON) GetLinkCount() int {
+	return len(links)
+}
+
+func (links linksWithGroupsForJSON) GetLinksWithGroups() storage.LinksWithGroupsGetter {
+	ll := make(linksWithGroups, links.GetLinkCount())
+	for i, link := range links {
+		ll[i] = LinkWithGroup{
+			Group:       &link.Group,
+			GroupId:     &link.GroupId,
+			GroupType:   &link.GroupType,
+			OriginalUrl: &link.OriginalURL,
+			Title:       &link.Title,
+		}
+	}
+	return ll
+}
+
+type linkWithGroupForJSON struct {
+	OriginalURL string `json:"original_url"`
+	Title       string `json:"title"`
+	GroupId     int64  `json:"groupId"`
+	GroupType   string `json:"groupType"`
+	Group       string `json:"group"`
+}
+
 func (a *API) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 	ctx := context.TODO()
 
@@ -20,7 +50,7 @@ func (a *API) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 		a.sendError(w, r, http.StatusBadGateway, err.Error())
 		return
 	}
-	var links LinksWithGroups
+	var links linksWithGroupsForJSON
 	err = json.Unmarshal(body, &links)
 	if err != nil {
 		a.sendError(w, r, http.StatusBadRequest, err.Error())
@@ -28,7 +58,7 @@ func (a *API) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 	}
 	db := sqlc.GetNestedDBTX(sqlc.GetDatastore())
 	err = db.Exec(func(dbtx sqlc.DBTX) error {
-		return storage.UpsertLinksWithGroups(ctx, db, linksWithGroups(links))
+		return storage.UpsertLinksWithGroups(ctx, db, links.GetLinksWithGroups())
 	})
 	switch {
 	case err == nil:
@@ -44,7 +74,7 @@ func (a *API) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 end:
 }
 
-var _ storage.LinksWithGroupsGetSetter = (*linksWithGroups)(nil)
+var _ storage.LinksWithGroupsGetter = (*linksWithGroups)(nil)
 
 type linksWithGroups LinksWithGroups
 
