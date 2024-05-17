@@ -1,231 +1,169 @@
 package ui
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"regexp"
-	"strings"
 
 	"github.com/google/safehtml"
-	"savetabs/sqlc"
+	"savetabs/model"
+	"savetabs/shared"
 )
 
-type IconState = safehtml.Identifier
+//goland:noinspection GoUnusedGlobalVariable
 
-var (
-	BlankIcon     IconState = safehtml.IdentifierFromConstant("blank")
-	ExpandedIcon  IconState = safehtml.IdentifierFromConstant("expanded")
-	CollapsedIcon IconState = safehtml.IdentifierFromConstant("collapsed")
-)
-
-type menuItem struct {
-	apiURL string
-	Id     safehtml.Identifier
-	Source MenuItemable
-	Label  string
-	menuItemArgs
-}
-type menuItemArgs struct {
-	IconState    IconState
-	DetailsClass string
-	SummaryClass string
+type HTMLMenuItem struct {
+	HTMLId           safehtml.Identifier
+	Label            safehtml.HTML
+	LinksQueryParams safehtml.URL
+	Menu             *HTMLMenu
+	MenuItemArgs
 }
 
-const topLevelSummaryClass = "py-4 my-0"
-
-func newMenuItem(src MenuItemable, host, label string) menuItem {
-	return newMenuItemWithArgs(src, host, label, menuItemArgs{
-		SummaryClass: topLevelSummaryClass,
-		IconState:    CollapsedIcon,
-	})
+type MenuItemArgs struct {
+	IconState IconState
 }
 
-func newMenuItemWithArgs(src MenuItemable, host, label string, args menuItemArgs) menuItem {
-	mi := menuItem{
-		apiURL:       makeURL(host),
-		Source:       src,
-		Label:        label,
-		menuItemArgs: args,
+func newHTMLMenuItem(menu *HTMLMenu, mi model.MenuItem) HTMLMenuItem {
+	return newHTMLMenuItem(menu, mi)
+}
+
+func newHTMLMenuItemWithArgs(menu *HTMLMenu, mi model.MenuItem, args MenuItemArgs) HTMLMenuItem {
+	return HTMLMenuItem{}.RenewWithArgs(menu, mi, &args)
+}
+
+var pristineHTMLMenuItem = HTMLMenuItem{
+	MenuItemArgs: MenuItemArgs{
+		IconState: CollapsedIcon,
+	},
+}
+
+func (hmi HTMLMenuItem) Renew(menu *HTMLMenu, mi model.MenuItem) HTMLMenuItem {
+	return hmi.RenewWithArgs(menu, mi, nil)
+}
+
+func (hmi HTMLMenuItem) RenewWithArgs(menu *HTMLMenu, mi model.MenuItem, args *MenuItemArgs) HTMLMenuItem {
+	hmi = pristineHTMLMenuItem
+	hmi.HTMLId = shared.MakeSafeId(mi.Id)
+	hmi.Label = shared.MakeSafeHTML(mi.Label)
+	hmi.Menu = menu
+	hmi.LinksQueryParams = shared.MakeSafeURL(`?` + fmt.Sprintf("%s=%s", mi.Menu.Type, mi.LocalId))
+	if args != nil {
+		hmi.MenuItemArgs = *args
 	}
-	mi.Id = mi.HTMLId()
-	return mi
+	return hmi
 }
 
-func (mi menuItem) IconIsBlank() bool {
-	return mi.IconState == BlankIcon
+func (hmi HTMLMenuItem) IsIconBlank() bool {
+	return hmi.IconState == BlankIcon
 }
 
-func (mi menuItem) Slug() safehtml.Identifier {
-	return mi.Source.HTMLId()
+func (hmi HTMLMenuItem) IsTopLevelMenu() bool {
+	return hmi.Menu.Level == 0
 }
 
-func (mi menuItem) LinksQueryParams() string {
-	return "?" + mi.Source.LinksQueryParams()
+func (hmi HTMLMenuItem) NotTopLevelMenu() bool {
+	return hmi.Menu.Level != 0
 }
 
-func (mi menuItem) HTMLId() safehtml.Identifier {
-	return safehtml.IdentifierFromConstantPrefix(`mi`, mi.Slug().String())
+func (hmi HTMLMenuItem) Slug() safehtml.Identifier {
+	return hmi.HTMLId
 }
 
-func newGroupFromSqlcGroup(g sqlc.Group) group {
-	return group{
-		Id:       g.ID,
-		Name:     g.Name,
-		Type:     g.Type,
-		TypeName: g.Name,
-	}
+type MenuItemHTMLParams struct {
+	APIURL   safehtml.URL
+	Menu     *HTMLMenu
+	MenuItem safehtml.HTML
+	MenuType shared.MenuType
 }
 
-func menuItemsFromListGroupTypesRows(host string, gtrs []sqlc.ListGroupsTypeRow) []menuItem {
-	var menuItems []menuItem
+// GetMenuItemHTML responds to HTTP GET request with an text/html response
+// containing the HTMX=flavored HTML for a menu item, which also includes its
+// children.
+func GetMenuItemHTML(ctx Context, p MenuItemHTMLParams) (hr HTMLResponse, err error) {
+	var items model.MenuItems
+	var htmlItems []HTMLMenuItem
+	var m HTMLMenu
 
-	cnt := len(gtrs)
+	hr.HTTPStatus = http.StatusOK
 
-	// No need to show invalid as a group type if
-	// there are no resources of that type
-	invalid := -1
-	for i, gtr := range gtrs {
-		if gtr.LinkCount != 0 {
-			continue
-		}
-		if gtr.Type != "I" {
-			continue
-		}
-		cnt--
-		invalid = i
-		break
-	}
-	menuItems = make([]menuItem, cnt)
-	for i, gtr := range gtrs {
-		if i == invalid {
-			continue
-		}
-		src := newGroupTypeFromListGroupsTypeRow(gtr)
-		menuItems[i] = newMenuItem(src, host, gtr.Plural.String)
-	}
-	menuItems = append(menuItems,
-		newMenuItemWithArgs(allLinks{}, host, "All Links", menuItemArgs{
-			SummaryClass: topLevelSummaryClass,
-			IconState:    BlankIcon,
-		}),
-	)
-	return menuItems
-}
-
-var _ MenuItemable = (*allLinks)(nil)
-
-type allLinks struct{}
-
-func (allLinks) LinksQueryParams() string {
-	return "all=1"
-}
-
-func (a allLinks) HTMLId() safehtml.Identifier {
-	return safehtml.IdentifierFromConstant(`gt-all`)
-}
-
-func (a allLinks) MenuItemType() safehtml.Identifier {
-	return safehtml.IdentifierFromConstant(`A`)
-}
-
-func (v *Views) GetMenuItemHTML(ctx Context, host, item string) (html safehtml.HTML, status int, err error) {
-	var items []menuItem
-
-	items, err = v.getMenuItemsForType(ctx, host, item)
-	if err != nil {
-		goto end
-	}
-	html, err = menuTemplate.ExecuteToHTML(menu{
-		apiURL:    makeURL(host),
-		MenuItems: items,
+	items, err = model.MenuItemsLoad(ctx, model.MenuItemLoadParams{
+		MenuType: p.MenuType,
+		Menu:     shared.Ptr(model.NewMenu(p.MenuType, p.Menu.Level)),
 	})
 	if err != nil {
 		goto end
 	}
+	htmlItems = make([]HTMLMenuItem, len(items.Items))
+	for i, item := range items.Items {
+		htmlItems[i] = htmlItems[i].Renew(&m, item)
+	}
+	hr.HTML, err = menuTemplate.ExecuteToHTML(HTMLMenu{
+		MenuItems: htmlItems,
+	})
 end:
-	return html, http.StatusInternalServerError, err
-}
-
-type ItemType string
-
-const (
-	GroupTypeItemType = "gt"
-	GroupItemType     = "grp"
-)
-
-var matchMenuItemKey = regexp.MustCompile(`^(gt|grp)-(.+)$`)
-
-func (v *Views) getMenuItemsForType(ctx Context, host, key string) (items []menuItem, err error) {
-	var keys []string
-	var gt sqlc.GroupType
-	var gs []sqlc.Group
-	var db *sqlc.NestedDBTX
-
-	if !matchMenuItemKey.MatchString(key) {
-		err = errors.Join(ErrInvalidKeyFormat, fmt.Errorf(`key=%s`, key))
-		goto end
-	}
-	keys = matchMenuItemKey.FindStringSubmatch(key)
-
-	db = sqlc.GetNestedDBTX(v.DataStore)
-	err = db.Exec(func(dbtx sqlc.DBTX) (err error) {
-		q := v.Queries(dbtx)
-		switch keys[1] {
-		case GroupTypeItemType: // Group Type
-			gs, err = q.ListGroupsByType(ctx, sqlc.ListGroupsByTypeParams{
-				Type:           strings.ToUpper(keys[2]),
-				GroupsArchived: sqlc.NotArchived,
-				GroupsDeleted:  sqlc.NotDeleted,
-			})
-			if err != nil {
-				goto end
-			}
-			gt, err = q.LoadGroupType(ctx, strings.ToUpper(keys[2]))
-			if err != nil {
-				goto end
-			}
-		}
-		err = nil
-		items = menuItemsFromGroups(host, gt.Plural.String, gs)
-	end:
-		return err
-	})
 	if err != nil {
-		goto end
+		hr.HTTPStatus = http.StatusInternalServerError
 	}
-end:
-	return items, err
+	return hr, err
 }
 
-func menuItemsFromGroups(host, gt string, gs []sqlc.Group) []menuItem {
-	var menuItems []menuItem
-	args := menuItemArgs{
-		IconState:    BlankIcon,
-		DetailsClass: "p-0 m-0",
-		SummaryClass: "p-0 m-0",
-	}
-
-	menuItems = make([]menuItem, len(gs)+1)
-	menuItems[0] = newMenuItemWithArgs(noMenuItem{}, host, fmt.Sprintf("<No %s>", gt), args)
-	for i, g := range gs {
-		src := newGroupFromSqlcGroup(g)
-		menuItems[i+1] = newMenuItemWithArgs(src, host, g.Name, args)
-	}
-	return menuItems
-}
-
-var _ MenuItemable = (*noMenuItem)(nil)
-
-type noMenuItem struct{}
-
-func (noMenuItem) LinksQueryParams() string {
-	return "g=none"
-}
-
-func (i noMenuItem) MenuItemType() safehtml.Identifier {
-	return safehtml.IdentifierFromConstant("_")
-}
-func (noMenuItem) HTMLId() safehtml.Identifier {
-	return safehtml.IdentifierFromConstant("none")
-}
+//func getMenuItemsForType(ctx Context, host, key string) (items []HTMLMenuItem, err error) {
+//	var keys []string
+//	var gt sqlc.GroupType
+//	var gs []sqlc.Group
+//	var db *storage.NestedDBTX
+//
+//	db = storage.GetNestedDBTX(v.DataStore)
+//	err = db.Exec(func(dbtx *storage.NestedDBTX) (err error) {
+//		q := v.Queries(dbtx)
+//		switch keys[1] {
+//		case shared.GroupTypeMenuType: // Group Type
+//			gs, err = q.ListGroupsByType(ctx, sqlc.ListGroupsByTypeParams{
+//				Type:           strings.ToUpper(keys[2]),
+//				GroupsArchived: storage.NotArchived,
+//				GroupsDeleted:  storage.NotDeleted,
+//			})
+//			if err != nil {
+//				goto end
+//			}
+//		}
+//		err = nil
+//		items = func(ctx Context, host string, gt groupType, gs []sqlc.Group) []HTMLMenuItem {
+//			var menuItems []HTMLMenuItem
+//
+//			// Instantiate new menu
+//			// Groups are level == 1, aka children of Group Types where level == 0
+//			m := newHTMLMenu(host, 1)
+//
+//			args := MenuItemArgs{
+//				IconState: BlankIcon,
+//			}
+//			menuItems = make([]HTMLMenuItem, len(gs)+1)
+//			menuItems[0] = newHTMLMenuItemWithArgs(&m, model.MenuItem{
+//				LocalId: "none",
+//				Label:   fmt.Sprintf("<No %s>", gt.Plural),
+//			}, args)
+//			groups, err := model.GroupsLoad(ctx,model.GroupsParams{
+//				Host:       shared.NewHost(host),
+//				GroupType:  gt.Type,
+//			})
+//			for i, g := range gs {
+//				grp := model.NewGroup(g)
+//				menuItems[i+1] = newHTMLMenuItemWithArgs(&m, model.MenuItem{
+//					LocalId: strings.ToLower(grp.Type),
+//					Label:   grp.Name,
+//				}, args)
+//			}
+//			return menuItems
+//
+//		}(ctx, host, gt, gs)
+//	end:
+//		return err
+//	})
+//	if err != nil {
+//		goto end
+//	}
+//end:
+//	return items, err
+//}
+//

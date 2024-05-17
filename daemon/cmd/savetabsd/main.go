@@ -20,13 +20,13 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"savetabs/restapi"
-	"savetabs/sqlc"
+	"savetabs/shared"
+	"savetabs/storage"
 	"savetabs/tasks"
-	"savetabs/ui"
 )
 
 const (
-	defaultPort = restapi.DefaultPort
+	defaultPort = shared.DefaultPort
 	DBFile      = "./data/savetabs.db"
 )
 
@@ -43,12 +43,11 @@ func main() {
 func runServer(port *int) (err error) {
 	var swagger *openapi3.T
 	var api *restapi.API
-	var ds sqlc.DataStore
 	var stopChan chan os.Signal
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	ds, err = sqlc.Initialize(ctx, DBFile)
+	err = storage.Initialize(ctx, DBFile)
 	if err != nil {
 		cancel()
 		goto end
@@ -65,13 +64,11 @@ func runServer(port *int) (err error) {
 	swagger.Servers = nil
 
 	api = restapi.NewAPI(restapi.APIArgs{
-		Port:      *port,
-		Swagger:   swagger,
-		Views:     ui.NewViews(ds),
-		DataStore: ds,
+		Port:    *port,
+		Swagger: swagger,
 	})
 
-	go tasks.BackgroundTask(ctx, tasks.NewCaretaker(ds))
+	go tasks.BackgroundTasks(ctx)
 
 	go func() {
 		err := api.ListenAndServe()

@@ -49,10 +49,10 @@ export function getTabGroupLinks(tabGroup) {
                .filter(tab =>  !rejectUrl(tab.url,tabGroup.title) )
                .map(tab => {
                   return {
-                     original_url: tab.url,
+                     url: tab.url,
                      title: tab.title,
                      groupId: tabGroup.id,
-                     groupType: 'tab-group',
+                     groupType: 'tabgroup',
                      group: tabGroup.title,
                   };
                })
@@ -111,7 +111,7 @@ export async function getAllLinksWithGroups() {
 export function addRecentlySubmittedLinks(links) {
    let d = new Date();
    links.forEach(r => {
-      recentlySubmittedLinks[urlKey(r.original_url,r.group)] = d;
+      recentlySubmittedLinks[urlKey(r.url,r.group)] = d;
    })
 }
 

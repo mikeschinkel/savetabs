@@ -44,6 +44,19 @@ type GroupType struct {
 	Description sql.NullString `json:"description"`
 }
 
+type GroupsType struct {
+	Type           string         `json:"type"`
+	Name           sql.NullString `json:"name"`
+	Plural         sql.NullString `json:"plural"`
+	GroupCount     int64          `json:"group_count"`
+	GroupsArchived int64          `json:"groups_archived"`
+	GroupsDeleted  int64          `json:"groups_deleted"`
+	LinkCount      int64          `json:"link_count"`
+	LinksArchived  int64          `json:"links_archived"`
+	LinksDeleted   int64          `json:"links_deleted"`
+	Sort           sql.NullInt64  `json:"sort"`
+}
+
 type History struct {
 	ID         int64         `json:"id"`
 	ForeignID  sql.NullInt64 `json:"foreign_id"`
@@ -64,7 +77,8 @@ type Link struct {
 	Query       string         `json:"query"`
 	Fragment    string         `json:"fragment"`
 	OriginalUrl string         `json:"original_url"`
-	Url         sql.NullString `json:"url"`
+	Host        string         `json:"host"`
+	Url         string         `json:"url"`
 	CreatedTime sql.NullString `json:"created_time"`
 	VisitedTime sql.NullString `json:"visited_time"`
 	Created     sql.NullInt64  `json:"-"`

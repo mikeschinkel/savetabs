@@ -2,9 +2,9 @@
 <ul class="menu p-0 mb-4 min-h-full bg-base-200 text-base-content x-data">
 {{range .MenuItems}}
   <li id="{{.HTMLId}}" class="m-0 p-0 flex">
-    <details x-data="preventable" class="grow {{.DetailsClass}}" @click="preventExpandOnIconClick">
-      <summary class="{{.SummaryClass}} rounded-sm list-none flex items-center w-full gap-2">
-        {{if .IconIsBlank }}
+    <details x-data="preventable" class="grow {{if .NotTopLevelMenu}}p-0 m-0{{end}}" @click="preventExpandOnIconClick">
+      <summary class="{{if .IsTopLevelMenu}}py-4 my-0{{else}}p-0 m-0{{end}} rounded-sm list-none flex items-center w-full gap-2">
+        {{if .IsIconBlank }}
           <span class="py-2">
             <blank-icon></blank-icon>
           </span>

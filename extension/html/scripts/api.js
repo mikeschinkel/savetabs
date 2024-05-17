@@ -52,8 +52,8 @@ function apiPutLink(link) {
    let endpoint;
    if (link.hasOwnProperty('id') && link.id) {
       endpoint = apiLinkEndpoint(link.id)
-   } else  if (link.hasOwnProperty('original_url') && link.original_url) {
-      endpoint = apiLinkByURLEndpoint(link.original_url)
+   } else  if (link.hasOwnProperty('url') && link.url) {
+      endpoint = apiLinkByURLEndpoint(link.url)
    } else {
       throw new Error(`Link has neither '.id' nor '.url' non-empty properties.`)
    }
@@ -72,7 +72,7 @@ function apiPutLink(link) {
 export function newLinkFromTab(tab) {
    return {
       tab_id: tab.id,
-      original_url: tab.url,
+      url: tab.url,
       title: document.title,
       html: tab.html
    };

@@ -4,11 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/google/safehtml"
-)
-
-var (
-	ErrInvalidKeyFormat = errors.New("invalid key format (expected '<type>-<key>')")
+	"savetabs/shared"
 )
 
 type HttpError struct {
@@ -25,17 +21,22 @@ func NewHTTPError(code int, msg string) HttpError {
 
 var errorTemplate = GetTemplate("error")
 
-func (*Views) GetErrorHTML(_ Context, err error) (html safehtml.HTML, _ int, _ error) {
+type ErrorParams struct {
+	Err  error
+	Host shared.Host
+}
+
+func GetErrorHTML(p ErrorParams) (hr HTMLResponse, err error) {
 	var httpErr HttpError
-	statusCode := http.StatusInternalServerError
+	hr.HTTPStatus = http.StatusInternalServerError
 
 	if errors.As(err, &httpErr) {
-		statusCode = httpErr.StatusCode
+		hr.HTTPStatus = httpErr.StatusCode
 	}
-	html, err = errorTemplate.ExecuteToHTML(err)
+	hr.HTML, err = errorTemplate.ExecuteToHTML(p.Err)
 	if err != nil {
 		goto end
 	}
 end:
-	return html, statusCode, err
+	return hr, err
 }

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/google/safehtml"
+	"savetabs/shared"
 )
 
 type Message struct {
@@ -11,25 +12,34 @@ type Message struct {
 	Items []string
 }
 
+func NewMessage(text string, items []string) Message {
+	return Message{Text: text, Items: items}
+}
+
 func (m *Message) HasItems() bool {
 	return len(m.Items) > 0
 }
 
 type Alert struct {
-	alertType  AlertType
-	Message    Message
-	HTTPStatus int
+	alertType AlertType
+	Message   Message
 }
 
-type AlertType string
+type AlertType struct {
+	value string
+}
 
-const (
-	UnspecifiedAlert AlertType = ""
-	AlertAlert       AlertType = "alert"
-	InfoAlert        AlertType = "info"
-	SuccessAlert     AlertType = "success"
-	WarningAlert     AlertType = "warning"
-	ErrorAlert       AlertType = "error"
+func NewAlertType(value string) AlertType {
+	return AlertType{value: value}
+}
+
+var (
+	UnspecifiedAlert = NewAlertType("")
+	AlertAlert       = NewAlertType("alert")
+	InfoAlert        = NewAlertType("info")
+	SuccessAlert     = NewAlertType("success")
+	WarningAlert     = NewAlertType("warning")
+	ErrorAlert       = NewAlertType("error")
 )
 
 func (a *Alert) IconHTML() safehtml.HTML {
@@ -79,38 +89,39 @@ func (a *Alert) AlertType() (id safehtml.Identifier) {
 var alertTemplate = GetTemplate("alert")
 var alertOOBTemplate = GetTemplate("alert-oob")
 
-func (*Views) GetAlertHTML(_ Context, typ AlertType, msg Message) (html safehtml.HTML, _ int, err error) {
-	alert := &Alert{
-		alertType:  typ,
-		Message:    msg,
-		HTTPStatus: http.StatusOK, // TODO: Might need more than this
-	}
-	html, err = alertTemplate.ExecuteToHTML(alert)
-	if err != nil {
-		goto end
-	}
-end:
-	return html, alert.HTTPStatus, err
+type AlertParams struct {
+	Host    shared.Host
+	OOB     bool
+	Type    AlertType
+	Message Message
 }
 
 type alertOOB struct {
 	AlertHTML safehtml.HTML
 }
 
-func (v *Views) GetOOBAlertHTML(ctx Context, typ AlertType, msg Message) (html safehtml.HTML, status int, err error) {
-	html, status, err = v.GetAlertHTML(ctx, typ, msg)
+func GetAlertHTML(_ Context, p AlertParams) (hr HTMLResponse, err error) {
+	var html safehtml.HTML
+	hr.HTTPStatus = http.StatusOK
+	alert := &Alert{
+		alertType: p.Type,
+		Message:   p.Message,
+	}
+	html, err = alertTemplate.ExecuteToHTML(alert)
 	if err != nil {
+		hr.HTTPStatus = http.StatusInternalServerError
+		goto end
+	}
+	if !p.OOB {
 		goto end
 	}
 	html, err = alertOOBTemplate.ExecuteToHTML(alertOOB{
 		AlertHTML: html,
 	})
 	if err != nil {
+		hr.HTTPStatus = http.StatusInternalServerError
 		goto end
 	}
-	if status == 0 {
-		status = http.StatusOK
-	}
 end:
-	return html, status, err
+	return hr, err
 }

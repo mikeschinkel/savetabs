@@ -5,44 +5,107 @@ import (
 	"net/http"
 
 	"github.com/google/safehtml"
-	"savetabs/sqlc"
+	"savetabs/model"
+	"savetabs/shared"
 )
 
-type menu struct {
-	apiURL    string
-	MenuItems []menuItem
+type HTMLMenu struct {
+	apiURL    safehtml.URL
+	Level     int
+	MenuType  shared.MenuType
+	MenuItems []HTMLMenuItem
 }
 
-func (m menu) HTMLMenuURL() string {
+func NewHTMLMenu(apiURL safehtml.URL, mt shared.MenuType, level int) HTMLMenu {
+	return HTMLMenu{}.Renew(apiURL, mt, level)
+}
+
+var pristineMenu HTMLMenu
+
+func (m HTMLMenu) Renew(apiURL safehtml.URL, mt shared.MenuType, level int) HTMLMenu {
+	m = pristineMenu
+	m.apiURL = apiURL
+	m.Level = level
+	m.MenuType = mt
+	m.MenuItems = make([]HTMLMenuItem, 0)
+	return m
+}
+
+func (m HTMLMenu) HTMLMenuURL() string {
 	return fmt.Sprintf("%s/html/menu", m.apiURL)
 }
 
-func (m menu) HTMLLinksURL() string {
+func (m HTMLMenu) HTMLLinksURL() string {
 	return fmt.Sprintf("%s/html/linkset", m.apiURL)
 }
 
 var menuTemplate = GetTemplate("menu")
 
-func (v *Views) GetMenuHTML(ctx Context, host string) (html safehtml.HTML, status int, err error) {
-	var items []menuItem
-	var gts []sqlc.ListGroupsTypeRow
+type HTMLMenuParams struct {
+	Host shared.Host
+}
 
-	db := sqlc.GetNestedDBTX(v.DataStore)
-	err = db.Exec(func(dbtx sqlc.DBTX) (err error) {
-		gts, err = v.Queries(dbtx).ListGroupsType(ctx)
-		return err
+func GetMenuHTML(ctx Context, p HTMLMenuParams) (hr HTMLResponse, err error) {
+	var menu model.Menu
+
+	hr.HTTPStatus = http.StatusOK
+
+	menu, err = model.MenuLoad(ctx, model.MenuParams{
+		Type: shared.GroupTypeMenuType,
 	})
-	if err != nil {
-		goto end
+
+	hm := HTMLMenu{
+		apiURL:    shared.MakeSafeURL(p.Host.URL()),
+		MenuItems: make([]HTMLMenuItem, len(menu.Items)),
 	}
-	items = menuItemsFromListGroupTypesRows(host, gts)
-	html, err = menuTemplate.ExecuteToHTML(menu{
-		apiURL:    makeURL(host),
-		MenuItems: items,
-	})
+	for i, item := range menu.Items {
+		item.Menu = &menu
+		hm.MenuItems[i] = hm.MenuItems[i].Renew(&hm, item)
+	}
+
+	hr.HTML, err = menuTemplate.ExecuteToHTML(hm)
 	if err != nil {
+		hr.HTTPStatus = http.StatusInternalServerError
 		goto end
 	}
 end:
-	return html, http.StatusInternalServerError, err
+	return hr, err
 }
+
+//func menuItemsFromListGroupTypesRows(host string, gtrs []sqlc.ListGroupsTypeRow) []menuItem {
+//	var menuItems []menuItem
+//
+//	cnt := len(gtrs)
+//
+//	// No need to show invalid as a group type if
+//	// there are no resources of that type
+//	invalid := -1
+//	for i, gtr := range gtrs {
+//		if gtr.LinkCount != 0 {
+//			continue
+//		}
+//		if gtr.Type != "I" {
+//			continue
+//		}
+//		cnt--
+//		invalid = i
+//		break
+//	}
+//	menuItems = make([]menuItem, cnt)
+//	for i, gtr := range gtrs {
+//		if i == invalid {
+//			continue
+//		}
+//		src := newGroupTypeFromListGroupsTypeRow(gtr)
+//		menuItems[i] = newMenuItem(src, host, gtr.Plural.String)
+//	}
+//	menuItems = append(menuItems,
+//		newHTMLMenuItemWithArgs(allLinks{}, host, "All Links", menuItemArgs{
+//			SummaryClass: topLevelSummaryClass,
+//			IconState:    BlankIcon,
+//		}),
+//	)
+//	return menuItems
+//}
+//
+//

@@ -1,3 +1,7 @@
+# SaveTabs Daemon Architecture
+
+The lowercase terms in bold are GoLang packages, and the arrows indicate which packages make calls to which other packages.
+
 ```mermaid
 flowchart TD
 

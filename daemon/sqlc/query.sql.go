@@ -67,7 +67,8 @@ func (q *Queries) DeleteVar(ctx context.Context, id int64) error {
 }
 
 const getLinkURLs = `-- name: GetLinkURLs :many
-SELECT CAST(ifnull(url,'<invalid>') AS TEXT) FROM link
+SELECT CAST(ifnull(url,'<invalid>') AS TEXT) AS url
+FROM link
 WHERE id IN (/*SLICE:link_ids*/?)
 `
 
@@ -89,11 +90,11 @@ func (q *Queries) GetLinkURLs(ctx context.Context, linkIds []int64) ([]string, e
 	defer rows.Close()
 	var items []string
 	for rows.Next() {
-		var column_1 string
-		if err := rows.Scan(&column_1); err != nil {
+		var url string
+		if err := rows.Scan(&url); err != nil {
 			return nil, err
 		}
-		items = append(items, column_1)
+		items = append(items, url)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -241,12 +242,15 @@ func (q *Queries) ListFilteredLinks(ctx context.Context, arg ListFilteredLinksPa
 }
 
 const listGroupsByType = `-- name: ListGroupsByType :many
-SELECT id, name, type, slug, created_time, latest_time, created, latest, archived, deleted
-FROM ` + "`" + `group` + "`" + `
+SELECT
+   g.id, g.name, g.type, g.slug, g.created_time, g.latest_time, g.created, g.latest, g.archived, g.deleted,
+   CAST(gt.name AS TEXT) AS type_name
+FROM ` + "`" + `group` + "`" + ` g
+   JOIN group_type gt ON gt.type = g.type
 WHERE true
-   AND type = ?
-   AND archived IN (/*SLICE:groups_archived*/?)
-   AND deleted IN (/*SLICE:groups_deleted*/?)
+   AND g.type = ?
+   AND g.archived IN (/*SLICE:groups_archived*/?)
+   AND g.deleted IN (/*SLICE:groups_deleted*/?)
 ORDER BY name
 `
 
@@ -256,7 +260,21 @@ type ListGroupsByTypeParams struct {
 	GroupsDeleted  []int64 `json:"groups_deleted"`
 }
 
-func (q *Queries) ListGroupsByType(ctx context.Context, arg ListGroupsByTypeParams) ([]Group, error) {
+type ListGroupsByTypeRow struct {
+	ID          int64          `json:"id"`
+	Name        string         `json:"name"`
+	Type        string         `json:"type"`
+	Slug        string         `json:"slug"`
+	CreatedTime sql.NullString `json:"created_time"`
+	LatestTime  sql.NullString `json:"latest_time"`
+	Created     sql.NullInt64  `json:"-"`
+	Latest      sql.NullInt64  `json:"latest"`
+	Archived    int64          `json:"archived"`
+	Deleted     int64          `json:"deleted"`
+	TypeName    string         `json:"type_name"`
+}
+
+func (q *Queries) ListGroupsByType(ctx context.Context, arg ListGroupsByTypeParams) ([]ListGroupsByTypeRow, error) {
 	query := listGroupsByType
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.Type)
@@ -281,9 +299,9 @@ func (q *Queries) ListGroupsByType(ctx context.Context, arg ListGroupsByTypePara
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Group
+	var items []ListGroupsByTypeRow
 	for rows.Next() {
-		var i Group
+		var i ListGroupsByTypeRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
@@ -295,6 +313,7 @@ func (q *Queries) ListGroupsByType(ctx context.Context, arg ListGroupsByTypePara
 			&i.Latest,
 			&i.Archived,
 			&i.Deleted,
+			&i.TypeName,
 		); err != nil {
 			return nil, err
 		}
@@ -310,52 +329,18 @@ func (q *Queries) ListGroupsByType(ctx context.Context, arg ListGroupsByTypePara
 }
 
 const listGroupsType = `-- name: ListGroupsType :many
-SELECT DISTINCT
-   gt.type,
-   gt.name,
-   gt.plural,
-   COUNT(DISTINCT g.id) AS group_count,
-   COUNT(DISTINCT g.archived=1) AS groups_archived,
-   COUNT(DISTINCT g.deleted=1) AS groups_deleted,
-   CAST(CASE WHEN g.ID IS NULL THEN 0
-      ELSE COUNT(DISTINCT rg.link_id) END AS INTEGER) AS link_count,
-   COUNT(DISTINCT l.archived=1) AS links_archived,
-   COUNT(DISTINCT l.deleted=1) AS links_deleted,
-   gt.sort
-FROM group_type gt
-   LEFT JOIN ` + "`" + `group` + "`" + ` g ON gt.type=g.type
-   LEFT JOIN link_group rg ON g.id=rg.group_id
-   LEFT JOIN link l ON l.id=rg.link_id
-GROUP BY
-   gt.sort,
-   gt.type,
-   gt.name
-ORDER BY
-   gt.sort
+SELECT type, name, plural, group_count, groups_archived, groups_deleted, link_count, links_archived, links_deleted, sort FROM groups_type
 `
 
-type ListGroupsTypeRow struct {
-	Type           string         `json:"type"`
-	Name           sql.NullString `json:"name"`
-	Plural         sql.NullString `json:"plural"`
-	GroupCount     int64          `json:"group_count"`
-	GroupsArchived int64          `json:"groups_archived"`
-	GroupsDeleted  int64          `json:"groups_deleted"`
-	LinkCount      int64          `json:"link_count"`
-	LinksArchived  int64          `json:"links_archived"`
-	LinksDeleted   int64          `json:"links_deleted"`
-	Sort           sql.NullInt64  `json:"sort"`
-}
-
-func (q *Queries) ListGroupsType(ctx context.Context) ([]ListGroupsTypeRow, error) {
+func (q *Queries) ListGroupsType(ctx context.Context) ([]GroupsType, error) {
 	rows, err := q.db.QueryContext(ctx, listGroupsType)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListGroupsTypeRow
+	var items []GroupsType
 	for rows.Next() {
-		var i ListGroupsTypeRow
+		var i GroupsType
 		if err := rows.Scan(
 			&i.Type,
 			&i.Name,
@@ -822,7 +807,7 @@ func (q *Queries) ListLinkMetaForLinkId(ctx context.Context, linkID int64) ([]Li
 const listLinks = `-- name: ListLinks :many
 ;
 
-SELECT id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, url, created_time, visited_time, created, visited, archived, deleted, parsed
+SELECT id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, host, url, created_time, visited_time, created, visited, archived, deleted, parsed
 FROM link
 WHERE true
    AND archived IN (/*SLICE:links_archived*/?)
@@ -875,6 +860,7 @@ func (q *Queries) ListLinks(ctx context.Context, arg ListLinksParams) ([]Link, e
 			&i.Query,
 			&i.Fragment,
 			&i.OriginalUrl,
+			&i.Host,
 			&i.Url,
 			&i.CreatedTime,
 			&i.VisitedTime,
@@ -898,7 +884,6 @@ func (q *Queries) ListLinks(ctx context.Context, arg ListLinksParams) ([]Link, e
 }
 
 const loadGroup = `-- name: LoadGroup :one
-
 SELECT id, name, type, slug, created_time, latest_time, created, latest, archived, deleted FROM ` + "`" + `group` + "`" + `
 WHERE true
    AND id = ?
@@ -913,7 +898,6 @@ type LoadGroupParams struct {
 	GroupsDeleted  []int64 `json:"groups_deleted"`
 }
 
-// noinspection SqlResolveForFile @ any/"sqlc"
 func (q *Queries) LoadGroup(ctx context.Context, arg LoadGroupParams) (Group, error) {
 	query := loadGroup
 	var queryParams []interface{}
@@ -964,6 +948,28 @@ func (q *Queries) LoadGroupType(ctx context.Context, type_ string) (GroupType, e
 		&i.Name,
 		&i.Plural,
 		&i.Description,
+	)
+	return i, err
+}
+
+const loadGroupTypeWithStats = `-- name: LoadGroupTypeWithStats :one
+SELECT type, name, plural, group_count, groups_archived, groups_deleted, link_count, links_archived, links_deleted, sort FROM groups_type WHERE type = ? LIMIT 1
+`
+
+func (q *Queries) LoadGroupTypeWithStats(ctx context.Context, type_ string) (GroupsType, error) {
+	row := q.db.QueryRowContext(ctx, loadGroupTypeWithStats, type_)
+	var i GroupsType
+	err := row.Scan(
+		&i.Type,
+		&i.Name,
+		&i.Plural,
+		&i.GroupCount,
+		&i.GroupsArchived,
+		&i.GroupsDeleted,
+		&i.LinkCount,
+		&i.LinksArchived,
+		&i.LinksDeleted,
+		&i.Sort,
 	)
 	return i, err
 }
@@ -1051,7 +1057,6 @@ func (q *Queries) LoadLatestContent(ctx context.Context, linkID int64) (Content,
 }
 
 const loadLink = `-- name: LoadLink :one
-;
 SELECT
    id,
    original_url,
@@ -1086,7 +1091,7 @@ type LoadLinkRow struct {
 	Query       string         `json:"query"`
 	Fragment    string         `json:"fragment"`
 	Port        string         `json:"port"`
-	Url         sql.NullString `json:"url"`
+	Url         string         `json:"url"`
 	Title       string         `json:"title"`
 }
 
@@ -1113,12 +1118,7 @@ func (q *Queries) LoadLink(ctx context.Context, id int64) (LoadLinkRow, error) {
 }
 
 const loadLinkIdByUrl = `-- name: LoadLinkIdByUrl :one
-SELECT 
-   id
-FROM link
-WHERE true
-   AND original_url = ?
-LIMIT 1
+SELECT id FROM link WHERE original_url = ? LIMIT 1
 `
 
 func (q *Queries) LoadLinkIdByUrl(ctx context.Context, originalUrl string) (int64, error) {
@@ -1228,15 +1228,15 @@ const upsertLinkGroupsFromVarJSON = `-- name: UpsertLinkGroupsFromVarJSON :exec
 INSERT INTO link_group (group_id, link_id)
 SELECT g.id, r.id
 FROM var
-        JOIN json_each( var.value ) j ON var.key='json'
-        JOIN link r ON r.original_url=json_extract(j.value,'$.link_url')
-        JOIN ` + "`" + `group` + "`" + ` g ON true
+   JOIN json_each( var.value ) j ON var.key='json'
+   JOIN link r ON r.original_url=json_extract(j.value,'$.link_url')
+   JOIN ` + "`" + `group` + "`" + ` g ON true
       AND g.name=json_extract(j.value,'$.group_name')
       AND g.type=json_extract(j.value,'$.group_type')
 WHERE var.id = ?
 ON CONFLICT (group_id, link_id)
    DO UPDATE
-   SET latest = strftime('%s','now')
+      SET latest = strftime('%s','now')
 `
 
 func (q *Queries) UpsertLinkGroupsFromVarJSON(ctx context.Context, id int64) error {
@@ -1253,7 +1253,7 @@ SELECT
    CAST(json_extract(r.value,'$.key') AS TEXT),
    CAST(json_extract(r.value,'$.value') AS TEXT)
 FROM var
-        JOIN json_each( var.value ) r ON var.key='json'
+   JOIN json_each( var.value ) r ON var.key='json'
 WHERE var.id = ?
 ON CONFLICT (link_id,key)
    DO UPDATE
@@ -1293,12 +1293,12 @@ const upsertMetaFromVarJSON = `-- name: UpsertMetaFromVarJSON :exec
 
 INSERT INTO meta (link_id, key, value)
 SELECT
-   r.id,
+   l.id,
    json_extract(kv.value,'$.key'),
    json_extract(kv.value,'$.value')
 FROM var
    JOIN json_each( var.value ) kv ON var.key='json'
-   JOIN link r ON r.original_url=json_extract(kv.value,'$.url')
+   JOIN link l ON l.original_url=json_extract(kv.value,'$.url')
 WHERE var.id = ?
    ON CONFLICT (link_id,key)
    DO UPDATE

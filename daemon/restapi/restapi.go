@@ -3,7 +3,6 @@
 package restapi
 
 import (
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -13,47 +12,36 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
-	"savetabs/sqlc"
+	"savetabs/shared"
 )
 
 type swagger = openapi3.T
 
 // Declare that *API implements ServerInterface and Persister interfaces
 var _ ServerInterface = (*API)(nil)
-var _ Persister = (*API)(nil)
-
-func RootURL() string {
-	return fmt.Sprintf("http://localhost:%d", DefaultPort)
-}
 
 type API struct {
-	Port      int
-	Mux       *http.ServeMux
-	Swagger   *swagger
-	Handler   http.Handler
-	Server    *http.Server
-	Lock      sync.Mutex
-	Views     Viewer
-	DataStore sqlc.DataStore
+	Port    int
+	Mux     *http.ServeMux
+	Swagger *swagger
+	Handler http.Handler
+	Server  *http.Server
+	Lock    sync.Mutex
 }
 
 type APIArgs struct {
-	Port      int
-	Swagger   *swagger
-	Views     Viewer
-	DataStore sqlc.DataStore
+	Port    int
+	Swagger *swagger
 }
 
 func NewAPI(args APIArgs) *API {
 	if args.Port == 0 {
-		args.Port = DefaultPort
+		args.Port = shared.DefaultPort
 	}
 	api := &API{
-		Port:      args.Port,
-		Swagger:   args.Swagger,
-		Views:     args.Views,
-		Mux:       http.NewServeMux(),
-		DataStore: args.DataStore,
+		Port:    args.Port,
+		Swagger: args.Swagger,
+		Mux:     http.NewServeMux(),
 	}
 
 	// We now register our api above as the handler for the interface

@@ -1,54 +1,31 @@
 package storage
 
 import (
-	"bytes"
-	"log/slog"
-	"strings"
+	"errors"
 
-	"golang.org/x/net/html"
+	"savetabs/sqlc"
 )
 
-type Content struct {
+type ContentToInsert struct {
+	Id     int64
 	LinkId int64
 	Head   string
 	Body   string
 }
 
-func (c *Content) setRawContent(h string) {
-	doc, err := html.Parse(strings.NewReader(h))
+func InsertContent(ctx Context, dbtx *NestedDBTX, content ContentToInsert) (err error) {
+	err = execWithEnsuredNestedDBTX(dbtx, func(dbtx *NestedDBTX) error {
+		q := dbtx.DataStore.Queries(dbtx)
+		return q.InsertContent(ctx, sqlc.InsertContentParams{
+			LinkID: content.LinkId,
+			Head:   content.Head,
+			Body:   content.Body,
+		})
+	})
 	if err != nil {
+		err = errors.Join(ErrFailedInsertLinkContent, err)
 		goto end
-	}
-	if doc == nil {
-		err = ErrHTMLNotParsed
-		goto end
-	}
-	if doc.Data == "" {
-		doc = doc.FirstChild
-	}
-	if doc.FirstChild.Data == "head" {
-		b := bytes.Buffer{}
-		err = html.Render(&b, doc.FirstChild)
-		if err != nil {
-			goto end
-		}
-		c.Head = b.String()
-	}
-	if doc.LastChild.Data == "body" {
-		b := bytes.Buffer{}
-		err = html.Render(&b, doc.LastChild)
-		if err != nil {
-			goto end
-		}
-		c.Body = b.String()
 	}
 end:
-	if err == nil {
-		return
-	}
-	slog.Warn("Unable to parse HTML for link",
-		"link_id", c.LinkId,
-		"html", h,
-		"error", err,
-	)
+	return err
 }

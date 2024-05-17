@@ -3,8 +3,6 @@ package shared
 import (
 	"regexp"
 	"strings"
-
-	"savetabs/regexes"
 )
 
 var MatchAngleDelimited = regexp.MustCompile(`^<No (.+)>$`)
@@ -19,9 +17,9 @@ func Slugify(s string) (slug string) {
 	// Lowercase it
 	slug = strings.ToLower(s)
 	// Change all non-slug characters ([A-Zaz0-9-]) and convert to a dash (-)
-	slug = regexes.MatchNonSlugCharacters.ReplaceAllString(slug, "-")
+	slug = MatchNonSlugCharacters.ReplaceAllString(slug, "-")
 	// Condense all repeated dashes into a single dash
-	slug = regexes.MatchDashes.ReplaceAllString(slug, "-")
+	slug = MatchDashes.ReplaceAllString(slug, "-")
 end:
 	return slug
 }
