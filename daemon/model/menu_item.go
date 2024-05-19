@@ -3,68 +3,129 @@ package model
 import (
 	"fmt"
 
+	"github.com/google/safehtml"
 	"savetabs/shared"
 )
 
+var _ shared.MenuItemable = (*MenuItem)(nil)
+
 type MenuItem struct {
-	Id      string
+	shared.MenuItemable
 	LocalId string
-	Menu    *Menu
 	Label   string
+	Type    *shared.MenuType
+}
+
+func (mi MenuItem) Root() shared.MenuItemable {
+	parent := mi.MenuItemable.Parent()
+	for parent != nil {
+		parent = parent.Parent()
+	}
+	return parent
+}
+
+func (mi MenuItem) Level() int {
+	return mi.MenuItemable.Level()
+}
+
+func (mi MenuItem) MenuType() *shared.MenuType {
+	return mi.Type
+}
+
+func (mi MenuItem) HTMLId() safehtml.Identifier {
+	return shared.MakeSafeId(fmt.Sprintf("%s-%s",
+		mi.MenuItemable.HTMLId(),
+		mi.LocalId,
+	))
+}
+
+func (mi MenuItem) Parent() shared.MenuItemable {
+	return mi.MenuItemable
+}
+
+func (mi MenuItem) SubmenuURL() safehtml.URL {
+	return shared.MakeSafeURL(fmt.Sprintf("%s/%s",
+		mi.MenuItemable.SubmenuURL(), // e.g.	menu/gt/g
+		mi.LocalId,                   // e.g. `golang`
+	))
+}
+
+func (mi MenuItem) ItemURL() safehtml.URL {
+
+	m := mi.MenuItemable
+	return shared.MakeSafeURL(fmt.Sprintf("%s%s",
+		m.ItemURL(), // e.g. `linkset/?gt=g`
+		mi.MenuType().Params(),
+	))
 }
 
 type MenuItemParams struct {
 	LocalId string
 	Label   string
+	Menu    shared.MenuItemable
+	Type    *shared.MenuType
 }
 
-func newMenuItem(m *Menu, p MenuItemParams) MenuItem {
-	return MenuItem{}.Renew(m, p)
+func newMenuItem(p MenuItemParams) MenuItem {
+	return MenuItem{}.Renew(p)
 }
 
-var pristine MenuItem
+var pristineMenuItem MenuItem
 
-func (mi MenuItem) Renew(m *Menu, p MenuItemParams) MenuItem {
-	mi = pristine
-	mi.Id = fmt.Sprintf("%s-%s", m.Type.String(), p.LocalId)
+func (mi MenuItem) Renew(p MenuItemParams) MenuItem {
+	mi = pristineMenuItem
+	if p.LocalId == "" {
+		p.LocalId = shared.Slugify(p.Label)
+	}
 	mi.LocalId = p.LocalId
-	mi.Menu = m
+	mi.MenuItemable = p.Menu
 	mi.Label = p.Label
+
+	if p.Type == nil {
+		mt, err := shared.MenuTypeByParentTypeAndMenuName(p.Menu.MenuType(), p.LocalId)
+		if err != nil {
+			panic(err.Error())
+		}
+		p.Type = &mt
+	}
+	mi.Type = p.Type
 	return mi
 }
 
-type MenuItemLoadParams struct {
-	MenuType shared.MenuType
+type LoadMenuItemParams struct {
+	MenuType *shared.MenuType
 	Menu     *Menu
 }
 type MenuItems struct {
 	Items []MenuItem
 }
 
-func MenuItemsLoad(ctx Context, p MenuItemLoadParams) (items MenuItems, err error) {
+func LoadMenuItems(ctx Context, p LoadMenuItemParams) (items MenuItems, err error) {
 	var groups Groups
 	var gt shared.GroupType
 
-	gt, err = shared.GroupTypeByCode(p.MenuType.String())
+	gt, err = shared.GroupTypeByType(p.MenuType.Name())
 	if err != nil {
 		// Panic because upstream should have cause this, so that needs to be where it is
 		// fixed, not here. Hence failing here is a programming error.
 		panic(err.Error())
 	}
 
-	groups, err = GroupsLoad(ctx, GroupsParams{
+	groups, err = LoadGroups(ctx, GroupsParams{
 		GroupType: gt,
 	})
 	if err != nil {
 		goto end
 	}
-	items.Items = make([]MenuItem, len(groups.Groups))
-	for i, g := range groups.Groups {
-		items.Items[i] = newMenuItem(p.Menu, MenuItemParams{
-			LocalId: fmt.Sprintf("%s-%s", p.MenuType, g.Type.Lower()),
-			Label:   g.Name,
+
+	items.Items = shared.ConvertSlice(groups.Groups, func(grp Group) MenuItem {
+		return newMenuItem(MenuItemParams{
+			LocalId: gt.String(),
+			Label:   grp.Name,
+			Menu:    p.Menu,
+			Type:    &shared.GroupTypeMenuType,
 		})
-	}
+	})
 end:
 	return items, err
 }

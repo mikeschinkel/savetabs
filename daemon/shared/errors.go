@@ -6,5 +6,7 @@ import (
 
 var (
 	ErrGroupTypeNotFoundForSlug = fmt.Errorf("GroupType not found for slug")
-	ErrGroupTypeNotFoundForCode = fmt.Errorf("GroupType not found for code")
+	ErrGroupTypeNotFoundForType = fmt.Errorf("GroupType not found for type")
+	ErrMenuTypeNotFound         = fmt.Errorf("MenuType not found")
+	ErrMenuTypeIsNil            = fmt.Errorf("MenuType is nil")
 )

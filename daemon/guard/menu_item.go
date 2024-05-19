@@ -29,8 +29,8 @@ var matchMenuItemIds = regexp.MustCompile(fmt.Sprintf(`^(%s)-(.+)$`, shared.Menu
 // GetMenuItemHTML return HTMX-flavored HTML for a single menu item
 func GetMenuItemHTML(ctx Context, host string, menuItem MenuItem) (_ HTMLResponse, err error) {
 	var hr ui.HTMLResponse
-	var idParts []string
 	var apiURL safehtml.URL
+	var mt shared.MenuType
 
 	// TODO: Review `id`, `key`, `menuItem` etc. semantics
 	id := menuItem.value
@@ -39,12 +39,15 @@ func GetMenuItemHTML(ctx Context, host string, menuItem MenuItem) (_ HTMLRespons
 		hr.HTTPStatus = http.StatusBadRequest
 		goto end
 	}
-	idParts = matchMenuItemIds.FindStringSubmatch(id)
+	mt, err = shared.MenuTypeByValue(id)
+	if err != nil {
+		goto end
+	}
 	apiURL = shared.MakeSafeURL(shared.NewHost(host).URL())
 	hr, err = ui.GetMenuItemHTML(ctx, ui.MenuItemHTMLParams{
-		Menu:     shared.Ptr(ui.NewHTMLMenu(apiURL, shared.GroupMenuType, 1)), // TODO: Need to make 2nd two params dyanmic.
-		MenuType: shared.NewMenuType(idParts[0]),
-		MenuItem: shared.MakeSafeHTML(idParts[1]),
+		Menu:     shared.Ptr(ui.NewHTMLMenu(apiURL, &shared.GroupTypeMenuType, 1)), // TODO: Need to make 2nd two params dyanmic.
+		MenuType: mt,
+		ItemType: mt.Leaf(),
 	})
 end:
 	return HTMLResponse(hr), err

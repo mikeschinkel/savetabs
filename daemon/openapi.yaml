@@ -30,19 +30,20 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/HtmlResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+
     get:
       summary: Return the HTML for a paginated table of links with optional filtering criteria in query parameters
       parameters:
       - $ref: '#/components/parameters/GroupTypeFilter'
-      - $ref: '#/components/parameters/TabGroupFilter'
-      - $ref: '#/components/parameters/CategoryFilter'
-      - $ref: '#/components/parameters/TagFilter'
-      - $ref: '#/components/parameters/KeywordFilter'
-      - $ref: '#/components/parameters/BookmarkFilter'
+      - $ref: '#/components/parameters/GroupFilter'
       - $ref: '#/components/parameters/MetaFilter'
       responses:
         '200':
           $ref: '#/components/responses/HtmlResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
 
   /html/menu:
     get:
@@ -50,6 +51,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/HtmlResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
 
   /html/menu/{menuItem}:
     get:
@@ -59,6 +62,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/HtmlResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
 
   /html/error:
     get:
@@ -69,6 +74,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/HtmlResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
 
   /html/alert:
     get:
@@ -80,6 +87,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/HtmlResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
 
   /links/with-groups:
     post:
@@ -167,6 +176,8 @@ paths:
           description: OK
         '503':
           description: Service Unavailable
+        default:
+          $ref: '#/components/responses/UnexpectedError'
   /readyz:
     get:
       summary: Readiness Check
@@ -176,6 +187,8 @@ paths:
           description: OK
         '503':
           description: Service Unavailable
+        default:
+          $ref: '#/components/responses/UnexpectedError'
 
 components:
   parameters:
@@ -194,66 +207,27 @@ components:
       schema:
         type: string
     GroupTypeFilter:
+      description: Links for a Group Type
       in: query
       name: gt
       schema:
         type: array
         items:
           type: string
-      description: Links for a Group Type
       style: form
       explode: true
-    TabGroupFilter:
+    GroupFilter:
+      description: Links by group of type
       in: query
-      name: g
+      name: grp
       schema:
         type: array
         items:
           type: string
-      description: TabGroup links by tags
-      style: form
-      explode: true
-    CategoryFilter:
-      in: query
-      name: c
-      schema:
-        type: array
-        items:
-          type: string
-      description: Category links by categories
-      style: form
-      explode: true
-    TagFilter:
-      in: query
-      name: t
-      schema:
-        type: array
-        items:
-          type: string
-      description: Tag links by tags
-      style: form
-      explode: true
-    KeywordFilter:
-      in: query
-      name: k
-      schema:
-        type: array
-        items:
-          type: string
-      description: Keyword filter for Links
-      style: form
-      explode: true
-    BookmarkFilter:
-      in: query
-      name: b
-      schema:
-        type: array
-        items:
-          type: string
-      description: Bookmark filter for Links
       style: form
       explode: true
     MetaFilter:
+      description: Key/Value meta filter for Links
       in: query
       name: m
       schema:
@@ -262,8 +236,8 @@ components:
           type: string
       style: form
       explode: true
-      description: Key/Value meta filter for Links
     AlertType:
+      description: Type of alert message to display as HTML
       in: query
       name: typ
       schema:
@@ -275,25 +249,24 @@ components:
         - warning
         - error
       style: form
-      description: Type of alert message to display as HTML
     AlertMsg:
+      description: Alert message to display as HTML
       in: query
       name: msg
       schema:
         type: string
       style: form
-      description: Alert message to display as HTML
     ErrorMsg:
+      description: Error message to display as HTML
       in: query
       name: err
       schema:
         type: string
       style: form
-      description: Error message to display as HTML
     MenuItem:
+      description: Item label for menu option
       name: menuItem
       in: path
-      description: Item label for menu option
       required: true
       schema:
         type: string

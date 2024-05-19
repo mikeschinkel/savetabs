@@ -8,24 +8,24 @@ import (
 )
 
 type GroupType struct {
-	Code string
+	Type string
 	Slug string
 }
 
 func (gt GroupType) String() string {
-	return gt.Code
+	return gt.Type
 }
 
 func (gt GroupType) Lower() string {
-	return strings.ToLower(gt.Code)
+	return strings.ToLower(gt.Type)
 }
 
 func (gt GroupType) Upper() string {
-	return strings.ToUpper(gt.Code)
+	return strings.ToUpper(gt.Type)
 }
 
 func (gt GroupType) Empty() bool {
-	return gt.Code == ""
+	return gt.Type == ""
 }
 
 var groupTypeBySlugMap = make(map[string]GroupType, 0)
@@ -33,11 +33,15 @@ var groupTypeByCodeMap = make(map[string]GroupType, 0)
 
 var groupTypeMutex sync.Mutex
 
-func newGroupType(code, slug string) GroupType {
+func newGroupType(typ, slug string) GroupType {
 	groupTypeMutex.Lock()
 	defer groupTypeMutex.Unlock()
-	gt := GroupType{Code: code}
+	gt := GroupType{
+		Type: typ,
+		Slug: slug,
+	}
 	groupTypeBySlugMap[gt.Slug] = gt
+	groupTypeByCodeMap[gt.Type] = gt
 	return gt
 }
 
@@ -52,7 +56,7 @@ var (
 
 func GroupTypeBySlug(slug string) (gt GroupType, err error) {
 	var ok bool
-	gt, ok = groupTypeBySlugMap[slug]
+	gt, ok = groupTypeBySlugMap[strings.ToLower(slug)]
 	if ok {
 		err = errors.Join(
 			ErrGroupTypeNotFoundForSlug,
@@ -62,13 +66,13 @@ func GroupTypeBySlug(slug string) (gt GroupType, err error) {
 	return gt, err
 }
 
-func GroupTypeByCode(code string) (gt GroupType, err error) {
+func GroupTypeByType(typ string) (gt GroupType, err error) {
 	var ok bool
-	gt, ok = groupTypeByCodeMap[strings.ToUpper(code)]
-	if ok {
+	gt, ok = groupTypeByCodeMap[strings.ToUpper(typ)]
+	if !ok {
 		err = errors.Join(
-			ErrGroupTypeNotFoundForSlug,
-			fmt.Errorf("code=%s", code),
+			ErrGroupTypeNotFoundForType,
+			fmt.Errorf("type=%s", typ),
 		)
 	}
 	return gt, err

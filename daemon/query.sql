@@ -19,7 +19,7 @@ WHERE true
    AND g.type = ?
    AND g.archived IN (sqlc.slice('groups_archived'))
    AND g.deleted IN (sqlc.slice('groups_deleted'))
-ORDER BY name;
+ORDER BY g.name;
 
 -- name: LoadGroupsBySlug :one
 SELECT * FROM `group`

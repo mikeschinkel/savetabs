@@ -35,3 +35,15 @@ func ConvertSlice[SF []F, ST []T, F any, T any](from SF, fn func(F) T) ST {
 	}
 	return items
 }
+
+func ConvertSliceWithFilter[SF []F, ST []T, F any, T any](from SF, fn func(F) (T, bool)) ST {
+	items := make(ST, len(from))
+	for i, item := range from {
+		newItem, ok := fn(item)
+		if !ok {
+			continue
+		}
+		items[i] = newItem
+	}
+	return items
+}

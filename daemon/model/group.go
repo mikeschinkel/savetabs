@@ -28,7 +28,7 @@ type GroupsParams storage.GroupsParams
 func NewGroups(groups storage.Groups) Groups {
 	gs := make([]Group, len(groups.Groups))
 	for i, grp := range groups.Groups {
-		gt, err := shared.GroupTypeByCode(grp.Type)
+		gt, err := shared.GroupTypeByType(grp.Type)
 		if err != nil {
 			// Panic because upstream should have cause this, so that needs to be where it is
 			// fixed, not here. Hence failing here is a programming error.
@@ -47,7 +47,7 @@ func NewGroups(groups storage.Groups) Groups {
 	}
 }
 
-func GroupsLoad(ctx Context, params GroupsParams) (groups Groups, err error) {
+func LoadGroups(ctx Context, params GroupsParams) (groups Groups, err error) {
 	var gs storage.Groups
 	gs, err = storage.GroupsLoad(ctx, storage.GroupsParams(params))
 	if err != nil {

@@ -74,20 +74,14 @@ type AlertMsg = string
 // AlertType defines model for AlertType.
 type AlertType string
 
-// BookmarkFilter defines model for BookmarkFilter.
-type BookmarkFilter = []string
-
-// CategoryFilter defines model for CategoryFilter.
-type CategoryFilter = []string
-
 // ErrorMsg defines model for ErrorMsg.
 type ErrorMsg = string
 
+// GroupFilter defines model for GroupFilter.
+type GroupFilter = []string
+
 // GroupTypeFilter defines model for GroupTypeFilter.
 type GroupTypeFilter = []string
-
-// KeywordFilter defines model for KeywordFilter.
-type KeywordFilter = []string
 
 // LinkId Primary key identifier
 type LinkId = Id
@@ -100,12 +94,6 @@ type MenuItem = string
 
 // MetaFilter defines model for MetaFilter.
 type MetaFilter map[string]string
-
-// TabGroupFilter defines model for TabGroupFilter.
-type TabGroupFilter = []string
-
-// TagFilter defines model for TagFilter.
-type TagFilter = []string
 
 // UnexpectedError defines model for UnexpectedError.
 type UnexpectedError = JSONError
@@ -133,20 +121,8 @@ type GetHtmlLinksetParams struct {
 	// Gt Links for a Group Type
 	Gt *GroupTypeFilter `form:"gt,omitempty" json:"gt,omitempty"`
 
-	// G TabGroup links by tags
-	G *TabGroupFilter `form:"g,omitempty" json:"g,omitempty"`
-
-	// C Category links by categories
-	C *CategoryFilter `form:"c,omitempty" json:"c,omitempty"`
-
-	// T Tag links by tags
-	T *TagFilter `form:"t,omitempty" json:"t,omitempty"`
-
-	// K Keyword filter for Links
-	K *KeywordFilter `form:"k,omitempty" json:"k,omitempty"`
-
-	// B Bookmark filter for Links
-	B *BookmarkFilter `form:"b,omitempty" json:"b,omitempty"`
+	// Grp Links by group of type
+	Grp *GroupFilter `form:"grp,omitempty" json:"grp,omitempty"`
 
 	// M Key/Value meta filter for Links
 	M *MetaFilter `form:"m,omitempty" json:"m,omitempty"`

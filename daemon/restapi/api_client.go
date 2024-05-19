@@ -462,73 +462,9 @@ func NewGetHtmlLinksetRequest(server string, params *GetHtmlLinksetParams) (*htt
 
 		}
 
-		if params.G != nil {
+		if params.Grp != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "g", runtime.ParamLocationQuery, *params.G); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.C != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "c", runtime.ParamLocationQuery, *params.C); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.T != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "t", runtime.ParamLocationQuery, *params.T); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.K != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "k", runtime.ParamLocationQuery, *params.K); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.B != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "b", runtime.ParamLocationQuery, *params.B); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "grp", runtime.ParamLocationQuery, *params.Grp); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -889,6 +825,7 @@ type ClientWithResponsesInterface interface {
 type GetHealthzResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSONDefault  *UnexpectedError
 }
 
 // Status returns HTTPResponse.Status
@@ -910,6 +847,7 @@ func (r GetHealthzResponse) StatusCode() int {
 type GetHtmlAlertResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSONDefault  *UnexpectedError
 }
 
 // Status returns HTTPResponse.Status
@@ -931,6 +869,7 @@ func (r GetHtmlAlertResponse) StatusCode() int {
 type GetHtmlErrorResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSONDefault  *UnexpectedError
 }
 
 // Status returns HTTPResponse.Status
@@ -952,6 +891,7 @@ func (r GetHtmlErrorResponse) StatusCode() int {
 type GetHtmlLinksetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSONDefault  *UnexpectedError
 }
 
 // Status returns HTTPResponse.Status
@@ -973,6 +913,7 @@ func (r GetHtmlLinksetResponse) StatusCode() int {
 type PostHtmlLinksetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSONDefault  *UnexpectedError
 }
 
 // Status returns HTTPResponse.Status
@@ -994,6 +935,7 @@ func (r PostHtmlLinksetResponse) StatusCode() int {
 type GetHtmlMenuResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSONDefault  *UnexpectedError
 }
 
 // Status returns HTTPResponse.Status
@@ -1015,6 +957,7 @@ func (r GetHtmlMenuResponse) StatusCode() int {
 type GetHtmlMenuMenuItemResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSONDefault  *UnexpectedError
 }
 
 // Status returns HTTPResponse.Status
@@ -1106,6 +1049,7 @@ func (r GetLinksLinkIdResponse) StatusCode() int {
 type GetReadyzResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSONDefault  *UnexpectedError
 }
 
 // Status returns HTTPResponse.Status
@@ -1252,6 +1196,16 @@ func ParseGetHealthzResponse(rsp *http.Response) (*GetHealthzResponse, error) {
 		HTTPResponse: rsp,
 	}
 
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest UnexpectedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
 	return response, nil
 }
 
@@ -1266,6 +1220,16 @@ func ParseGetHtmlAlertResponse(rsp *http.Response) (*GetHtmlAlertResponse, error
 	response := &GetHtmlAlertResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest UnexpectedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
 	}
 
 	return response, nil
@@ -1284,6 +1248,16 @@ func ParseGetHtmlErrorResponse(rsp *http.Response) (*GetHtmlErrorResponse, error
 		HTTPResponse: rsp,
 	}
 
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest UnexpectedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
 	return response, nil
 }
 
@@ -1298,6 +1272,16 @@ func ParseGetHtmlLinksetResponse(rsp *http.Response) (*GetHtmlLinksetResponse, e
 	response := &GetHtmlLinksetResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest UnexpectedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
 	}
 
 	return response, nil
@@ -1316,6 +1300,16 @@ func ParsePostHtmlLinksetResponse(rsp *http.Response) (*PostHtmlLinksetResponse,
 		HTTPResponse: rsp,
 	}
 
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest UnexpectedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
 	return response, nil
 }
 
@@ -1332,6 +1326,16 @@ func ParseGetHtmlMenuResponse(rsp *http.Response) (*GetHtmlMenuResponse, error) 
 		HTTPResponse: rsp,
 	}
 
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest UnexpectedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
 	return response, nil
 }
 
@@ -1346,6 +1350,16 @@ func ParseGetHtmlMenuMenuItemResponse(rsp *http.Response) (*GetHtmlMenuMenuItemR
 	response := &GetHtmlMenuMenuItemResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest UnexpectedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
 	}
 
 	return response, nil
@@ -1468,6 +1482,16 @@ func ParseGetReadyzResponse(rsp *http.Response) (*GetReadyzResponse, error) {
 	response := &GetReadyzResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest UnexpectedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
 	}
 
 	return response, nil

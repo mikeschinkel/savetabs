@@ -23,3 +23,11 @@ func Slugify(s string) (slug string) {
 end:
 	return slug
 }
+
+type String struct {
+	s string
+}
+
+func (s String) String() string {
+	return s.s
+}

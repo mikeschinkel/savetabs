@@ -12,11 +12,11 @@ import (
 type HTMLMenu struct {
 	apiURL    safehtml.URL
 	Level     int
-	MenuType  shared.MenuType
+	MenuType  *shared.MenuType
 	MenuItems []HTMLMenuItem
 }
 
-func NewHTMLMenu(apiURL safehtml.URL, mt shared.MenuType, level int) HTMLMenu {
+func NewHTMLMenu(apiURL safehtml.URL, mt *shared.MenuType, level int) HTMLMenu {
 	return HTMLMenu{}.Renew(apiURL, mt, level)
 }
 
@@ -59,7 +59,7 @@ func GetMenuHTML(ctx Context, p HTMLMenuParams) (hr HTMLResponse, err error) {
 		MenuItems: make([]HTMLMenuItem, len(menu.Items)),
 	}
 	for i, item := range menu.Items {
-		item.Menu = &menu
+		item.MenuItemable = menu
 		hm.MenuItems[i] = hm.MenuItems[i].Renew(&hm, item)
 	}
 

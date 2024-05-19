@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/google/safehtml"
@@ -15,6 +14,7 @@ type HTMLMenuItem struct {
 	HTMLId           safehtml.Identifier
 	Label            safehtml.HTML
 	LinksQueryParams safehtml.URL
+	Slug             safehtml.URL
 	Menu             *HTMLMenu
 	MenuItemArgs
 }
@@ -24,11 +24,11 @@ type MenuItemArgs struct {
 }
 
 func newHTMLMenuItem(menu *HTMLMenu, mi model.MenuItem) HTMLMenuItem {
-	return newHTMLMenuItem(menu, mi)
+	return newHTMLMenuItemWithArgs(menu, mi, nil)
 }
 
-func newHTMLMenuItemWithArgs(menu *HTMLMenu, mi model.MenuItem, args MenuItemArgs) HTMLMenuItem {
-	return HTMLMenuItem{}.RenewWithArgs(menu, mi, &args)
+func newHTMLMenuItemWithArgs(menu *HTMLMenu, mi model.MenuItem, args *MenuItemArgs) HTMLMenuItem {
+	return HTMLMenuItem{}.RenewWithArgs(menu, mi, args)
 }
 
 var pristineHTMLMenuItem = HTMLMenuItem{
@@ -43,10 +43,11 @@ func (hmi HTMLMenuItem) Renew(menu *HTMLMenu, mi model.MenuItem) HTMLMenuItem {
 
 func (hmi HTMLMenuItem) RenewWithArgs(menu *HTMLMenu, mi model.MenuItem, args *MenuItemArgs) HTMLMenuItem {
 	hmi = pristineHTMLMenuItem
-	hmi.HTMLId = shared.MakeSafeId(mi.Id)
+	hmi.HTMLId = mi.HTMLId()
 	hmi.Label = shared.MakeSafeHTML(mi.Label)
 	hmi.Menu = menu
-	hmi.LinksQueryParams = shared.MakeSafeURL(`?` + fmt.Sprintf("%s=%s", mi.Menu.Type, mi.LocalId))
+	hmi.Slug = mi.SubmenuURL()
+	hmi.LinksQueryParams = mi.ItemURL()
 	if args != nil {
 		hmi.MenuItemArgs = *args
 	}
@@ -65,15 +66,10 @@ func (hmi HTMLMenuItem) NotTopLevelMenu() bool {
 	return hmi.Menu.Level != 0
 }
 
-func (hmi HTMLMenuItem) Slug() safehtml.Identifier {
-	return hmi.HTMLId
-}
-
 type MenuItemHTMLParams struct {
-	APIURL   safehtml.URL
 	Menu     *HTMLMenu
-	MenuItem safehtml.HTML
-	MenuType shared.MenuType
+	MenuType *shared.MenuType
+	ItemType string
 }
 
 // GetMenuItemHTML responds to HTTP GET request with an text/html response
@@ -86,9 +82,14 @@ func GetMenuItemHTML(ctx Context, p MenuItemHTMLParams) (hr HTMLResponse, err er
 
 	hr.HTTPStatus = http.StatusOK
 
-	items, err = model.MenuItemsLoad(ctx, model.MenuItemLoadParams{
+	if p.Menu == nil {
+		panic("ERROR: A nil HTMLMenu was passed to ui.GetMenuItemHTML().")
+	}
+	m = *p.Menu
+
+	items, err = model.LoadMenuItems(ctx, model.LoadMenuItemParams{
 		MenuType: p.MenuType,
-		Menu:     shared.Ptr(model.NewMenu(p.MenuType, p.Menu.Level)),
+		Menu:     model.NewMenu(p.MenuType),
 	})
 	if err != nil {
 		goto end
@@ -143,7 +144,7 @@ end:
 //				LocalId: "none",
 //				Label:   fmt.Sprintf("<No %s>", gt.Plural),
 //			}, args)
-//			groups, err := model.GroupsLoad(ctx,model.GroupsParams{
+//			groups, err := model.LoadGroups(ctx,model.GroupsParams{
 //				Host:       shared.NewHost(host),
 //				GroupType:  gt.Type,
 //			})

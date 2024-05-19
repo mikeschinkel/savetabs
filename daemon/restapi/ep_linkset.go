@@ -37,11 +37,7 @@ end:
 func (p GetHtmlLinksetParams) linksetParams() guard.LinksetParams {
 	return guard.LinksetParams{
 		GroupTypeFilter: shared.EnsureNotNil(p.Gt, []string{}),
-		TabGroupFilter:  shared.EnsureNotNil(p.G, []string{}),
-		CategoryFilter:  shared.EnsureNotNil(p.C, []string{}),
-		TagFilter:       shared.EnsureNotNil(p.T, []string{}),
-		KeywordFilter:   shared.EnsureNotNil(p.K, []string{}),
-		BookmarkFilter:  shared.EnsureNotNil(p.B, []string{}),
+		GroupFilter:     shared.EnsureNotNil(p.Grp, []string{}),
 		MetaFilter:      shared.EnsureNotNil(p.M, map[string]string{}),
 	}
 }

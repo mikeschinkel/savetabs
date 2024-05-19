@@ -154,43 +154,11 @@ func (siw *ServerInterfaceWrapper) GetHtmlLinkset(w http.ResponseWriter, r *http
 		return
 	}
 
-	// ------------- Optional query parameter "g" -------------
+	// ------------- Optional query parameter "grp" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "g", r.URL.Query(), &params.G)
+	err = runtime.BindQueryParameter("form", true, false, "grp", r.URL.Query(), &params.Grp)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "g", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "c" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "c", r.URL.Query(), &params.C)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "c", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "t" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "t", r.URL.Query(), &params.T)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "t", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "k" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "k", r.URL.Query(), &params.K)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "k", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "b" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "b", r.URL.Query(), &params.B)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "b", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "grp", Err: err})
 		return
 	}
 

@@ -251,7 +251,7 @@ WHERE true
    AND g.type = ?
    AND g.archived IN (/*SLICE:groups_archived*/?)
    AND g.deleted IN (/*SLICE:groups_deleted*/?)
-ORDER BY name
+ORDER BY g.name
 `
 
 type ListGroupsByTypeParams struct {

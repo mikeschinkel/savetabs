@@ -8,12 +8,20 @@ import (
 type Filter struct {
 	Type   FilterType
 	Values []string
+	Map    map[string]string
 }
 
-func NewFilter(ft FilterType, values []string) Filter {
+func NewSliceFilter(ft FilterType, values []string) Filter {
 	return Filter{
 		Type:   ft,
 		Values: values,
+	}
+}
+
+func NewMapFilter(ft FilterType, mss map[string]string) Filter {
+	return Filter{
+		Type: ft,
+		Map:  mss,
 	}
 }
 
@@ -36,7 +44,7 @@ var FilterTypes = make([]FilterType, 0, 10)
 var filterMutex sync.Mutex
 
 func newFilterType(value string) FilterType {
-	ft := FilterType{value: strings.ToUpper(value)}
+	ft := FilterType{value: strings.ToLower(value)}
 	filterMutex.Lock()
 	defer filterMutex.Unlock()
 	dupFilterCheck(ft)
@@ -49,13 +57,8 @@ func (f FilterType) String() string {
 }
 
 var (
-	GroupTypeFilter = newFilterType("GT")
-	MetaFilter      = newFilterType("M")
-	BookmarkFilter  = newFilterType(GroupTypeBookmark.Upper())
-	TabGroupFilter  = newFilterType(GroupTypeTabGroup.Upper())
-	TagFilter       = newFilterType(GroupTypeTag.Upper())
-	CategoryFilter  = newFilterType(GroupTypeCategory.Upper())
-	KeywordFilter   = newFilterType(GroupTypeKeyword.Upper())
-	InvalidFilter   = newFilterType(GroupTypeInvalid.Upper())
+	GroupTypeFilter = newFilterType("gt")
+	GroupFilter     = newFilterType("grp")
+	MetaFilter      = newFilterType("m")
 	NoFilter        = newFilterType("_")
 )
