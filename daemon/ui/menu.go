@@ -3,40 +3,88 @@ package ui
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/google/safehtml"
 	"savetabs/model"
 	"savetabs/shared"
 )
 
+var _ shared.Menu = (*HTMLMenu)(nil)
+
 type HTMLMenu struct {
 	apiURL    safehtml.URL
-	Level     int
-	MenuType  *shared.MenuType
+	Type      *shared.MenuType
 	MenuItems []HTMLMenuItem
+	level     int
+	parent    *HTMLMenu
 }
 
-func NewHTMLMenu(apiURL safehtml.URL, mt *shared.MenuType, level int) HTMLMenu {
-	return HTMLMenu{}.Renew(apiURL, mt, level)
+func (hm HTMLMenu) HTMLId() (id safehtml.Identifier) {
+	if hm.level == 0 {
+		id = safehtml.IdentifierFromConstant("mi")
+		goto end
+	}
+	id = shared.MakeSafeIdf("mi-%s", strings.Join(hm.Type.Slice(), "-"))
+end:
+	return id
 }
 
-var pristineMenu HTMLMenu
-
-func (m HTMLMenu) Renew(apiURL safehtml.URL, mt shared.MenuType, level int) HTMLMenu {
-	m = pristineMenu
-	m.apiURL = apiURL
-	m.Level = level
-	m.MenuType = mt
-	m.MenuItems = make([]HTMLMenuItem, 0)
-	return m
+func (hm HTMLMenu) MenuType() *shared.MenuType {
+	return hm.Type
 }
 
-func (m HTMLMenu) HTMLMenuURL() string {
-	return fmt.Sprintf("%s/html/menu", m.apiURL)
+func (hm HTMLMenu) Parent() shared.Menu {
+	return hm.parent
 }
 
-func (m HTMLMenu) HTMLLinksURL() string {
-	return fmt.Sprintf("%s/html/linkset", m.apiURL)
+func (hm HTMLMenu) ItemURL() safehtml.URL {
+	panic("ItemURL() should not be called for HTMLMenu")
+}
+
+func (hm HTMLMenu) SubmenuURL() safehtml.URL {
+	panic("SubmenuURL() should not be called for HTMLMenu")
+}
+
+func (hm HTMLMenu) Level() int {
+	return hm.level
+}
+
+type HTMLMenuArgs struct {
+	APIURL safehtml.URL
+	Type   *shared.MenuType
+}
+
+func NewHTMLMenu(args HTMLMenuArgs) *HTMLMenu {
+	return HTMLMenu{}.Renew(args)
+}
+
+var zeroStateMenu HTMLMenu
+
+func (hm HTMLMenu) Renew(args HTMLMenuArgs) *HTMLMenu {
+	hm = zeroStateMenu
+	hm.apiURL = args.APIURL
+	hm.MenuItems = make([]HTMLMenuItem, 0)
+	hm.Type = args.Type
+	if hm.Type == nil {
+		shared.Panicf("NewHTMLMenu() or HTMLMenu.Renew() called with `nil` Type")
+	}
+	hm.level = hm.Type.Level()
+	if hm.level > 0 {
+		hm.parent = NewHTMLMenu(HTMLMenuArgs{
+			APIURL: hm.apiURL,
+			Type:   hm.Type.Parent,
+		})
+	}
+	return &hm
+}
+
+func (hm HTMLMenu) HTMLMenuURL() string {
+	return fmt.Sprintf("%s/html/menu", hm.apiURL)
+}
+
+func (hm HTMLMenu) HTMLLinksURL() string {
+	return fmt.Sprintf("%s/html/linkset", hm.apiURL)
 }
 
 var menuTemplate = GetTemplate("menu")
@@ -46,7 +94,7 @@ type HTMLMenuParams struct {
 }
 
 func GetMenuHTML(ctx Context, p HTMLMenuParams) (hr HTMLResponse, err error) {
-	var menu model.Menu
+	var menu *model.Menu
 
 	hr.HTTPStatus = http.StatusOK
 
@@ -54,14 +102,17 @@ func GetMenuHTML(ctx Context, p HTMLMenuParams) (hr HTMLResponse, err error) {
 		Type: shared.GroupTypeMenuType,
 	})
 
-	hm := HTMLMenu{
-		apiURL:    shared.MakeSafeURL(p.Host.URL()),
-		MenuItems: make([]HTMLMenuItem, len(menu.Items)),
-	}
-	for i, item := range menu.Items {
-		item.MenuItemable = menu
-		hm.MenuItems[i] = hm.MenuItems[i].Renew(&hm, item)
-	}
+	hm := NewHTMLMenu(HTMLMenuArgs{
+		APIURL: shared.MakeSafeURL(p.Host.URL()),
+		Type:   menu.Type,
+	})
+
+	hm.MenuItems = shared.ConvertSlice(menu.Items, func(item model.MenuItem) HTMLMenuItem {
+		return newHTMLMenuItem(item, &HTMLMenuItemArgs{
+			IconState: CollapsedIcon,
+			Menu:      hm,
+		})
+	})
 
 	hr.HTML, err = menuTemplate.ExecuteToHTML(hm)
 	if err != nil {

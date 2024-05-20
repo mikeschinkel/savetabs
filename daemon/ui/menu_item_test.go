@@ -1,15 +1,19 @@
-package model
+package ui
 
 import (
 	"testing"
 
+	"savetabs/model"
 	"savetabs/shared"
 )
 
+var APIURL = shared.MakeSafeURL("http://localhost:8642")
+
 type menuItemTest struct {
 	name    string
-	args    MenuItemParams
-	want    MenuItem
+	args    *HTMLMenuItemArgs
+	mi      model.MenuItem
+	want    HTMLMenuItem
 	htmlId  string
 	menuURL string
 	itemURL string
@@ -24,46 +28,60 @@ func (s String) String() string {
 }
 
 func groupTypeKeywords() menuItemTest {
-	gtm := NewMenu(&shared.GroupTypeMenuType)
+	gtm := NewHTMLMenu(HTMLMenuArgs{
+		APIURL: shared.MakeSafeURL("http://localhost:8642"),
+		Type:   shared.GroupTypeMenuType,
+	})
 	return menuItemTest{
 		name: "Group Type: Keywords",
-		args: MenuItemParams{
+		mi: model.MenuItem{
+			Menu:    model.NewMenu(shared.GroupTypeMenuType),
 			LocalId: "k",
 			Label:   "Keywords",
-			Menu:    gtm,
-			Type:    &shared.KeywordMenuType,
+			Type:    shared.KeywordMenuType,
 		},
-		want: MenuItem{
-			MenuItemable: gtm,
-			LocalId:      shared.GroupTypeKeyword.Lower(),
-			Label:        "Keywords",
-			Type:         &shared.KeywordMenuType,
+		args: &HTMLMenuItemArgs{
+			Menu: gtm,
+		},
+		want: HTMLMenuItem{
+			Menu:      gtm,
+			LocalId:   shared.GroupTypeKeyword.Lower(),
+			Label:     shared.MakeSafeHTML("Keywords"),
+			Type:      shared.KeywordMenuType,
+			IconState: CollapsedIcon,
 		},
 		htmlId:  "mi-gt-k",
-		menuURL: "/gt/k",
-		itemURL: "?gt=k",
+		menuURL: "gt--k",
+		itemURL: "gt=k",
 	}
 }
 func groupKeywordNYTimes() menuItemTest {
-	kwm := NewMenu(&shared.KeywordMenuType)
-	nytMenu := shared.NewMenuType(&shared.KeywordMenuType, String{"nytimes"}, nil)
+	kwm := NewHTMLMenu(HTMLMenuArgs{
+		APIURL: shared.MakeSafeURL("http://localhost:8642"),
+		Type:   shared.KeywordMenuType,
+	})
+	nytMenu := shared.NewMenuType(shared.KeywordMenuType, String{"nytimes"}, nil)
 	return menuItemTest{
 		name: "Group Keyword: NYTimes",
-		args: MenuItemParams{
-			LocalId: "nytimes",
-			Label:   "New York Times",
-			Menu:    kwm,
-			Type:    &nytMenu,
+		mi: model.MenuItem{
+			Menu:    model.NewMenu(shared.KeywordMenuType),
+			LocalId: "k",
+			Label:   "Keywords",
+			Type:    shared.KeywordMenuType,
 		},
-		want: MenuItem{
-			MenuItemable: kwm,
-			LocalId:      shared.GroupTypeKeyword.Lower(),
-			Label:        "New York Times",
-			Type:         &nytMenu,
+		args: &HTMLMenuItemArgs{
+			Menu: kwm,
+		},
+		want: HTMLMenuItem{
+			Menu:      kwm,
+			LocalId:   "nytimes",
+			Label:     shared.MakeSafeHTML("New York Times"),
+			Type:      nytMenu,
+			IconState: CollapsedIcon,
 		},
 		htmlId:  "mi-gt-k-nytimes",
-		menuURL: "/gt/k/nytimes",
-		itemURL: "?gt=k&grp=nytimes",
+		menuURL: "gt--k/grp--nytimes",
+		itemURL: "gt=k&grp=nytimes",
 	}
 }
 
@@ -74,7 +92,7 @@ func Test_newMenuItem(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mi := newMenuItem(tt.args)
+			mi := newHTMLMenuItem(tt.mi, tt.args)
 			if mi.HTMLId().String() != tt.htmlId {
 				t.Errorf("HTMLId() = %v, want %v", mi.HTMLId(), tt.htmlId)
 			}

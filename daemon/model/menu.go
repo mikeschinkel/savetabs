@@ -3,67 +3,19 @@ package model
 import (
 	"strings"
 
-	"github.com/google/safehtml"
 	"savetabs/shared"
 	"savetabs/storage"
 )
 
-var _ shared.MenuItemable = (*Menu)(nil)
-
 type Menu struct {
-	Type   *shared.MenuType
-	Items  []MenuItem
-	level  int
-	parent *Menu
-}
-
-func (m Menu) SubmenuURL() (u safehtml.URL) {
-	if m.level == 0 {
-		u = shared.MakeSafeURL("/")
-		goto end
-	}
-	u = shared.MakeSafeURLf("/%s", strings.Join(m.Type.Slice(), "/"))
-end:
-	return u
-}
-
-func (m Menu) Parent() shared.MenuItemable {
-	return m.parent
-}
-
-func (m Menu) ItemURL() (u safehtml.URL) {
-	return shared.MakeSafeURL("?")
-}
-
-func (m Menu) Level() int {
-	return m.level
-}
-
-func (m Menu) MenuType() *shared.MenuType {
-	return m.Type
-}
-
-func (m Menu) HTMLId() (id safehtml.Identifier) {
-	if m.level == 0 {
-		id = safehtml.IdentifierFromConstant("mi")
-		goto end
-	}
-	id = shared.MakeSafeIdf("mi-%s", strings.Join(m.Type.Slice(), "-"))
-end:
-	return id
+	Type  *shared.MenuType
+	Items []MenuItem
 }
 
 func NewMenu(mt *shared.MenuType) *Menu {
-	var parent *Menu
-	level := mt.Level()
-	if level > 0 {
-		parent = NewMenu(mt.Parent)
-	}
 	return &Menu{
-		Type:   mt,
-		Items:  make([]MenuItem, 0),
-		level:  level,
-		parent: parent,
+		Type:  mt,
+		Items: make([]MenuItem, 0),
 	}
 }
 
@@ -98,16 +50,16 @@ func MenuLoad(ctx Context, p MenuParams) (m *Menu, err error) {
 		if excludeGroupTypeAsMenuItem(gt, invalidGTWithStats) {
 			return item, false
 		}
-		typ, err := shared.MenuTypeByValue(gt.Type)
+		typ, err := shared.MenuTypeByParentTypeAndMenuName(shared.GroupTypeMenuType, gt.Type)
 		if err != nil {
 			shared.Panicf("Invalid group type '%s' loaded from database", gt.Type)
 		}
 		cnt++
-		item = m.Items[cnt-1].Renew(MenuItemParams{
+		item = item.Renew(MenuItemArgs{
 			LocalId: strings.ToLower(gt.Type),
 			Label:   gt.Plural,
 			Menu:    m,
-			Type:    &typ,
+			Type:    typ,
 		})
 		return item, true
 	})

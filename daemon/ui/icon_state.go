@@ -17,6 +17,7 @@ func newIconState(state string) IconState {
 
 //goland:noinspection GoUnusedGlobalVariable
 var (
+	ZeroStateIcon IconState
 	BlankIcon     IconState = newIconState("blank")
 	ExpandedIcon  IconState = newIconState("expanded")
 	CollapsedIcon IconState = newIconState("collapsed")

@@ -1,56 +1,86 @@
 package ui
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/google/safehtml"
 	"savetabs/model"
 	"savetabs/shared"
 )
 
-//goland:noinspection GoUnusedGlobalVariable
+var _ shared.Menu = (*HTMLMenuItem)(nil)
 
 type HTMLMenuItem struct {
-	HTMLId           safehtml.Identifier
-	Label            safehtml.HTML
-	LinksQueryParams safehtml.URL
-	Slug             safehtml.URL
-	Menu             *HTMLMenu
-	MenuItemArgs
-}
-
-type MenuItemArgs struct {
+	shared.Menu
+	LocalId   string
+	Label     safehtml.HTML
+	Type      *shared.MenuType
 	IconState IconState
 }
 
-func newHTMLMenuItem(menu *HTMLMenu, mi model.MenuItem) HTMLMenuItem {
-	return newHTMLMenuItemWithArgs(menu, mi, nil)
+type HTMLMenuItemArgs struct {
+	IconState IconState
+	shared.Menu
 }
 
-func newHTMLMenuItemWithArgs(menu *HTMLMenu, mi model.MenuItem, args *MenuItemArgs) HTMLMenuItem {
-	return HTMLMenuItem{}.RenewWithArgs(menu, mi, args)
+var zeroStateHTMLMenuItem HTMLMenuItem
+
+func (hmi HTMLMenuItem) MenuType() *shared.MenuType {
+	return hmi.Type
 }
 
-var pristineHTMLMenuItem = HTMLMenuItem{
-	MenuItemArgs: MenuItemArgs{
-		IconState: CollapsedIcon,
-	},
+func (hmi HTMLMenuItem) HTMLId() safehtml.Identifier {
+	return shared.MakeSafeId(fmt.Sprintf("%s-%s",
+		hmi.Menu.HTMLId(),
+		hmi.LocalId,
+	))
 }
 
-func (hmi HTMLMenuItem) Renew(menu *HTMLMenu, mi model.MenuItem) HTMLMenuItem {
-	return hmi.RenewWithArgs(menu, mi, nil)
+func (hmi HTMLMenuItem) SubmenuURL() safehtml.URL {
+	return shared.MakeSafeURL(hmi.MenuType().Params(shared.ParamsArgs{
+		Equates:  "--",
+		Combines: "/",
+	}))
 }
 
-func (hmi HTMLMenuItem) RenewWithArgs(menu *HTMLMenu, mi model.MenuItem, args *MenuItemArgs) HTMLMenuItem {
-	hmi = pristineHTMLMenuItem
-	hmi.HTMLId = mi.HTMLId()
-	hmi.Label = shared.MakeSafeHTML(mi.Label)
-	hmi.Menu = menu
-	hmi.Slug = mi.SubmenuURL()
-	hmi.LinksQueryParams = mi.ItemURL()
-	if args != nil {
-		hmi.MenuItemArgs = *args
+func (hmi HTMLMenuItem) Slug() safehtml.URL {
+	return hmi.SubmenuURL()
+}
+func (hmi HTMLMenuItem) LinksQueryParams() safehtml.URL {
+	return hmi.ItemURL()
+}
+
+func (hmi HTMLMenuItem) ItemURL() safehtml.URL {
+	return shared.MakeSafeURL(hmi.MenuType().Params(shared.ParamsArgs{
+		Equates:  "=",
+		Combines: "&",
+	}))
+}
+
+func newHTMLMenuItem(mi model.MenuItem, args *HTMLMenuItemArgs) HTMLMenuItem {
+	return HTMLMenuItem{}.Renew(mi, args)
+}
+
+func (hmi HTMLMenuItem) Renew(mi model.MenuItem, args *HTMLMenuItemArgs) HTMLMenuItem {
+	if args == nil {
+		shared.Panicf("RenewWithArgs: args must not be nil")
 	}
+	hmi = zeroStateHTMLMenuItem
+	hmi.Label = shared.MakeSafeHTML(mi.Label)
+	hmi.LocalId = strings.ToLower(mi.LocalId)
+	hmi.Menu = args.Menu
+	//mt,err := shared.MenuTypeByParentTypeAndMenuName(shared.GroupTypeMenuType, args.LocalId)
+	mt, err := shared.MenuTypeByParentTypeAndMenuName(hmi.Menu.MenuType(), mi.LocalId)
+	if err != nil {
+		shared.Panicf(err.Error())
+	}
+	hmi.Type = mt
+	if args.IconState == ZeroStateIcon {
+		args.IconState = CollapsedIcon
+	}
+	hmi.IconState = args.IconState
 	return hmi
 }
 
@@ -59,17 +89,16 @@ func (hmi HTMLMenuItem) IsIconBlank() bool {
 }
 
 func (hmi HTMLMenuItem) IsTopLevelMenu() bool {
-	return hmi.Menu.Level == 0
+	return hmi.Menu.Level() == 0
 }
 
 func (hmi HTMLMenuItem) NotTopLevelMenu() bool {
-	return hmi.Menu.Level != 0
+	return hmi.Menu.Level() != 0
 }
 
 type MenuItemHTMLParams struct {
 	Menu     *HTMLMenu
 	MenuType *shared.MenuType
-	ItemType string
 }
 
 // GetMenuItemHTML responds to HTTP GET request with an text/html response
@@ -78,14 +107,12 @@ type MenuItemHTMLParams struct {
 func GetMenuItemHTML(ctx Context, p MenuItemHTMLParams) (hr HTMLResponse, err error) {
 	var items model.MenuItems
 	var htmlItems []HTMLMenuItem
-	var m HTMLMenu
 
 	hr.HTTPStatus = http.StatusOK
 
 	if p.Menu == nil {
 		panic("ERROR: A nil HTMLMenu was passed to ui.GetMenuItemHTML().")
 	}
-	m = *p.Menu
 
 	items, err = model.LoadMenuItems(ctx, model.LoadMenuItemParams{
 		MenuType: p.MenuType,
@@ -94,10 +121,11 @@ func GetMenuItemHTML(ctx Context, p MenuItemHTMLParams) (hr HTMLResponse, err er
 	if err != nil {
 		goto end
 	}
-	htmlItems = make([]HTMLMenuItem, len(items.Items))
-	for i, item := range items.Items {
-		htmlItems[i] = htmlItems[i].Renew(&m, item)
-	}
+	htmlItems = shared.ConvertSlice(items.Items, func(item model.MenuItem) HTMLMenuItem {
+		return newHTMLMenuItem(item, &HTMLMenuItemArgs{
+			Menu: *p.Menu,
+		})
+	})
 	hr.HTML, err = menuTemplate.ExecuteToHTML(HTMLMenu{
 		MenuItems: htmlItems,
 	})

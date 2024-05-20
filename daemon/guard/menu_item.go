@@ -27,27 +27,28 @@ func NewMenuItem(v string) MenuItem {
 var matchMenuItemIds = regexp.MustCompile(fmt.Sprintf(`^(%s)-(.+)$`, shared.MenuTypesForRegexp()))
 
 // GetMenuItemHTML return HTMX-flavored HTML for a single menu item
-func GetMenuItemHTML(ctx Context, host string, menuItem MenuItem) (_ HTMLResponse, err error) {
+func GetMenuItemHTML(ctx Context, host string, menuItem string) (_ HTMLResponse, err error) {
 	var hr ui.HTMLResponse
 	var apiURL safehtml.URL
-	var mt shared.MenuType
+	var mt *shared.MenuType
 
 	// TODO: Review `id`, `key`, `menuItem` etc. semantics
-	id := menuItem.value
-	if !matchMenuItemIds.MatchString(id) {
-		err = errors.Join(ErrInvalidKeyFormat, fmt.Errorf(`id=%s`, id))
+	if !matchMenuItemIds.MatchString(menuItem) {
+		err = errors.Join(ErrInvalidMenuItemFormat, fmt.Errorf(`menu_item=%s`, menuItem))
 		hr.HTTPStatus = http.StatusBadRequest
 		goto end
 	}
-	mt, err = shared.MenuTypeByValue(id)
+	mt, err = shared.MenuTypeByValue(menuItem)
 	if err != nil {
 		goto end
 	}
 	apiURL = shared.MakeSafeURL(shared.NewHost(host).URL())
 	hr, err = ui.GetMenuItemHTML(ctx, ui.MenuItemHTMLParams{
-		Menu:     shared.Ptr(ui.NewHTMLMenu(apiURL, &shared.GroupTypeMenuType, 1)), // TODO: Need to make 2nd two params dyanmic.
 		MenuType: mt,
-		ItemType: mt.Leaf(),
+		Menu: ui.NewHTMLMenu(ui.HTMLMenuArgs{
+			APIURL: apiURL,
+			Type:   shared.GroupTypeMenuType,
+		}),
 	})
 end:
 	return HTMLResponse(hr), err

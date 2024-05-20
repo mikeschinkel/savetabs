@@ -5,8 +5,8 @@ import (
 )
 
 var (
-	ErrInvalidUpsertAction = errors.New("invalid upsert action")
-	ErrHTMLNotParsed       = errors.New("html not parsed")
-	ErrUrlNotSpecified     = errors.New("url not specified")
-	ErrInvalidKeyFormat    = errors.New("invalid key format (expected 'mi-<type>-<key>')")
+	ErrInvalidUpsertAction   = errors.New("invalid upsert action")
+	ErrHTMLNotParsed         = errors.New("html not parsed")
+	ErrUrlNotSpecified       = errors.New("url not specified")
+	ErrInvalidMenuItemFormat = errors.New("invalid menu item format (expected '<type>-<key>')")
 )

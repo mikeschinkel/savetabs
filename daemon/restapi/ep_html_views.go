@@ -9,7 +9,7 @@ import (
 
 func (a *API) GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request, menuItem MenuItem) {
 	a.sendView(context.Background(), w, r, func(ctx Context) (guard.HTMLResponse, error) {
-		return guard.GetMenuItemHTML(ctx, r.Host, guard.NewMenuItem(menuItem))
+		return guard.GetMenuItemHTML(ctx, r.Host, menuItem)
 	})
 }
 
