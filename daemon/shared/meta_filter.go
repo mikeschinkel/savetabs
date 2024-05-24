@@ -61,18 +61,24 @@ end:
 	return meta, err
 }
 
-func ParseMetaFilter(value string) (mf MetaFilter, err error) {
+func ParseMetaFilter(value string) (mf MetaFilter, found bool, err error) {
+	var me *MultiErr
 	values := strings.Split(value, ",")
-	me := NewMultiErr()
-	mf.Metas = make([]Meta, len(values))
-	for i, value := range values {
+	if len(values) == 0 {
+		goto end
+	}
+	me = NewMultiErr()
+	mf.Metas = make([]Meta, 0, len(values))
+	for _, value := range values {
 		meta, err := parseMeta(value)
 		if err != nil {
 			me.Add(err)
 			continue
 		}
-		mf.Metas[i] = meta
+		found = true
+		mf.Metas = append(mf.Metas, meta)
 	}
 	err = me.Err()
-	return mf, err
+end:
+	return mf, found, err
 }

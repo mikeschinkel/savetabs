@@ -35,9 +35,8 @@ type UpsertLinksWithGroupsParams struct {
 func UpsertLinksWithGroups(ctx context.Context, p UpsertLinksWithGroupsParams) error {
 	var groupBytes []byte
 	var groupedLinkBytes []byte
-	var gg []Group
-	var rgs []LinkGroup
 	//var mm []Meta
+
 	var me = shared.NewMultiErr()
 
 	slog.Info("Received from Chrome extension", "num_links", len(p.Links))
@@ -77,8 +76,8 @@ func UpsertLinksWithGroups(ctx context.Context, p UpsertLinksWithGroupsParams) e
 
 		slog.Info("Saved",
 			"links", len(p.Links),
-			"link_groups", len(rgs),
-			"groups", len(gg),
+			"link_groups", len(p.GroupedLinks),
+			"groups", len(p.Groups),
 		)
 		throttle()
 		return innerME.Err()

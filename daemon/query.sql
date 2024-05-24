@@ -38,9 +38,9 @@ SELECT
 FROM var
    JOIN json_each( var.value ) r ON var.key='json'
 WHERE var.id = ?
-ON CONFLICT (name,type)
-   DO UPDATE
-   SET latest = strftime('%s','now');
+    ON CONFLICT (name,type)
+        DO UPDATE
+            SET latest = strftime('%s','now');
 
 -- name: ListGroupsType :many
 SELECT * FROM groups_type;
@@ -278,9 +278,10 @@ WHERE TRUE
       WHERE g.type IN (sqlc.slice('groupTypes'))
    );
 
--- name: UpsertVar :execlastid
+-- name: UpsertVar :one
 INSERT INTO var (key,value) VALUES (?,?)
-ON CONFLICT (key) DO UPDATE SET value = excluded.value;
+ON CONFLICT (key) DO UPDATE SET value = excluded.value
+RETURNING id;
 
 -- name: DeleteVar :exec
 DELETE FROM var WHERE id = ?;

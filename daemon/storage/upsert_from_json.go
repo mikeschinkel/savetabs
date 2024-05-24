@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"log/slog"
 
 	"savetabs/sqlc"
 )
@@ -37,14 +38,18 @@ func UpsertMetaFromJSON(ctx context.Context, db *NestedDBTX, metaJSON string) (e
 }
 
 func upsertFromJSON(ctx context.Context, db *NestedDBTX, j string, fn func(ctx context.Context, q *sqlc.Queries, id int64) error) (err error) {
-	err = db.Exec(func(dbtx *NestedDBTX) (err error) {
+	err = execWithEnsuredNestedDBTX(db, func(dbtx *NestedDBTX) (err error) {
 		var varId int64
-		q := db.DataStore.Queries(dbtx)
+		q := dbtx.DataStore.Queries(dbtx)
 		varId, err = q.UpsertVar(ctx, sqlc.UpsertVarParams{
 			Key:   "json",
 			Value: NewNullString(j),
 		})
 		if err != nil {
+			goto end
+		}
+		if varId == 0 {
+			slog.Warn("Failed to return ID for upsert to var.key='json'")
 			goto end
 		}
 		err = fn(ctx, q, varId)

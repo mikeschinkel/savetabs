@@ -11,6 +11,16 @@ import (
 
 type unparsedLink guard.UnparsedLink
 
+type LinkToParse struct {
+	url          *url.URL
+	Subdomain    string
+	SLD          string
+	Port         string
+	IsIP         bool
+	IsLocal      bool
+	HasSubdomain bool
+}
+
 func run(ctx context.Context) (err error) {
 	var links []guard.UnparsedLink
 
@@ -34,7 +44,7 @@ end:
 }
 
 func updateUnparsedLink(ctx Context, link unparsedLink) (err error) {
-	slog.Info("Processing", "url", link.URL) // TODO: Change to slog.Debug()
+	slog.Info("Processing", "url", link.OriginalURL) // TODO: Change to slog.Debug()
 	link.URL, err = url.Parse(link.OriginalURL)
 	if err != nil {
 		slog.Error(err.Error(), "url", link.URL)

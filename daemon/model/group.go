@@ -8,10 +8,9 @@ import (
 )
 
 type Group struct {
-	Id       int64
-	Name     string
-	Type     shared.GroupType
-	TypeName string
+	Id   int64
+	Name string
+	Type shared.GroupType
 }
 
 func (grp Group) Slug() string {
@@ -35,10 +34,9 @@ func NewGroups(groups storage.Groups) Groups {
 			panic(err.Error())
 		}
 		gs[i] = Group{
-			Id:       grp.Id,
-			Name:     grp.Name,
-			Type:     gt,
-			TypeName: grp.TypeName,
+			Id:   grp.Id,
+			Name: grp.Name,
+			Type: gt,
 		}
 	}
 	return Groups{

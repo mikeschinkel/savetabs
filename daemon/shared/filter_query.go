@@ -30,7 +30,7 @@ func ParseFilterQuery(u string) (items FilterQuery, err error) {
 	var urlValues url.Values
 	var me *MultiErr
 
-	type parseOne func(string) (FilterItem, error)
+	type parseOne func(string) (FilterItem, bool, error)
 	var parse func([]string, parseOne) bool
 
 	q, err := url.Parse(u)
@@ -44,12 +44,15 @@ func ParseFilterQuery(u string) (items FilterQuery, err error) {
 	parse = func(vv []string, fn parseOne) (ok bool) {
 		ok = true
 		for _, value := range vv {
-			item, err := fn(value)
+			item, found, err := fn(value)
 			if err != nil {
 				me.Add(err)
 				ok = false
 			}
 			if item == nil {
+				continue
+			}
+			if !found {
 				continue
 			}
 			items.FilterItems = append(items.FilterItems, item)
@@ -64,21 +67,21 @@ func ParseFilterQuery(u string) (items FilterQuery, err error) {
 		}
 		switch ft {
 		case GroupTypeFilterType:
-			fn := func(v string) (FilterItem, error) {
+			fn := func(v string) (FilterItem, bool, error) {
 				return ParseGroupFilter(v)
 			}
 			if !parse(ftValues, fn) {
 				continue
 			}
 		case GroupFilterType:
-			fn := func(v string) (FilterItem, error) {
+			fn := func(v string) (FilterItem, bool, error) {
 				return ParseGroupTypeFilter(v)
 			}
 			if !parse(ftValues, fn) {
 				continue
 			}
 		case MetaFilterType:
-			fn := func(v string) (FilterItem, error) {
+			fn := func(v string) (FilterItem, bool, error) {
 				return ParseMetaFilter(v)
 			}
 			if !parse(ftValues, fn) {

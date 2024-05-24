@@ -1195,9 +1195,9 @@ SELECT
 FROM var
    JOIN json_each( var.value ) r ON var.key='json'
 WHERE var.id = ?
-ON CONFLICT (name,type)
-   DO UPDATE
-   SET latest = strftime('%s','now')
+    ON CONFLICT (name,type)
+        DO UPDATE
+            SET latest = strftime('%s','now')
 `
 
 func (q *Queries) UpsertGroupsFromVarJSON(ctx context.Context, id int64) error {
@@ -1320,9 +1320,10 @@ func (q *Queries) UpsertMetaFromVarJSON(ctx context.Context, id int64) error {
 	return err
 }
 
-const upsertVar = `-- name: UpsertVar :execlastid
+const upsertVar = `-- name: UpsertVar :one
 INSERT INTO var (key,value) VALUES (?,?)
 ON CONFLICT (key) DO UPDATE SET value = excluded.value
+RETURNING id
 `
 
 type UpsertVarParams struct {
@@ -1331,9 +1332,8 @@ type UpsertVarParams struct {
 }
 
 func (q *Queries) UpsertVar(ctx context.Context, arg UpsertVarParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, upsertVar, arg.Key, arg.Value)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
+	row := q.db.QueryRowContext(ctx, upsertVar, arg.Key, arg.Value)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }

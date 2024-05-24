@@ -17,11 +17,10 @@ type GroupsParams struct {
 }
 
 type Group struct {
-	Id       int64  `json:"id"`
-	Name     string `json:"name"`
-	Type     string `json:"type"`
-	Slug     string `json:"slug"`
-	TypeName string `json:"type_name"`
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+	Slug string `json:"slug"`
 }
 
 type Groups struct {
@@ -52,11 +51,10 @@ func GroupsLoad(ctx Context, params GroupsParams) (gs Groups, err error) {
 	gs.Groups = make([]Group, len(groups))
 	for i, g := range groups {
 		gs.Groups[i] = Group{
-			Id:       g.ID,
-			Name:     g.Name,
-			Type:     g.Type,
-			Slug:     g.Slug, // TOOD: Ensure this is a lewer-case letter and not a name
-			TypeName: g.TypeName,
+			Id:   g.ID,
+			Name: g.Name,
+			Type: g.Type,
+			Slug: g.Slug, // TOOD: Ensure this is a lewer-case letter and not a name
 		}
 	}
 end:

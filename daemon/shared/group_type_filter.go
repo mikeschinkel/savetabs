@@ -26,20 +26,27 @@ func (g GroupTypeFilter) Filters() []any {
 	})
 }
 
-func ParseGroupTypeFilter(value string) (gf GroupTypeFilter, err error) {
+func ParseGroupTypeFilter(value string) (gf GroupTypeFilter, found bool, err error) {
+	var gtf GroupTypeFilter
+
 	me := NewMultiErr()
 	values := strings.Split(value, ",")
-	gtf := GroupTypeFilter{
-		GroupTypes: make([]GroupType, len(values)),
+	if len(values) == 0 {
+		goto end
 	}
-	for i, groupType := range values {
+	gtf = GroupTypeFilter{
+		GroupTypes: make([]GroupType, 0, len(values)),
+	}
+	for _, groupType := range values {
 		gt, err := ParseGroupTypeByLetter(groupType)
 		if err != nil {
 			me.Add(err)
 			continue
 		}
-		gtf.GroupTypes[i] = gt
+		found = true
+		gtf.GroupTypes = append(gtf.GroupTypes, gt)
 	}
 	err = me.Err()
-	return gtf, err
+end:
+	return gtf, found, err
 }

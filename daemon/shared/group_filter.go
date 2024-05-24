@@ -32,7 +32,7 @@ func (g GroupFilter) Filters() []any {
 var groupRegexp = regexp.MustCompile(`^([a-z]+):([a-z0-9-]+)$`)
 var groupsRegexp = regexp.MustCompile(`^(([a-z]+):([a-z0-9-]+),?)+$`)
 
-func ParseGroupFilter(value string) (gf GroupFilter, err error) {
+func ParseGroupFilter(value string) (gf GroupFilter, found bool, err error) {
 	var fg FilterGroup
 
 	me := NewMultiErr()
@@ -53,6 +53,7 @@ func ParseGroupFilter(value string) (gf GroupFilter, err error) {
 		gf.Groups = append(gf.Groups, fg)
 	}
 	err = me.Err()
+	found = true
 end:
-	return gf, err
+	return gf, found, err
 }
