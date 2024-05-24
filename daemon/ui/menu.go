@@ -10,7 +10,7 @@ import (
 	"savetabs/shared"
 )
 
-var _ shared.Menu = (*HTMLMenu)(nil)
+var _ shared.MenuItemable = (*HTMLMenu)(nil)
 
 type HTMLMenu struct {
 	apiURL    safehtml.URL
@@ -18,6 +18,10 @@ type HTMLMenu struct {
 	MenuItems []HTMLMenuItem
 	level     int
 	parent    *HTMLMenu
+}
+
+func (hm HTMLMenu) IsLeaf() bool {
+	return false
 }
 
 func (hm HTMLMenu) HTMLId() (id safehtml.Identifier) {
@@ -34,12 +38,12 @@ func (hm HTMLMenu) MenuType() *shared.MenuType {
 	return hm.Type
 }
 
-func (hm HTMLMenu) Parent() shared.Menu {
+func (hm HTMLMenu) Parent() shared.MenuItemable {
 	return hm.parent
 }
 
-func (hm HTMLMenu) ItemURL() safehtml.URL {
-	panic("ItemURL() should not be called for HTMLMenu")
+func (hm HTMLMenu) LinksQuery() safehtml.URL {
+	panic("LinksQuery() should not be called for HTMLMenu")
 }
 
 func (hm HTMLMenu) SubmenuURL() safehtml.URL {
@@ -96,7 +100,7 @@ type HTMLMenuParams struct {
 func GetMenuHTML(ctx Context, p HTMLMenuParams) (hr HTMLResponse, err error) {
 	var menu *model.Menu
 
-	hr.HTTPStatus = http.StatusOK
+	hr = NewHTMLResponse()
 
 	menu, err = model.MenuLoad(ctx, model.MenuParams{
 		Type: shared.GroupTypeMenuType,
@@ -109,14 +113,13 @@ func GetMenuHTML(ctx Context, p HTMLMenuParams) (hr HTMLResponse, err error) {
 
 	hm.MenuItems = shared.ConvertSlice(menu.Items, func(item model.MenuItem) HTMLMenuItem {
 		return newHTMLMenuItem(item, &HTMLMenuItemArgs{
-			IconState: CollapsedIcon,
-			Menu:      hm,
+			MenuItemable: hm,
 		})
 	})
 
 	hr.HTML, err = menuTemplate.ExecuteToHTML(hm)
 	if err != nil {
-		hr.HTTPStatus = http.StatusInternalServerError
+		hr.SetCode(http.StatusInternalServerError)
 		goto end
 	}
 end:

@@ -8,4 +8,6 @@ import (
 
 type Context = context.Context
 
-type HTMLResponse ui.HTMLResponse
+type HTMLResponse struct {
+	ui.HTMLResponse
+}

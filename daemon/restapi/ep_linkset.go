@@ -1,7 +1,6 @@
 package restapi
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
@@ -23,23 +22,27 @@ type linkSetForm struct {
 	queryJSON string
 }
 
-func (f linkSetForm) linksetParams() (lsp guard.LinksetParams, err error) {
-	var params GetHtmlLinksetParams
-	err = json.Unmarshal([]byte(f.queryJSON), &params)
-	if err != nil {
-		goto end
-	}
-	lsp = params.linksetParams()
-end:
-	return lsp, err
-}
-
-func (p GetHtmlLinksetParams) linksetParams() guard.LinksetParams {
-	return guard.LinksetParams{
-		GroupTypeFilter: shared.EnsureNotNil(p.Gt, []string{}),
-		GroupFilter:     shared.EnsureNotNil(p.Grp, []string{}),
-		MetaFilter:      shared.EnsureNotNil(p.M, map[string]string{}),
-	}
+func (f linkSetForm) FilterQuery() (fq shared.FilterQuery, err error) {
+	print()
+	//	var params GetHtmlLinksetParams
+	//	var filterItems  []shared.FilterItem
+	//
+	//	err = json.Unmarshal([]byte(f.queryJSON), &params)
+	//	if err != nil {
+	//		goto end
+	//	}
+	//	filterItems = make([]shared.FilterItem,3)
+	//	shared.ParseGroupTypeFilter()
+	//	filterItems[0] = shared.GroupTypeFilter{GroupTypes: *params.Gt,}
+	//
+	//
+	//}
+	//	fq = shared.FilterQuery{FilterItems: []shared.FilterItem{
+	//		*params.Gt,
+	//
+	//	}}
+	//end:
+	return fq, err
 }
 
 func parseLinksetForm(form url.Values) (lsf linkSetForm, err error) {
@@ -90,20 +93,24 @@ func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case err == nil:
 		var alert guard.HTMLResponse
-		lsp, err := form.linksetParams()
+		fq, err := form.FilterQuery()
 		if err != nil {
 			a.sendError(w, r, http.StatusBadRequest, err.Error())
 			return
 		}
-		hr, err := guard.GetLinksetHTML(ctx, r.Host, r.RequestURI, lsp)
+		hr, err := guard.GetLinksetHTML(ctx, guard.LinksetParams{
+			FilterQuery: &fq,
+			RequestURI:  r.RequestURI,
+			Host:        r.Host,
+		})
 		if err != nil {
-			a.sendError(w, r, hr.HTTPStatus, err.Error())
+			a.sendError(w, r, hr.Code(), err.Error())
 			return
 		}
 		alert, err = guard.GetLinksetSuccessAlertHTML(ctx, form.LinkIds)
 		if err != nil {
 			//goland:noinspection GoDfaErrorMayBeNotNil
-			a.sendError(w, r, alert.HTTPStatus, err.Error())
+			a.sendError(w, r, alert.Code(), err.Error())
 			return
 		}
 		a.sendHTML(w, hr.HTML, alert.HTML)

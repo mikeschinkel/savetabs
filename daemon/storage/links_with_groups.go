@@ -65,14 +65,14 @@ func UpsertLinksWithGroups(ctx context.Context, p UpsertLinksWithGroupsParams) e
 			innerME.Add(err, ErrFailedUpsertLinks)
 		}
 
-		err = UpsertLinkGroupsFromJSON(ctx, dbtx, string(groupedLinkBytes))
-		if err != nil {
-			innerME.Add(err, ErrFailedUpsertLinkGroups)
-		}
-
 		err = UpsertGroupsFromJSON(ctx, dbtx, string(groupBytes))
 		if err != nil {
 			innerME.Add(err, ErrFailedUpsertGroups)
+		}
+
+		err = UpsertLinkGroupsFromJSON(ctx, dbtx, string(groupedLinkBytes))
+		if err != nil {
+			innerME.Add(err, ErrFailedUpsertLinkGroups)
 		}
 
 		slog.Info("Saved",

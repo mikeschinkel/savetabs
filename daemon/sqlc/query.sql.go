@@ -432,7 +432,7 @@ func (q *Queries) ListLatestUnparsedLinkURLs(ctx context.Context, arg ListLatest
 	return items, nil
 }
 
-const listLinkIdsByGroupSlugs = `-- name: ListLinkIdsByGroupSlugs :many
+const listLinkIdsByGroup = `-- name: ListLinkIdsByGroup :many
 SELECT CAST(l.id AS INTEGER) AS link_id
 FROM
    link l
@@ -444,14 +444,14 @@ WHERE true
    AND l.deleted IN (/*SLICE:links_deleted*/?)
 `
 
-type ListLinkIdsByGroupSlugsParams struct {
+type ListLinkIdsByGroupParams struct {
 	Slugs         []string `json:"slugs"`
 	LinksArchived []int64  `json:"links_archived"`
 	LinksDeleted  []int64  `json:"links_deleted"`
 }
 
-func (q *Queries) ListLinkIdsByGroupSlugs(ctx context.Context, arg ListLinkIdsByGroupSlugsParams) ([]int64, error) {
-	query := listLinkIdsByGroupSlugs
+func (q *Queries) ListLinkIdsByGroup(ctx context.Context, arg ListLinkIdsByGroupParams) ([]int64, error) {
+	query := listLinkIdsByGroup
 	var queryParams []interface{}
 	if len(arg.Slugs) > 0 {
 		for _, v := range arg.Slugs {
@@ -573,12 +573,14 @@ FROM meta m
    JOIN link l ON l.id=m.link_id
 WHERE true
    AND m.kv_pair IN (/*SLICE:kv_pairs*/?)
+   AND m.key IN (/*SLICE:keys*/?)
    AND archived IN (/*SLICE:links_archived*/?)
    AND deleted IN (/*SLICE:links_deleted*/?)
 `
 
 type ListLinkIdsByMetaParams struct {
 	KvPairs       []string `json:"kv_pairs"`
+	Keys          []string `json:"keys"`
 	LinksArchived []int64  `json:"links_archived"`
 	LinksDeleted  []int64  `json:"links_deleted"`
 }
@@ -593,6 +595,14 @@ func (q *Queries) ListLinkIdsByMeta(ctx context.Context, arg ListLinkIdsByMetaPa
 		query = strings.Replace(query, "/*SLICE:kv_pairs*/?", strings.Repeat(",?", len(arg.KvPairs))[1:], 1)
 	} else {
 		query = strings.Replace(query, "/*SLICE:kv_pairs*/?", "NULL", 1)
+	}
+	if len(arg.Keys) > 0 {
+		for _, v := range arg.Keys {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:keys*/?", strings.Repeat(",?", len(arg.Keys))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:keys*/?", "NULL", 1)
 	}
 	if len(arg.LinksArchived) > 0 {
 		for _, v := range arg.LinksArchived {

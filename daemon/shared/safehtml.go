@@ -28,6 +28,26 @@ func MakeSafeURL(u string) safehtml.URL {
 	return safehtml.URLSanitized(u)
 }
 
+func MakeSafeAPIURL(host string) safehtml.URL {
+	return safehtml.URLSanitized(Host{host}.URL())
+}
+
+func MustMakeSafeJSON(j string) safehtml.JSON {
+	jsn, err := safehtml.JSONFromValue(j)
+	if err != nil {
+		panic(err)
+	}
+	return jsn
+}
+
+func MakeSafeJSON(j string) (safehtml.JSON, error) {
+	return safehtml.JSONFromValue(j)
+}
+
+func MakeEmptyObjectJSON() safehtml.JSON {
+	return safehtml.EmptyObjectJSON()
+}
+
 func MakeSafeURLf(format string, args ...any) safehtml.URL {
 	return MakeSafeURL(fmt.Sprintf(format, args...))
 }

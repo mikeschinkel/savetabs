@@ -102,14 +102,14 @@ type alertOOB struct {
 
 func GetAlertHTML(_ Context, p AlertParams) (hr HTMLResponse, err error) {
 	var html safehtml.HTML
-	hr.HTTPStatus = http.StatusOK
+	hr = NewHTMLResponse()
 	alert := &Alert{
 		alertType: p.Type,
 		Message:   p.Message,
 	}
 	html, err = alertTemplate.ExecuteToHTML(alert)
 	if err != nil {
-		hr.HTTPStatus = http.StatusInternalServerError
+		hr.SetCode(http.StatusInternalServerError)
 		goto end
 	}
 	if !p.OOB {
@@ -119,7 +119,7 @@ func GetAlertHTML(_ Context, p AlertParams) (hr HTMLResponse, err error) {
 		AlertHTML: html,
 	})
 	if err != nil {
-		hr.HTTPStatus = http.StatusInternalServerError
+		hr.SetCode(http.StatusInternalServerError)
 		goto end
 	}
 end:

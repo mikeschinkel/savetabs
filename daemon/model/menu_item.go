@@ -56,7 +56,7 @@ func LoadMenuItems(ctx Context, p LoadMenuItemParams) (items MenuItems, err erro
 	var groups Groups
 	var gt shared.GroupType
 
-	gt, err = shared.GroupTypeByType(p.MenuType.Name())
+	gt, err = shared.ParseGroupTypeByLetter(p.MenuType.Name())
 	if err != nil {
 		// Panic because upstream should have cause this, so that needs to be where it is
 		// fixed, not here. Hence failing here is a programming error.
@@ -72,7 +72,7 @@ func LoadMenuItems(ctx Context, p LoadMenuItemParams) (items MenuItems, err erro
 
 	items.Items = shared.ConvertSlice(groups.Groups, func(grp Group) MenuItem {
 		return newMenuItem(MenuItemArgs{
-			LocalId: gt.String(),
+			LocalId: shared.Slugify(grp.Name),
 			Label:   grp.Name,
 			Menu:    p.Menu,
 			Type:    shared.GroupTypeMenuType,

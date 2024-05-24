@@ -4,11 +4,12 @@ import (
 	"github.com/google/safehtml"
 )
 
-type Menu interface {
+type MenuItemable interface {
 	HTMLId() safehtml.Identifier
 	MenuType() *MenuType
-	ItemURL() safehtml.URL
+	LinksQuery() safehtml.URL
 	SubmenuURL() safehtml.URL
 	Level() int
-	Parent() Menu
+	Parent() MenuItemable
+	IsLeaf() bool
 }

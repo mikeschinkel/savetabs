@@ -55,7 +55,7 @@ func GroupsLoad(ctx Context, params GroupsParams) (gs Groups, err error) {
 			Id:       g.ID,
 			Name:     g.Name,
 			Type:     g.Type,
-			Slug:     g.Slug,
+			Slug:     g.Slug, // TOOD: Ensure this is a lewer-case letter and not a name
 			TypeName: g.TypeName,
 		}
 	}

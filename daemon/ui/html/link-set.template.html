@@ -2,7 +2,7 @@
 {{- /*gotype:savetabs/ui.linkset*/ -}}
 
 <form id="link-actions"
-      hx-post="http://localhost:8642/html/linkset{{.URLQuery}}"
+      hx-post="{{.HTMLLinksURL}}{{.URLQuery}}"
       hx-target="#links-section"
       x-data="allCheckboxChecker">
   <input type="hidden" name="action">

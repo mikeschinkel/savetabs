@@ -28,14 +28,14 @@ var matchMenuItemIds = regexp.MustCompile(fmt.Sprintf(`^(%s)-(.+)$`, shared.Menu
 
 // GetMenuItemHTML return HTMX-flavored HTML for a single menu item
 func GetMenuItemHTML(ctx Context, host string, menuItem string) (_ HTMLResponse, err error) {
-	var hr ui.HTMLResponse
 	var apiURL safehtml.URL
 	var mt *shared.MenuType
 
+	hr := ui.NewHTMLResponse()
 	// TODO: Review `id`, `key`, `menuItem` etc. semantics
 	if !matchMenuItemIds.MatchString(menuItem) {
 		err = errors.Join(ErrInvalidMenuItemFormat, fmt.Errorf(`menu_item=%s`, menuItem))
-		hr.HTTPStatus = http.StatusBadRequest
+		hr.SetCode(http.StatusBadRequest)
 		goto end
 	}
 	mt, err = shared.MenuTypeByValue(menuItem)
@@ -47,9 +47,9 @@ func GetMenuItemHTML(ctx Context, host string, menuItem string) (_ HTMLResponse,
 		MenuType: mt,
 		Menu: ui.NewHTMLMenu(ui.HTMLMenuArgs{
 			APIURL: apiURL,
-			Type:   shared.GroupTypeMenuType,
+			Type:   mt,
 		}),
 	})
 end:
-	return HTMLResponse(hr), err
+	return HTMLResponse{hr}, err
 }

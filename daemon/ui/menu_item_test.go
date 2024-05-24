@@ -10,13 +10,13 @@ import (
 var APIURL = shared.MakeSafeURL("http://localhost:8642")
 
 type menuItemTest struct {
-	name    string
-	args    *HTMLMenuItemArgs
-	mi      model.MenuItem
-	want    HTMLMenuItem
-	htmlId  string
-	menuURL string
-	itemURL string
+	name       string
+	args       *HTMLMenuItemArgs
+	mi         model.MenuItem
+	want       HTMLMenuItem
+	htmlId     string
+	menuURL    string
+	linksQuery string
 }
 
 type String struct {
@@ -41,18 +41,17 @@ func groupTypeKeywords() menuItemTest {
 			Type:    shared.KeywordMenuType,
 		},
 		args: &HTMLMenuItemArgs{
-			Menu: gtm,
+			MenuItemable: gtm,
 		},
 		want: HTMLMenuItem{
-			Menu:      gtm,
-			LocalId:   shared.GroupTypeKeyword.Lower(),
-			Label:     shared.MakeSafeHTML("Keywords"),
-			Type:      shared.KeywordMenuType,
-			IconState: CollapsedIcon,
+			MenuItemable: gtm,
+			LocalId:      shared.GroupTypeKeyword.Lower(),
+			Label:        shared.MakeSafeHTML("Keywords"),
+			Type:         shared.KeywordMenuType,
 		},
-		htmlId:  "mi-gt-k",
-		menuURL: "gt--k",
-		itemURL: "gt=k",
+		htmlId:     "mi-gt-k",
+		menuURL:    "gt--k",
+		linksQuery: "gt=k",
 	}
 }
 func groupKeywordNYTimes() menuItemTest {
@@ -60,7 +59,7 @@ func groupKeywordNYTimes() menuItemTest {
 		APIURL: shared.MakeSafeURL("http://localhost:8642"),
 		Type:   shared.KeywordMenuType,
 	})
-	nytMenu := shared.NewMenuType(shared.KeywordMenuType, String{"nytimes"}, nil)
+	nytMenu := shared.NewMenuType(shared.KeywordMenuType, String{"nytimes"}, 0)
 	return menuItemTest{
 		name: "Group Keyword: NYTimes",
 		mi: model.MenuItem{
@@ -70,18 +69,18 @@ func groupKeywordNYTimes() menuItemTest {
 			Type:    shared.KeywordMenuType,
 		},
 		args: &HTMLMenuItemArgs{
-			Menu: kwm,
+			MenuItemable: kwm,
 		},
 		want: HTMLMenuItem{
-			Menu:      kwm,
-			LocalId:   "nytimes",
-			Label:     shared.MakeSafeHTML("New York Times"),
-			Type:      nytMenu,
-			IconState: CollapsedIcon,
+			MenuItemable: kwm,
+			LocalId:      "nytimes",
+			Label:        shared.MakeSafeHTML("New York Times"),
+			Type:         nytMenu,
+			IconState:    CollapsedIcon,
 		},
-		htmlId:  "mi-gt-k-nytimes",
-		menuURL: "gt--k/grp--nytimes",
-		itemURL: "gt=k&grp=nytimes",
+		htmlId:     "mi-gt-k-nytimes",
+		menuURL:    "gt--k/grp--nytimes",
+		linksQuery: "gt=k&grp=nytimes",
 	}
 }
 
@@ -99,8 +98,8 @@ func Test_newMenuItem(t *testing.T) {
 			if mi.SubmenuURL().String() != tt.menuURL {
 				t.Errorf("SubmenuURL() = %v, want %v", mi.SubmenuURL(), tt.menuURL)
 			}
-			if mi.ItemURL().String() != tt.itemURL {
-				t.Errorf("ItemURL() = %v, want %v", mi.ItemURL(), tt.itemURL)
+			if mi.LinksQuery().String() != tt.linksQuery {
+				t.Errorf("linksQuery() = %v, want %v", mi.LinksQuery(), tt.linksQuery)
 			}
 			//if got := newMenuItem(tt.args); !reflect.DeepEqual(got, tt.want) {
 			//	t.Errorf("newMenuItem() = %v, want %v", got, tt.want)

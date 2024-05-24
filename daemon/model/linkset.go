@@ -37,7 +37,7 @@ end:
 }
 
 func NewLinksetToLoad(ls storage.LinksetToLoad) LinksetToLoad {
-	links := make([]Link, 0, len(ls.Links))
+	links := make([]Link, len(ls.Links))
 	for i, l := range ls.Links {
 		links[i] = Link(l)
 	}

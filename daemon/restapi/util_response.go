@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/google/safehtml"
@@ -44,6 +45,10 @@ func (a *API) sendError(w http.ResponseWriter, r *http.Request, code int, msg st
 		shared.Panicf(err.Error())
 	}
 	w.Header().Set("Content-Type", "text/html")
+	if code == 0 {
+		code = http.StatusInternalServerError
+		slog.Warn("HTTP Status code not set", "error", msg)
+	}
 	w.WriteHeader(code)
 	_, _ = fmt.Fprint(w, hr.HTML.String()) // TODO: Change this to use safehtml
 }
@@ -51,6 +56,10 @@ func (a *API) sendError(w http.ResponseWriter, r *http.Request, code int, msg st
 // sendJSON sends a success code and json encoded content
 func sendJSON(w http.ResponseWriter, code int, content any) {
 	w.Header().Set("Content-Type", "application/json")
+	if code == 0 {
+		code = http.StatusInternalServerError
+		slog.Warn("HTTP Status code not set")
+	}
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(content)
 }
@@ -67,7 +76,7 @@ func (a *API) sendHTML(w http.ResponseWriter, html ...safehtml.HTML) {
 func (a *API) sendView(ctx Context, w http.ResponseWriter, r *http.Request, fn func(ctx Context) (guard.HTMLResponse, error)) {
 	hr, err := fn(ctx)
 	if err != nil {
-		a.sendError(w, r, hr.HTTPStatus, err.Error())
+		a.sendError(w, r, hr.Code(), err.Error())
 		return
 	}
 	a.sendHTML(w, hr.HTML)

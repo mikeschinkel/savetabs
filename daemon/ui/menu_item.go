@@ -10,10 +10,10 @@ import (
 	"savetabs/shared"
 )
 
-var _ shared.Menu = (*HTMLMenuItem)(nil)
+var _ shared.MenuItemable = (*HTMLMenuItem)(nil)
 
 type HTMLMenuItem struct {
-	shared.Menu
+	shared.MenuItemable
 	LocalId   string
 	Label     safehtml.HTML
 	Type      *shared.MenuType
@@ -21,8 +21,7 @@ type HTMLMenuItem struct {
 }
 
 type HTMLMenuItemArgs struct {
-	IconState IconState
-	shared.Menu
+	shared.MenuItemable
 }
 
 var zeroStateHTMLMenuItem HTMLMenuItem
@@ -33,27 +32,28 @@ func (hmi HTMLMenuItem) MenuType() *shared.MenuType {
 
 func (hmi HTMLMenuItem) HTMLId() safehtml.Identifier {
 	return shared.MakeSafeId(fmt.Sprintf("%s-%s",
-		hmi.Menu.HTMLId(),
+		hmi.MenuItemable.HTMLId(),
 		hmi.LocalId,
 	))
 }
 
 func (hmi HTMLMenuItem) SubmenuURL() safehtml.URL {
-	return shared.MakeSafeURL(hmi.MenuType().Params(shared.ParamsArgs{
+	var u string
+	if hmi.IsLeaf() {
+		u = "#"
+		goto end
+	}
+	u = hmi.MenuType().Params(shared.ParamsArgs{
 		Equates:  "--",
 		Combines: "/",
-	}))
+	})
+end:
+	return shared.MakeSafeURL(u)
 }
 
-func (hmi HTMLMenuItem) Slug() safehtml.URL {
-	return hmi.SubmenuURL()
-}
-func (hmi HTMLMenuItem) LinksQueryParams() safehtml.URL {
-	return hmi.ItemURL()
-}
-
-func (hmi HTMLMenuItem) ItemURL() safehtml.URL {
-	return shared.MakeSafeURL(hmi.MenuType().Params(shared.ParamsArgs{
+func (hmi HTMLMenuItem) LinksQuery() safehtml.URL {
+	mt := hmi.MenuType()
+	return shared.MakeSafeURLf("?%s", mt.Params(shared.ParamsArgs{
 		Equates:  "=",
 		Combines: "&",
 	}))
@@ -70,30 +70,28 @@ func (hmi HTMLMenuItem) Renew(mi model.MenuItem, args *HTMLMenuItemArgs) HTMLMen
 	hmi = zeroStateHTMLMenuItem
 	hmi.Label = shared.MakeSafeHTML(mi.Label)
 	hmi.LocalId = strings.ToLower(mi.LocalId)
-	hmi.Menu = args.Menu
-	//mt,err := shared.MenuTypeByParentTypeAndMenuName(shared.GroupTypeMenuType, args.LocalId)
-	mt, err := shared.MenuTypeByParentTypeAndMenuName(hmi.Menu.MenuType(), mi.LocalId)
+	hmi.MenuItemable = args.MenuItemable
+	pmt := hmi.MenuItemable.MenuType()
+	mt, err := shared.MenuTypeByParentTypeAndMenuName(pmt, mi.LocalId)
 	if err != nil {
-		shared.Panicf(err.Error())
+		mt = shared.CloneLeafMenuType()
+		mt.Parent = pmt
+		mt.SetName(hmi.LocalId)
 	}
 	hmi.Type = mt
-	if args.IconState == ZeroStateIcon {
-		args.IconState = CollapsedIcon
-	}
-	hmi.IconState = args.IconState
 	return hmi
 }
 
-func (hmi HTMLMenuItem) IsIconBlank() bool {
-	return hmi.IconState == BlankIcon
+func (hmi HTMLMenuItem) IsLeaf() bool {
+	return hmi.MenuType().IsLeaf
 }
 
 func (hmi HTMLMenuItem) IsTopLevelMenu() bool {
-	return hmi.Menu.Level() == 0
+	return hmi.MenuItemable.Level() <= 1
 }
 
 func (hmi HTMLMenuItem) NotTopLevelMenu() bool {
-	return hmi.Menu.Level() != 0
+	return !hmi.IsTopLevelMenu()
 }
 
 type MenuItemHTMLParams struct {
@@ -106,9 +104,8 @@ type MenuItemHTMLParams struct {
 // children.
 func GetMenuItemHTML(ctx Context, p MenuItemHTMLParams) (hr HTMLResponse, err error) {
 	var items model.MenuItems
-	var htmlItems []HTMLMenuItem
 
-	hr.HTTPStatus = http.StatusOK
+	hr = NewHTMLResponse()
 
 	if p.Menu == nil {
 		panic("ERROR: A nil HTMLMenu was passed to ui.GetMenuItemHTML().")
@@ -121,17 +118,15 @@ func GetMenuItemHTML(ctx Context, p MenuItemHTMLParams) (hr HTMLResponse, err er
 	if err != nil {
 		goto end
 	}
-	htmlItems = shared.ConvertSlice(items.Items, func(item model.MenuItem) HTMLMenuItem {
+	p.Menu.MenuItems = shared.ConvertSlice(items.Items, func(item model.MenuItem) HTMLMenuItem {
 		return newHTMLMenuItem(item, &HTMLMenuItemArgs{
-			Menu: *p.Menu,
+			MenuItemable: *p.Menu,
 		})
 	})
-	hr.HTML, err = menuTemplate.ExecuteToHTML(HTMLMenu{
-		MenuItems: htmlItems,
-	})
+	hr.HTML, err = menuTemplate.ExecuteToHTML(p.Menu)
 end:
 	if err != nil {
-		hr.HTTPStatus = http.StatusInternalServerError
+		hr.SetCode(http.StatusInternalServerError)
 	}
 	return hr, err
 }

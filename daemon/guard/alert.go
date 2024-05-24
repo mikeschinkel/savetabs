@@ -21,5 +21,5 @@ func GetAlertHTML(ctx Context, params AlertParams) (_ HTMLResponse, err error) {
 		Type:    ui.NewAlertType(params.Type),
 		Message: ui.NewMessage(params.Msg, params.Items),
 	})
-	return HTMLResponse(hr), err
+	return HTMLResponse{hr}, err
 }

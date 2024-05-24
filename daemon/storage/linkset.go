@@ -3,8 +3,7 @@ package storage
 import (
 	"errors"
 	"fmt"
-	"net/url"
-	"slices"
+	"strings"
 
 	"savetabs/shared"
 	"savetabs/sqlc"
@@ -43,8 +42,6 @@ func LinksetUpsert(ctx Context, ds DataStore, ls UpsertLinkset) (err error) {
 }
 
 type LoadLinksetParams struct {
-	Host       shared.Host
-	RequestURI *url.URL
 	shared.FilterQuery
 }
 
@@ -57,54 +54,51 @@ func LoadLinkset(ctx Context, params LoadLinksetParams) (ls LinksetToLoad, err e
 	var links []sqlc.ListFilteredLinksRow
 	var ids []int64
 	var linkIds []int64
-	var values []string
+
 	ls.Params = params
 	db := GetNestedDBTX(GetDatastore())
 	err = db.Exec(func(dbtx *NestedDBTX) (err error) {
 		q := dbtx.DataStore.Queries(dbtx)
-		for _, gt := range params.FilterTypes {
-			filter := params.Filters[gt]
-			values = filter.Values
-			if len(values) == 0 {
-				continue
-			}
-			switch gt {
-			case shared.MetaFilter:
-				ids, err = q.ListLinkIdsByMeta(ctx, sqlc.ListLinkIdsByMetaParams{
-					KvPairs:       values,
+		me := shared.MultiErr{}
+		for _, fi := range params.FilterQuery.FilterItems {
+			switch fi.FilterType() {
+			case shared.GroupTypeFilterType:
+				ids, err = q.ListLinkIdsByGroupType(ctx, sqlc.ListLinkIdsByGroupTypeParams{
+					GroupTypes: shared.ConvertSlice(fi.Filters(), func(f any) string {
+						return f.(string)
+					}),
 					LinksArchived: NotArchived,
 					LinksDeleted:  NotDeleted,
 				})
-			case shared.GroupTypeFilter:
-				ids, err = q.ListLinkIdsByGroupType(ctx, sqlc.ListLinkIdsByGroupTypeParams{
-					GroupTypes:    values,
+			case shared.GroupFilterType:
+				ids, err = q.ListLinkIdsByGroup(ctx, sqlc.ListLinkIdsByGroupParams{
+					Slugs: shared.ConvertSlice(fi.Filters(), func(f any) string {
+						return f.(string)
+					}),
+					LinksArchived: NotArchived,
+					LinksDeleted:  NotDeleted,
+				})
+			case shared.MetaFilterType:
+				ids, err = q.ListLinkIdsByMeta(ctx, sqlc.ListLinkIdsByMetaParams{
+					Keys: shared.ConvertSlice(fi.Filters(), func(f any) string {
+						s := f.(string)
+						return s[:strings.Index(s, "=")]
+					}),
+					KvPairs: shared.ConvertSlice(fi.Filters(), func(f any) string {
+						return f.(string)
+					}),
 					LinksArchived: NotArchived,
 					LinksDeleted:  NotDeleted,
 				})
 			default:
-				switch {
-				case slices.Contains(values, "none"):
-					ids, err = q.ListLinkIdsNotInGroupType(ctx, sqlc.ListLinkIdsNotInGroupTypeParams{
-						GroupTypes:    []string{gt.String()},
-						LinksArchived: NotArchived,
-						LinksDeleted:  NotDeleted,
-					})
-				default:
-					ids, err = q.ListLinkIdsByGroupSlugs(ctx, sqlc.ListLinkIdsByGroupSlugsParams{
-						Slugs:         values,
-						LinksArchived: NotArchived,
-						LinksDeleted:  NotDeleted,
-					})
-				}
+				panicf("Unhandled FilterQuery Type: %v", fi.FilterType())
 			}
 			if err != nil {
-				goto end
+				me.Add(err)
 			}
 			if len(ids) == 0 {
 				continue
 			}
-			// TODO: Once the UI supports calling API with multiple values this needs to be
-			//       refactored to support AND logic vs. the OR logic it now has by default.
 			linkIds = append(linkIds, ids...)
 		}
 		if len(linkIds) == 0 {

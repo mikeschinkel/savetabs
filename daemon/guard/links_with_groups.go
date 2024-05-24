@@ -105,7 +105,8 @@ func AddLinksWithGroupsIfNotExists(ctx Context, p AddLinksWithGroupsParams) (err
 			continue
 		}
 		link.Sanitize()
-		gt, err = shared.GroupTypeBySlug(link.GroupType)
+		// TODO: Verify that link.GroupType is a slug and not a type
+		gt, err = shared.ParseGroupTypeBySlug(link.GroupType)
 		if err != nil {
 			goto end
 		}

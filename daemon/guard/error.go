@@ -18,5 +18,5 @@ func GetErrorHTML(params ErrorParams) (_ HTMLResponse, err error) {
 		Err:  errors.New(params.Msg),
 		Host: shared.NewHost(params.Host),
 	})
-	return HTMLResponse(hr), err
+	return HTMLResponse{hr}, err
 }

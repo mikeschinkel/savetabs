@@ -21,12 +21,14 @@ func (a *API) catchPanic(next http.Handler) http.Handler {
 			}
 			msg = fmt.Sprintf("%v", reason)
 			rootDir := rootSourceDir()
-			lines := strings.Split(string(debug.Stack()), "\n")
+			stack := string(debug.Stack())
+			lines := strings.Split(stack, "\n")
 			for i := 0; i < len(lines); i++ {
 				if !strings.HasPrefix(strings.TrimSpace(lines[i]), rootDir) {
 					continue
 				}
-				msg = fmt.Sprintf("%s; %s", msg, strings.Join(lines[i-1:i+1], ""))
+				//msg = fmt.Sprintf("%s; %s", msg, strings.Join(lines[i-2:i], ""))
+				msg = fmt.Sprintf("%s; %s", msg, strings.Join(lines, ""))
 				break
 			}
 			slog.Error(msg)

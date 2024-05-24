@@ -1,6 +1,8 @@
 package shared
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 	"sync"
 )
@@ -11,45 +13,52 @@ type Filter struct {
 	Map    map[string]string
 }
 
-func NewSliceFilter(ft FilterType, values []string) Filter {
-	return Filter{
-		Type:   ft,
-		Values: values,
-	}
-}
-
-func NewMapFilter(ft FilterType, mss map[string]string) Filter {
-	return Filter{
-		Type: ft,
-		Map:  mss,
-	}
-}
-
-type FilterQuery struct {
-	FilterLabel Label
-	Filters     FilterMap
-	FilterTypes []FilterType
-}
-
-type FilterMap map[FilterType]Filter
+var filterTypeMap = make(map[string]*FilterType)
 
 type FilterType struct {
-	value string
+	value  string
+	Label  string
+	Plural string
 }
 
 // FilterTypes is a convenience array to allow processing filter types.
 // Note that it does not include `NoFilter`
-var FilterTypes = make([]FilterType, 0, 10)
+var FilterTypes = make([]*FilterType, 0, 10)
 
 var filterMutex sync.Mutex
 
-func newFilterType(value string) FilterType {
-	ft := FilterType{value: strings.ToLower(value)}
+func newFilterType(value, label, plural string) *FilterType {
+	ft := &FilterType{
+		value:  strings.ToLower(value),
+		Label:  label,
+		Plural: plural,
+	}
 	filterMutex.Lock()
 	defer filterMutex.Unlock()
-	dupFilterCheck(ft)
+	dupFilterTypeCheck(ft)
+	filterTypeMap[ft.value] = ft
 	FilterTypes = append(FilterTypes, ft)
 	return ft
+}
+
+func FilterTypeByValue(value string) (_ *FilterType, err error) {
+	ft, ok := filterTypeMap[strings.ToLower(value)]
+	if !ok {
+		err = errors.Join(
+			ErrInvalidFilterType,
+			fmt.Errorf("filter_type=%s, valid_types=[%s]",
+				ft,
+				strings.Join(FilterTypeNames(), ","),
+			),
+		)
+	}
+	return ft, err
+}
+
+func FilterTypeNames() []string {
+	return ConvertSlice(FilterTypes, func(ft *FilterType) string {
+		return ft.value
+	})
 }
 
 func (f FilterType) String() string {
@@ -57,8 +66,7 @@ func (f FilterType) String() string {
 }
 
 var (
-	GroupTypeFilter = newFilterType("gt")
-	GroupFilter     = newFilterType("grp")
-	MetaFilter      = newFilterType("m")
-	NoFilter        = newFilterType("_")
+	GroupTypeFilterType = newFilterType("gt", "Group Type", "Group Types")
+	GroupFilterType     = newFilterType("grp", "Group", "Groups")
+	MetaFilterType      = newFilterType("m", "Meta Pair", "Meta Pairs")
 )

@@ -233,7 +233,7 @@ SET
 WHERE
    original_url = ?;
 
--- name: ListLinkIdsByGroupSlugs :many
+-- name: ListLinkIdsByGroup :many
 SELECT CAST(l.id AS INTEGER) AS link_id
 FROM
    link l
@@ -251,6 +251,7 @@ FROM meta m
    JOIN link l ON l.id=m.link_id
 WHERE true
    AND m.kv_pair IN (sqlc.slice('kv_pairs'))
+   AND m.key IN (sqlc.slice('keys'))
    AND archived IN (sqlc.slice('links_archived'))
    AND deleted IN (sqlc.slice('links_deleted'));
 

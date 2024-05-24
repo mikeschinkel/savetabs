@@ -9,23 +9,17 @@ import (
 
 	"github.com/google/safehtml"
 	"savetabs/model"
+	"savetabs/shared"
 )
 
 type htmlLinkset struct {
-	apiURL     string
-	Links      []model.Link
-	Label      string
-	requestURI string
-	queryJSON  string
+	apiURL     safehtml.URL
+	Links      []htmlLink
+	Label      safehtml.HTML
+	requestURI safehtml.URL
+	queryJSON  safehtml.JSON
 }
 
-func (ls htmlLinkset) HTMLLinks() (links []htmlLink) {
-	links = make([]htmlLink, len(ls.Links))
-	for i, link := range ls.Links {
-		links[i] = newHTMLLink(link, i+1)
-	}
-	return links
-}
 func (ls htmlLinkset) HeaderHTMLId() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant(`links-row-head`)
 }
@@ -33,11 +27,11 @@ func (ls htmlLinkset) FooterHTMLId() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant(`links-row-foot`)
 }
 func (ls htmlLinkset) URLQuery() safehtml.URL {
-	parts := strings.Split(ls.requestURI+"?", "?")
+	parts := strings.Split(ls.requestURI.String()+"?", "?")
 	return safehtml.URLSanitized("?" + parts[1])
 }
 func (ls htmlLinkset) QueryJSON() safehtml.JSON {
-	j, err := safehtml.JSONFromValue(ls.queryJSON)
+	j, err := safehtml.JSONFromValue(ls.queryJSON.String())
 	if err != nil {
 		slog.Error("Unable to create safe JSON", "json", ls.queryJSON)
 		j = safehtml.JSONFromConstant("{}")
@@ -74,45 +68,62 @@ func (ls htmlLinkset) TableHeaderFooterHTML() safehtml.HTML {
 
 var linksetTemplate = GetTemplate("link-set")
 
-type LinksetParams model.LinksetToLoadParams
+type LinksetArgs struct {
+	shared.FilterQuery
+	RequestURI safehtml.URL
+	APIURL     safehtml.URL
+}
 
-func (lp LinksetParams) FilterJSON() (j string) {
+func (lp LinksetArgs) FilterJSON() (j safehtml.JSON) {
 	b, err := json.Marshal(lp.FilterQuery)
 	if err != nil {
-		j = "{}"
+		goto end
+	}
+	j, err = shared.MakeSafeJSON(string(b))
+end:
+	if err != nil {
+		j = shared.MakeEmptyObjectJSON()
 		slog.Error("Failed to marshal FilterQuery",
 			"filter_query", lp.FilterQuery,
 			"err", err.Error(),
 		)
-		goto end
 	}
-	j = string(b)
-end:
 	return j
 }
 
-func GetLinksetHTML(ctx Context, params LinksetParams) (hr HTMLResponse, err error) {
+func GetLinksetHTML(ctx Context, args LinksetArgs) (hr HTMLResponse, err error) {
 	var ls model.LinksetToLoad
+	var rowNum int
+	var htmlLS htmlLinkset
 
-	hr.HTTPStatus = http.StatusOK
+	hr = NewHTMLResponse()
 
-	ls, err = model.LoadLinkset(ctx, model.LinksetToLoadParams(params))
+	ls, err = model.LoadLinkset(ctx, model.LinksetToLoadParams(model.LinksetToLoadParams{
+		FilterQuery: args.FilterQuery,
+	}))
 	if err != nil {
-		hr.HTTPStatus = http.StatusInternalServerError
+		hr.SetCode(http.StatusInternalServerError)
 		goto end
 	}
 	if len(ls.Links) == 0 {
+		// TODO: Change to using a dismissible error
 		hr.HTML = safehtml.HTMLFromConstant("<div>No links for selection</div>")
-		hr.HTTPStatus = http.StatusNoContent
+		hr.SetCode(http.StatusNoContent)
 		goto end
 	}
-	hr.HTML, err = linksetTemplate.ExecuteToHTML(htmlLinkset{
-		apiURL:     params.Host.URL(),
-		Links:      ls.Links,
-		Label:      params.FilterLabel.String(),
-		requestURI: params.RequestURI.String(),
-		queryJSON:  params.FilterJSON(),
+
+	htmlLS = htmlLinkset{
+		apiURL:     args.APIURL,
+		Label:      shared.MakeSafeHTML(args.FilterQuery.Label()),
+		requestURI: args.RequestURI,
+		queryJSON:  args.FilterJSON(),
+	}
+	htmlLS.Links = shared.ConvertSlice(ls.Links, func(link model.Link) htmlLink {
+		rowNum++
+		return newHTMLLink(link, rowNum)
 	})
+
+	hr.HTML, err = linksetTemplate.ExecuteToHTML(htmlLS)
 	if err != nil {
 		goto end
 	}

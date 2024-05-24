@@ -15,7 +15,7 @@ type Group struct {
 }
 
 func (grp Group) Slug() string {
-	return fmt.Sprintf("%s/%s", grp.Type.Lower(), shared.Slugify(grp.Name))
+	return fmt.Sprintf("%s:%s", grp.Type.Lower(), shared.Slugify(grp.Name))
 }
 
 type Groups struct {
@@ -28,7 +28,7 @@ type GroupsParams storage.GroupsParams
 func NewGroups(groups storage.Groups) Groups {
 	gs := make([]Group, len(groups.Groups))
 	for i, grp := range groups.Groups {
-		gt, err := shared.GroupTypeByType(grp.Type)
+		gt, err := shared.ParseGroupTypeByLetter(grp.Type)
 		if err != nil {
 			// Panic because upstream should have cause this, so that needs to be where it is
 			// fixed, not here. Hence failing here is a programming error.

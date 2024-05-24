@@ -16,7 +16,10 @@ func (a *API) GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request, menuIt
 func (a *API) GetHtmlLinkset(w http.ResponseWriter, r *http.Request, params GetHtmlLinksetParams) {
 	a.sendView(context.Background(), w, r, func(ctx Context) (guard.HTMLResponse, error) {
 		// TODO: Implement validation for these filters before passing them on
-		return guard.GetLinksetHTML(ctx, r.Host, r.RequestURI, params.linksetParams())
+		return guard.GetLinksetHTML(ctx, guard.LinksetParams{
+			RequestURI: r.RequestURI,
+			Host:       r.Host,
+		})
 	})
 }
 

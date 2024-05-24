@@ -7,24 +7,35 @@ import (
 	"sync"
 )
 
+const LeafMenuName = "leaf"
+
 //goland:noinspection GoUnusedGlobalVariable
 var (
 	RootMenuType      = &MenuType{}
-	GroupTypeMenuType = newStaticMenuType(RootMenuType, String{"gt"}, String{"grp"})
+	GroupTypeMenuType = newStaticMenuType(RootMenuType, String{"gt"}, 2)
 
-	BookmarkMenuType = newStaticMenuType(GroupTypeMenuType, GroupTypeBookmark, nil)
-	TabGroupMenuType = newStaticMenuType(GroupTypeMenuType, GroupTypeTabGroup, nil)
-	TagMenuType      = newStaticMenuType(GroupTypeMenuType, GroupTypeTag, nil)
-	CategoryMenuType = newStaticMenuType(GroupTypeMenuType, GroupTypeCategory, nil)
-	KeywordMenuType  = newStaticMenuType(GroupTypeMenuType, GroupTypeKeyword, nil)
-	InvalidMenuType  = newStaticMenuType(GroupTypeMenuType, GroupTypeInvalid, nil)
+	BookmarkMenuType = newStaticMenuType(GroupTypeMenuType, GroupTypeBookmark, 0)
+	TabGroupMenuType = newStaticMenuType(GroupTypeMenuType, GroupTypeTabGroup, 0)
+	TagMenuType      = newStaticMenuType(GroupTypeMenuType, GroupTypeTag, 0)
+	CategoryMenuType = newStaticMenuType(GroupTypeMenuType, GroupTypeCategory, 0)
+	KeywordMenuType  = newStaticMenuType(GroupTypeMenuType, GroupTypeKeyword, 0)
+	InvalidMenuType  = newStaticMenuType(GroupTypeMenuType, GroupTypeInvalid, 0)
+
+	// LeafMenuArchetype should never be used directly but should be copies to make a LeadMenuType
+	LeafMenuArchetype = newStaticMenuType(nil, String{LeafMenuName}, 0)
 )
 
+func CloneLeafMenuType() *MenuType {
+	mt := &MenuType{}
+	*mt = *LeafMenuArchetype
+	return mt
+}
+
 type MenuType struct {
-	Parent *MenuType
-	name   string
-	child  string
-	Param  string
+	Parent   *MenuType
+	name     string
+	IsLeaf   bool
+	ParamCnt int
 }
 
 func (mt *MenuType) Id() (s string) {
@@ -34,7 +45,7 @@ func (mt *MenuType) Id() (s string) {
 	case RootMenuType:
 		s = strings.ToLower(mt.name)
 	default:
-		s = fmt.Sprintf("%s-%s", mt.Parent.Id(), strings.ToLower(mt.name))
+		s = fmt.Sprintf("%s--%s", mt.Parent.Id(), strings.ToLower(mt.name))
 	}
 	return s
 }
@@ -63,6 +74,10 @@ func (mt *MenuType) Leaf() string {
 	return mt.name
 }
 
+func (mt *MenuType) SetName(name string) {
+	mt.name = name
+}
+
 func (mt *MenuType) Name() string {
 	return mt.name
 }
@@ -71,8 +86,8 @@ var menuTypeMap = make(map[string]*MenuType, 0)
 var MenuTypes []*MenuType
 var menuTypeMutex sync.Mutex
 
-func newStaticMenuType(parent *MenuType, name, child fmt.Stringer) *MenuType {
-	mt := NewMenuType(parent, name, child)
+func newStaticMenuType(parent *MenuType, name fmt.Stringer, paramCnt int) *MenuType {
+	mt := NewMenuType(parent, name, paramCnt)
 	menuTypeMutex.Lock()
 	defer menuTypeMutex.Unlock()
 	MenuTypes = append(MenuTypes, mt)
@@ -88,7 +103,7 @@ type ParamsArgs struct {
 // Params provides string of parmeters with equates and joins.
 // For URL query type equates +> '=' and combines => '&', e.g. x=1&y=2
 // For URL path type equates => '--' and combines => '/', e.g. x--1/y--2
-func (mt *MenuType) Params(args ParamsArgs) string {
+func (mt *MenuType) Params(args ParamsArgs) (p string) {
 	s := mt.params([]string{})
 	kvs := make([]string, len(s)/2)
 	n := 0
@@ -96,7 +111,11 @@ func (mt *MenuType) Params(args ParamsArgs) string {
 		kvs[n] = fmt.Sprintf("%s%s%s", s[i], args.Equates, s[i+1])
 		n++
 	}
-	return strings.Join(kvs, args.Combines)
+	p = strings.Join(kvs, args.Combines)
+	if len(s)%2 != 0 {
+		p = fmt.Sprintf("%s:%s", p, s[n+1])
+	}
+	return p
 }
 
 func (mt *MenuType) params(s []string) []string {
@@ -107,27 +126,17 @@ func (mt *MenuType) params(s []string) []string {
 		goto end
 	}
 	s = append(s, mt.name)
-	if mt.name != mt.Param {
-		s = append(s, mt.Param)
-	}
 
 end:
 	return s
 }
 
-func NewMenuType(parent *MenuType, name, child fmt.Stringer) *MenuType {
+func NewMenuType(parent *MenuType, name fmt.Stringer, paramCnt int) *MenuType {
 	mt := &MenuType{
-		Parent: parent,
-		name:   strings.ToLower(name.String()),
-	}
-	if child != nil {
-		mt.child = strings.ToLower(child.String())
-	}
-	if parent != nil {
-		mt.Param = parent.child
-	}
-	if mt.Param == "" {
-		mt.Param = mt.name
+		Parent:   parent,
+		name:     strings.ToLower(name.String()),
+		IsLeaf:   name.String() == LeafMenuName,
+		ParamCnt: paramCnt,
 	}
 	return mt
 }
@@ -137,7 +146,7 @@ func MenuTypeByParentTypeAndMenuName(parent *MenuType, name string) (mt *MenuTyp
 		err = errors.Join(ErrMenuTypeIsNil, fmt.Errorf("child_name=%s", name))
 		goto end
 	}
-	mt, err = MenuTypeByValue(fmt.Sprintf("%s-%s", parent.Id(), name))
+	mt, err = MenuTypeByValue(fmt.Sprintf("%s--%s", parent.Id(), name))
 end:
 	return mt, err
 }

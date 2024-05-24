@@ -3,61 +3,70 @@ package shared
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
 )
 
 type GroupType struct {
-	Type string
-	Slug string
+	Letter string
+	Slug   string
+	Label  string
+	Plural string
 }
 
 func (gt GroupType) String() string {
-	return gt.Type
+	return gt.Letter
 }
 
 func (gt GroupType) Lower() string {
-	return strings.ToLower(gt.Type)
+	return strings.ToLower(gt.Letter)
 }
 
 func (gt GroupType) Upper() string {
-	return strings.ToUpper(gt.Type)
+	return strings.ToUpper(gt.Letter)
 }
 
 func (gt GroupType) Empty() bool {
-	return gt.Type == ""
+	return gt.Letter == ""
 }
 
 var groupTypeBySlugMap = make(map[string]GroupType, 0)
-var groupTypeByCodeMap = make(map[string]GroupType, 0)
+var groupTypeByLetterMap = make(map[string]GroupType, 0)
 
 var groupTypeMutex sync.Mutex
 
-func newGroupType(typ, slug string) GroupType {
+func newGroupType(ltr, slug, label, plural string) GroupType {
 	groupTypeMutex.Lock()
 	defer groupTypeMutex.Unlock()
 	gt := GroupType{
-		Type: typ,
-		Slug: slug,
+		Letter: ltr,
+		Slug:   slug,
+		Label:  label,
+		Plural: plural,
 	}
 	groupTypeBySlugMap[gt.Slug] = gt
-	groupTypeByCodeMap[gt.Type] = gt
+	groupTypeByLetterMap[gt.Letter] = gt
 	return gt
 }
 
 var (
-	GroupTypeBookmark = newGroupType("B", "bookmark")
-	GroupTypeTabGroup = newGroupType("G", "tabgroup")
-	GroupTypeTag      = newGroupType("T", "tag")
-	GroupTypeCategory = newGroupType("C", "category")
-	GroupTypeKeyword  = newGroupType("K", "keyword")
-	GroupTypeInvalid  = newGroupType("I", "invalid")
+	GroupTypeBookmark = newGroupType("B", "bookmark", "Bookmark", "Bookmarks")
+	GroupTypeTabGroup = newGroupType("G", "tabgroup", "Tag Groups", "Tag Groups")
+	GroupTypeTag      = newGroupType("T", "tag", "Tag", "Tags")
+	GroupTypeCategory = newGroupType("C", "category", "Category", "Categories")
+	GroupTypeKeyword  = newGroupType("K", "keyword", "Keyword", "Keywords")
+	GroupTypeInvalid  = newGroupType("I", "invalid", "Invalid", "Invalids")
 )
 
-func GroupTypeBySlug(slug string) (gt GroupType, err error) {
+func ParseGroupTypeBySlug(slug string) (gt GroupType, err error) {
 	var ok bool
+	if strings.Contains(slug, "-") {
+		slog.Warn("Group type slugs with dashes exist", "slug", slug)
+		slug = strings.Replace(slug, "-", "", -1)
+	}
 	gt, ok = groupTypeBySlugMap[strings.ToLower(slug)]
-	if ok {
+	if !ok {
 		err = errors.Join(
 			ErrGroupTypeNotFoundForSlug,
 			fmt.Errorf("slug=%s", slug),
@@ -66,13 +75,13 @@ func GroupTypeBySlug(slug string) (gt GroupType, err error) {
 	return gt, err
 }
 
-func GroupTypeByType(typ string) (gt GroupType, err error) {
+func ParseGroupTypeByLetter(ltr string) (gt GroupType, err error) {
 	var ok bool
-	gt, ok = groupTypeByCodeMap[strings.ToUpper(typ)]
+	gt, ok = groupTypeByLetterMap[strings.ToUpper(ltr)]
 	if !ok {
 		err = errors.Join(
-			ErrGroupTypeNotFoundForType,
-			fmt.Errorf("type=%s", typ),
+			ErrGroupTypeNotFoundForLetter,
+			fmt.Errorf("letter=%s", ltr),
 		)
 	}
 	return gt, err
