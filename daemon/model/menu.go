@@ -50,16 +50,16 @@ func MenuLoad(ctx Context, p MenuParams) (m *Menu, err error) {
 		if excludeGroupTypeAsMenuItem(gt, invalidGTWithStats) {
 			return item, false
 		}
-		typ, err := shared.MenuTypeByParentTypeAndMenuName(shared.GroupTypeMenuType, gt.Type)
+		mt, err := shared.MenuTypeByParentTypeAndMenuName(shared.GroupTypeMenuType, gt.Type)
 		if err != nil {
 			shared.Panicf("Invalid group type '%s' loaded from database", gt.Type)
 		}
 		cnt++
 		item = item.Renew(MenuItemArgs{
-			LocalId: strings.ToLower(gt.Type),
-			Label:   gt.Plural,
-			Menu:    m,
-			Type:    typ,
+			LocalId:  strings.ToLower(gt.Type),
+			Label:    gt.Plural,
+			Menu:     m,
+			MenuType: mt,
 		})
 		return item, true
 	})

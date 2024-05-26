@@ -6,16 +6,16 @@ import (
 
 type MenuItem struct {
 	*Menu
-	LocalId string
-	Label   string
-	Type    *shared.MenuType
+	LocalId    string
+	Label      string
+	FilterType *shared.FilterType
 }
 
 type MenuItemArgs struct {
-	LocalId string
-	Label   string
-	Type    *shared.MenuType
-	Menu    *Menu
+	LocalId  string
+	Label    string
+	MenuType *shared.MenuType
+	Menu     *Menu
 }
 
 func newMenuItem(p MenuItemArgs) MenuItem {
@@ -33,14 +33,13 @@ func (mi MenuItem) Renew(args MenuItemArgs) MenuItem {
 	mi.Menu = args.Menu
 	mi.Label = args.Label
 
-	if args.Type == nil {
+	if args.MenuType == nil {
 		mt, err := shared.MenuTypeByParentTypeAndMenuName(args.Menu.Type, args.LocalId)
 		if err != nil {
 			panic(err.Error())
 		}
-		args.Type = mt
+		args.MenuType = mt
 	}
-	mi.Type = args.Type
 	return mi
 }
 
@@ -72,10 +71,10 @@ func LoadMenuItems(ctx Context, p LoadMenuItemParams) (items MenuItems, err erro
 
 	items.Items = shared.ConvertSlice(groups.Groups, func(grp Group) MenuItem {
 		return newMenuItem(MenuItemArgs{
-			LocalId: shared.Slugify(grp.Name),
-			Label:   grp.Name,
-			Menu:    p.Menu,
-			Type:    shared.GroupTypeMenuType,
+			LocalId:  shared.Slugify(grp.Name),
+			Label:    grp.Name,
+			Menu:     p.Menu,
+			MenuType: shared.GroupTypeMenuType,
 		})
 	})
 end:

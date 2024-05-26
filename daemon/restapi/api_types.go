@@ -33,6 +33,9 @@ type IdObject struct {
 // IdObjects defines model for IdObjects.
 type IdObjects = []IdObject
 
+// IdString String-based Id
+type IdString = string
+
 // JSONError defines model for JSONError.
 type JSONError struct {
 	// Code Error code
@@ -68,6 +71,9 @@ type LinkWithGroup struct {
 // LinksWithGroups defines model for LinksWithGroups.
 type LinksWithGroups = []LinkWithGroup
 
+// TypeString Type of item
+type TypeString = string
+
 // AlertMsg defines model for AlertMsg.
 type AlertMsg = string
 
@@ -82,6 +88,15 @@ type GroupFilter = []string
 
 // GroupTypeFilter defines model for GroupTypeFilter.
 type GroupTypeFilter = []string
+
+// ItemId String-based Id
+type ItemId = IdString
+
+// ItemType Type of item
+type ItemType = TypeString
+
+// LabelId String-based Id
+type LabelId = IdString
 
 // LinkId Primary key identifier
 type LinkId = Id
@@ -110,6 +125,12 @@ type GetHtmlAlertParams struct {
 // GetHtmlAlertParamsTyp defines parameters for GetHtmlAlert.
 type GetHtmlAlertParamsTyp string
 
+// GetHtmlContextMenuItemIdParams defines parameters for GetHtmlContextMenuItemId.
+type GetHtmlContextMenuItemIdParams struct {
+	// Type Type of Item for ItemId
+	Type *ItemType `form:"type,omitempty" json:"type,omitempty"`
+}
+
 // GetHtmlErrorParams defines parameters for GetHtmlError.
 type GetHtmlErrorParams struct {
 	// Err Error message to display as HTML
@@ -131,7 +152,7 @@ type GetHtmlLinksetParams struct {
 // PostHtmlLinksetFormdataBody defines parameters for PostHtmlLinkset.
 type PostHtmlLinksetFormdataBody struct {
 	Action *string `form:"action,omitempty" json:"action,omitempty"`
-	LinkId *[]Id   `form:"link_id,omitempty" json:"link_id,omitempty"`
+	LinkId *[]Id   `form:"linkId,omitempty" json:"linkId,omitempty"`
 }
 
 // PostHtmlLinksetFormdataRequestBody defines body for PostHtmlLinkset for application/x-www-form-urlencoded ContentType.

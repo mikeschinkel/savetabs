@@ -13,15 +13,17 @@ import (
 )
 
 type htmlLinkset struct {
-	apiURL     safehtml.URL
-	Links      []htmlLink
-	Label      safehtml.HTML
-	requestURI safehtml.URL
-	queryJSON  safehtml.JSON
+	apiURL      safehtml.URL
+	Links       []htmlLink
+	requestURI  safehtml.URL
+	filterQuery shared.FilterQuery
 }
 
 func (ls htmlLinkset) HeaderHTMLId() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant(`links-row-head`)
+}
+func (ls htmlLinkset) Label() safehtml.HTML {
+	return shared.MakeSafeHTML(ls.filterQuery.Label())
 }
 func (ls htmlLinkset) FooterHTMLId() safehtml.Identifier {
 	return safehtml.IdentifierFromConstant(`links-row-foot`)
@@ -30,13 +32,8 @@ func (ls htmlLinkset) URLQuery() safehtml.URL {
 	parts := strings.Split(ls.requestURI.String()+"?", "?")
 	return safehtml.URLSanitized("?" + parts[1])
 }
-func (ls htmlLinkset) QueryJSON() safehtml.JSON {
-	j, err := safehtml.JSONFromValue(ls.queryJSON.String())
-	if err != nil {
-		slog.Error("Unable to create safe JSON", "json", ls.queryJSON)
-		j = safehtml.JSONFromConstant("{}")
-	}
-	return j
+func (ls htmlLinkset) FilterQuery() safehtml.URL {
+	return shared.MakeSafeURL(ls.filterQuery.String())
 }
 func (ls htmlLinkset) NumLinks() int {
 	return len(ls.Links)
@@ -113,10 +110,9 @@ func GetLinksetHTML(ctx Context, args LinksetArgs) (hr HTMLResponse, err error) 
 	}
 
 	htmlLS = htmlLinkset{
-		apiURL:     args.APIURL,
-		Label:      shared.MakeSafeHTML(args.FilterQuery.Label()),
-		requestURI: args.RequestURI,
-		queryJSON:  args.FilterJSON(),
+		apiURL:      args.APIURL,
+		requestURI:  args.RequestURI,
+		filterQuery: args.FilterQuery,
 	}
 	htmlLS.Links = shared.ConvertSlice(ls.Links, func(link model.Link) htmlLink {
 		rowNum++

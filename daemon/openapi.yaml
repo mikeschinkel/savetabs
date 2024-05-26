@@ -3,6 +3,34 @@ info:
   title: SaveTabs Daemon API
   version: 1.0.0
 paths:
+
+  /labels/{labelId}:
+    put:
+      summary: Update label text by ID
+      parameters:
+      - $ref: '#/components/parameters/LabelId'
+      responses:
+        '204': # No content
+          description: The label text was updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdObject'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+
+  /html/context-menu/{itemId}:
+    get:
+      summary: Return a context menu for the editable item
+      parameters:
+      - $ref: '#/components/parameters/ItemId'
+      - $ref: '#/components/parameters/ItemType'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+
   /html/linkset:
     post:
       summary: Update a set of Links
@@ -16,7 +44,7 @@ paths:
                 action:
                   type: string
                   nullable: false
-                link_id:
+                linkId:
                   type: array
                   nullable: false
                   items:
@@ -24,7 +52,7 @@ paths:
             encoding:
               action:
                 style: form
-              link_id:
+              linkId:
                 style: form
                 explode: true
       responses:
@@ -111,7 +139,7 @@ paths:
         default:
           $ref: '#/components/responses/UnexpectedError'
 
-  /links/by-url/{link_url}:
+  /links/by-url/{linkUrl}:
     put:
       summary: Send URL information to be stored
       parameters:
@@ -148,7 +176,7 @@ paths:
         default:
           $ref: '#/components/responses/UnexpectedError'
 
-  /links/{link_id}:
+  /links/{linkId}:
     get:
       summary: Get information about a Link (URL)
       parameters:
@@ -192,15 +220,36 @@ paths:
 
 components:
   parameters:
+    LabelId:
+      name: labelId
+      in: path
+      description: HTML ID attribute for label
+      required: true
+      schema:
+        $ref: '#/components/schemas/IdString'
+    ItemId:
+      name: itemId
+      in: path
+      description: HTML ID for the item to edit
+      required: true
+      schema:
+        $ref: '#/components/schemas/IdString'
+    ItemType:
+      name: type
+      in: query
+      description: Type of Item for ItemId
+      required: false
+      schema:
+        $ref: '#/components/schemas/TypeString'
     LinkId:
-      name: link_id
+      name: linkId
       in: path
       description: ID for the link
       required: true
       schema:
         $ref: '#/components/schemas/Id'
     LinkUrl:
-      name: link_url
+      name: linkUrl
       in: path
       description: URL for a link
       required: true
@@ -333,6 +382,14 @@ components:
           schema:
             $ref: '#/components/schemas/JSONError'
   schemas:
+    TypeString:
+      type: string
+      description: Type of item
+      nullable: false
+    IdString:
+      type: string
+      description: String-based Id
+      nullable: false
     Id:
       type: integer
       format: int64

@@ -10,13 +10,13 @@ import (
 var APIURL = shared.MakeSafeURL("http://localhost:8642")
 
 type menuItemTest struct {
-	name       string
-	args       *HTMLMenuItemArgs
-	mi         model.MenuItem
-	want       HTMLMenuItem
-	htmlId     string
-	menuURL    string
-	linksQuery string
+	name         string
+	args         *HTMLMenuItemArgs
+	mi           model.MenuItem
+	want         HTMLMenuItem
+	htmlId       string
+	menuURL      string
+	contentQuery string
 }
 
 type String struct {
@@ -29,8 +29,8 @@ func (s String) String() string {
 
 func groupTypeKeywords() menuItemTest {
 	gtm := NewHTMLMenu(HTMLMenuArgs{
-		APIURL: shared.MakeSafeURL("http://localhost:8642"),
-		Type:   shared.GroupTypeMenuType,
+		APIURL:   shared.MakeSafeURL("http://localhost:8642"),
+		MenuType: shared.GroupTypeMenuType,
 	})
 	return menuItemTest{
 		name: "Group Type: Keywords",
@@ -38,49 +38,45 @@ func groupTypeKeywords() menuItemTest {
 			Menu:    model.NewMenu(shared.GroupTypeMenuType),
 			LocalId: "k",
 			Label:   "Keywords",
-			Type:    shared.KeywordMenuType,
 		},
 		args: &HTMLMenuItemArgs{
-			MenuItemable: gtm,
+			Parent: gtm,
 		},
 		want: HTMLMenuItem{
-			MenuItemable: gtm,
-			LocalId:      shared.GroupTypeKeyword.Lower(),
-			Label:        shared.MakeSafeHTML("Keywords"),
-			Type:         shared.KeywordMenuType,
+			parent:  gtm,
+			localId: shared.GroupTypeKeyword.Lower(),
+			Label:   shared.MakeSafeHTML("Keywords"),
 		},
-		htmlId:     "mi-gt-k",
-		menuURL:    "gt--k",
-		linksQuery: "gt=k",
+		htmlId:       "mi-gt-k",
+		menuURL:      "gt--k",
+		contentQuery: "gt=k",
 	}
 }
 func groupKeywordNYTimes() menuItemTest {
 	kwm := NewHTMLMenu(HTMLMenuArgs{
-		APIURL: shared.MakeSafeURL("http://localhost:8642"),
-		Type:   shared.KeywordMenuType,
+		APIURL:   shared.MakeSafeURL("http://localhost:8642"),
+		MenuType: shared.KeywordMenuType,
 	})
-	nytMenu := shared.NewMenuType(shared.KeywordMenuType, String{"nytimes"}, 0)
+	nytMenu := shared.NewMenuType(shared.KeywordMenuType, String{"nytimes"}, nil)
 	return menuItemTest{
 		name: "Group Keyword: NYTimes",
 		mi: model.MenuItem{
 			Menu:    model.NewMenu(shared.KeywordMenuType),
 			LocalId: "k",
 			Label:   "Keywords",
-			Type:    shared.KeywordMenuType,
 		},
 		args: &HTMLMenuItemArgs{
-			MenuItemable: kwm,
+			Parent: kwm,
 		},
 		want: HTMLMenuItem{
-			MenuItemable: kwm,
-			LocalId:      "nytimes",
-			Label:        shared.MakeSafeHTML("New York Times"),
-			Type:         nytMenu,
-			IconState:    CollapsedIcon,
+			parent:   kwm,
+			localId:  "nytimes",
+			Label:    shared.MakeSafeHTML("New York Times"),
+			menuType: nytMenu,
 		},
-		htmlId:     "mi-gt-k-nytimes",
-		menuURL:    "gt--k/grp--nytimes",
-		linksQuery: "gt=k&grp=nytimes",
+		htmlId:       "mi-gt-k-nytimes",
+		menuURL:      "gt--k/grp--nytimes",
+		contentQuery: "gt=k&grp=nytimes",
 	}
 }
 
@@ -95,11 +91,11 @@ func Test_newMenuItem(t *testing.T) {
 			if mi.HTMLId().String() != tt.htmlId {
 				t.Errorf("HTMLId() = %v, want %v", mi.HTMLId(), tt.htmlId)
 			}
-			if mi.SubmenuURL().String() != tt.menuURL {
-				t.Errorf("SubmenuURL() = %v, want %v", mi.SubmenuURL(), tt.menuURL)
+			if mi.ChildMenuURL().String() != tt.menuURL {
+				t.Errorf("ChildMenuURL() = %v, want %v", mi.ChildMenuURL(), tt.menuURL)
 			}
-			if mi.LinksQuery().String() != tt.linksQuery {
-				t.Errorf("linksQuery() = %v, want %v", mi.LinksQuery(), tt.linksQuery)
+			if mi.ContentQuery().String() != tt.contentQuery {
+				t.Errorf("contentQuery() = %v, want %v", mi.ContentQuery(), tt.contentQuery)
 			}
 			//if got := newMenuItem(tt.args); !reflect.DeepEqual(got, tt.want) {
 			//	t.Errorf("newMenuItem() = %v, want %v", got, tt.want)
@@ -138,7 +134,7 @@ func Test_newMenuItem(t *testing.T) {
 //
 //func TestMenuItem_HTMLId(t *testing.T) {
 //	type fields struct {
-//		MenuItemable shared.MenuItemable
+//		MenuItemParent shared.MenuItemParent
 //		LocalId      string
 //		Label        string
 //		Type         shared.MenuType
@@ -153,7 +149,7 @@ func Test_newMenuItem(t *testing.T) {
 //	for _, tt := range tests {
 //		t.Run(tt.name, func(t *testing.T) {
 //			mi := MenuItem{
-//				MenuItemable: tt.fields.MenuItemable,
+//				MenuItemParent: tt.fields.MenuItemParent,
 //				LocalId:      tt.fields.LocalId,
 //				Label:        tt.fields.Label,
 //				Type:         tt.fields.Type,
@@ -167,7 +163,7 @@ func Test_newMenuItem(t *testing.T) {
 //
 //func TestMenuItem_ItemURL(t *testing.T) {
 //	type fields struct {
-//		MenuItemable shared.MenuItemable
+//		MenuItemParent shared.MenuItemParent
 //		LocalId      string
 //		Label        string
 //		Type         shared.MenuType
@@ -182,7 +178,7 @@ func Test_newMenuItem(t *testing.T) {
 //	for _, tt := range tests {
 //		t.Run(tt.name, func(t *testing.T) {
 //			mi := MenuItem{
-//				MenuItemable: tt.fields.MenuItemable,
+//				MenuItemParent: tt.fields.MenuItemParent,
 //				LocalId:      tt.fields.LocalId,
 //				Label:        tt.fields.Label,
 //				Type:         tt.fields.Type,
@@ -196,7 +192,7 @@ func Test_newMenuItem(t *testing.T) {
 //
 //func TestMenuItem_Level(t *testing.T) {
 //	type fields struct {
-//		MenuItemable shared.MenuItemable
+//		MenuItemParent shared.MenuItemParent
 //		LocalId      string
 //		Label        string
 //		Type         shared.MenuType
@@ -211,7 +207,7 @@ func Test_newMenuItem(t *testing.T) {
 //	for _, tt := range tests {
 //		t.Run(tt.name, func(t *testing.T) {
 //			mi := MenuItem{
-//				MenuItemable: tt.fields.MenuItemable,
+//				MenuItemParent: tt.fields.MenuItemParent,
 //				LocalId:      tt.fields.LocalId,
 //				Label:        tt.fields.Label,
 //				Type:         tt.fields.Type,
@@ -225,7 +221,7 @@ func Test_newMenuItem(t *testing.T) {
 //
 //func TestMenuItem_MenuType(t *testing.T) {
 //	type fields struct {
-//		MenuItemable shared.MenuItemable
+//		MenuItemParent shared.MenuItemParent
 //		LocalId      string
 //		Label        string
 //		Type         shared.MenuType
@@ -240,7 +236,7 @@ func Test_newMenuItem(t *testing.T) {
 //	for _, tt := range tests {
 //		t.Run(tt.name, func(t *testing.T) {
 //			mi := MenuItem{
-//				MenuItemable: tt.fields.MenuItemable,
+//				MenuItemParent: tt.fields.MenuItemParent,
 //				LocalId:      tt.fields.LocalId,
 //				Label:        tt.fields.Label,
 //				Type:         tt.fields.Type,
@@ -254,7 +250,7 @@ func Test_newMenuItem(t *testing.T) {
 //
 //func TestMenuItem_Renew(t *testing.T) {
 //	type fields struct {
-//		MenuItemable shared.MenuItemable
+//		MenuItemParent shared.MenuItemParent
 //		LocalId      string
 //		Label        string
 //		Type         shared.MenuType
@@ -273,7 +269,7 @@ func Test_newMenuItem(t *testing.T) {
 //	for _, tt := range tests {
 //		t.Run(tt.name, func(t *testing.T) {
 //			mi := MenuItem{
-//				MenuItemable: tt.fields.MenuItemable,
+//				MenuItemParent: tt.fields.MenuItemParent,
 //				LocalId:      tt.fields.LocalId,
 //				Label:        tt.fields.Label,
 //				Type:         tt.fields.Type,
@@ -287,7 +283,7 @@ func Test_newMenuItem(t *testing.T) {
 //
 //func TestMenuItem_Root(t *testing.T) {
 //	type fields struct {
-//		MenuItemable shared.MenuItemable
+//		MenuItemParent shared.MenuItemParent
 //		LocalId      string
 //		Label        string
 //		Type         shared.MenuType
@@ -295,14 +291,14 @@ func Test_newMenuItem(t *testing.T) {
 //	tests := []struct {
 //		name   string
 //		fields fields
-//		want   shared.MenuItemable
+//		want   shared.MenuItemParent
 //	}{
 //		// TODO: Add test cases.
 //	}
 //	for _, tt := range tests {
 //		t.Run(tt.name, func(t *testing.T) {
 //			mi := MenuItem{
-//				MenuItemable: tt.fields.MenuItemable,
+//				MenuItemParent: tt.fields.MenuItemParent,
 //				LocalId:      tt.fields.LocalId,
 //				Label:        tt.fields.Label,
 //				Type:         tt.fields.Type,
@@ -314,9 +310,9 @@ func Test_newMenuItem(t *testing.T) {
 //	}
 //}
 //
-//func TestMenuItem_SubmenuURL(t *testing.T) {
+//func TestMenuItem_ChildMenuURL(t *testing.T) {
 //	type fields struct {
-//		MenuItemable shared.MenuItemable
+//		MenuItemParent shared.MenuItemParent
 //		LocalId      string
 //		Label        string
 //		Type         shared.MenuType
@@ -331,13 +327,13 @@ func Test_newMenuItem(t *testing.T) {
 //	for _, tt := range tests {
 //		t.Run(tt.name, func(t *testing.T) {
 //			mi := MenuItem{
-//				MenuItemable: tt.fields.MenuItemable,
+//				MenuItemParent: tt.fields.MenuItemParent,
 //				LocalId:      tt.fields.LocalId,
 //				Label:        tt.fields.Label,
 //				Type:         tt.fields.Type,
 //			}
-//			if got := mi.SubmenuURL(); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("SubmenuURL() = %v, want %v", got, tt.want)
+//			if got := mi.ChildMenuURL(); !reflect.DeepEqual(got, tt.want) {
+//				t.Errorf("ChildMenuURL() = %v, want %v", got, tt.want)
 //			}
 //		})
 //	}

@@ -15,10 +15,6 @@ type MenuItem struct {
 	value string
 }
 
-func NewMenuItem(v string) MenuItem {
-	return MenuItem{value: v}
-}
-
 // matchMenuItemIds matcbes values menu item and also capturing the prefix and
 // the localId into a 2 element slice, e.g.
 //
@@ -46,8 +42,8 @@ func GetMenuItemHTML(ctx Context, host string, menuItem string) (_ HTMLResponse,
 	hr, err = ui.GetMenuItemHTML(ctx, ui.MenuItemHTMLParams{
 		MenuType: mt,
 		Menu: ui.NewHTMLMenu(ui.HTMLMenuArgs{
-			APIURL: apiURL,
-			Type:   mt,
+			APIURL:   apiURL,
+			MenuType: mt.Parent,
 		}),
 	})
 end:

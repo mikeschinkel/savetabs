@@ -3,60 +3,19 @@ package ui
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/google/safehtml"
 	"savetabs/model"
 	"savetabs/shared"
 )
 
-var _ shared.MenuItemable = (*HTMLMenu)(nil)
+var _ shared.MenuItemParent = (*HTMLMenu)(nil)
 
 type HTMLMenu struct {
 	apiURL    safehtml.URL
-	Type      *shared.MenuType
-	MenuItems []HTMLMenuItem
-	level     int
+	menuType  *shared.MenuType
 	parent    *HTMLMenu
-}
-
-func (hm HTMLMenu) IsLeaf() bool {
-	return false
-}
-
-func (hm HTMLMenu) HTMLId() (id safehtml.Identifier) {
-	if hm.level == 0 {
-		id = safehtml.IdentifierFromConstant("mi")
-		goto end
-	}
-	id = shared.MakeSafeIdf("mi-%s", strings.Join(hm.Type.Slice(), "-"))
-end:
-	return id
-}
-
-func (hm HTMLMenu) MenuType() *shared.MenuType {
-	return hm.Type
-}
-
-func (hm HTMLMenu) Parent() shared.MenuItemable {
-	return hm.parent
-}
-
-func (hm HTMLMenu) LinksQuery() safehtml.URL {
-	panic("LinksQuery() should not be called for HTMLMenu")
-}
-
-func (hm HTMLMenu) SubmenuURL() safehtml.URL {
-	panic("SubmenuURL() should not be called for HTMLMenu")
-}
-
-func (hm HTMLMenu) Level() int {
-	return hm.level
-}
-
-type HTMLMenuArgs struct {
-	APIURL safehtml.URL
-	Type   *shared.MenuType
+	MenuItems []HTMLMenuItem
 }
 
 func NewHTMLMenu(args HTMLMenuArgs) *HTMLMenu {
@@ -69,18 +28,36 @@ func (hm HTMLMenu) Renew(args HTMLMenuArgs) *HTMLMenu {
 	hm = zeroStateMenu
 	hm.apiURL = args.APIURL
 	hm.MenuItems = make([]HTMLMenuItem, 0)
-	hm.Type = args.Type
-	if hm.Type == nil {
-		shared.Panicf("NewHTMLMenu() or HTMLMenu.Renew() called with `nil` Type")
-	}
-	hm.level = hm.Type.Level()
-	if hm.level > 0 {
-		hm.parent = NewHTMLMenu(HTMLMenuArgs{
-			APIURL: hm.apiURL,
-			Type:   hm.Type.Parent,
-		})
+	hm.menuType = args.MenuType
+	if hm.menuType == nil {
+		shared.Panicf("NewHTMLMenu() or HTMLMenu.Renew() called with `nil` menuType")
 	}
 	return &hm
+}
+
+func (hm HTMLMenu) APIURL() safehtml.URL {
+	return hm.apiURL
+}
+
+func (hm HTMLMenu) HTMLId() (id safehtml.Identifier) {
+	return safehtml.IdentifierFromConstant("mi")
+}
+
+func (hm HTMLMenu) MenuType() *shared.MenuType {
+	return hm.menuType
+}
+
+func (hm HTMLMenu) Parent() shared.MenuItemParent {
+	return hm.parent
+}
+
+func (hm HTMLMenu) Level() int {
+	return 0
+}
+
+type HTMLMenuArgs struct {
+	APIURL   safehtml.URL
+	MenuType *shared.MenuType
 }
 
 func (hm HTMLMenu) HTMLMenuURL() string {
@@ -99,21 +76,29 @@ type HTMLMenuParams struct {
 
 func GetMenuHTML(ctx Context, p HTMLMenuParams) (hr HTMLResponse, err error) {
 	var menu *model.Menu
+	var hm *HTMLMenu
+
+	menuType := shared.GroupTypeMenuType
 
 	hr = NewHTMLResponse()
 
 	menu, err = model.MenuLoad(ctx, model.MenuParams{
-		Type: shared.GroupTypeMenuType,
+		Type: menuType,
 	})
+	if err != nil {
+		hr.SetCode(http.StatusInternalServerError)
+		goto end
+	}
 
-	hm := NewHTMLMenu(HTMLMenuArgs{
-		APIURL: shared.MakeSafeURL(p.Host.URL()),
-		Type:   menu.Type,
+	hm = NewHTMLMenu(HTMLMenuArgs{
+		APIURL:   shared.MakeSafeURL(p.Host.URL()),
+		MenuType: menuType,
 	})
 
 	hm.MenuItems = shared.ConvertSlice(menu.Items, func(item model.MenuItem) HTMLMenuItem {
 		return newHTMLMenuItem(item, &HTMLMenuItemArgs{
-			MenuItemable: hm,
+			Parent:   hm,
+			MenuType: menuType,
 		})
 	})
 
@@ -125,41 +110,3 @@ func GetMenuHTML(ctx Context, p HTMLMenuParams) (hr HTMLResponse, err error) {
 end:
 	return hr, err
 }
-
-//func menuItemsFromListGroupTypesRows(host string, gtrs []sqlc.ListGroupsTypeRow) []menuItem {
-//	var menuItems []menuItem
-//
-//	cnt := len(gtrs)
-//
-//	// No need to show invalid as a group type if
-//	// there are no resources of that type
-//	invalid := -1
-//	for i, gtr := range gtrs {
-//		if gtr.LinkCount != 0 {
-//			continue
-//		}
-//		if gtr.Type != "I" {
-//			continue
-//		}
-//		cnt--
-//		invalid = i
-//		break
-//	}
-//	menuItems = make([]menuItem, cnt)
-//	for i, gtr := range gtrs {
-//		if i == invalid {
-//			continue
-//		}
-//		src := newGroupTypeFromListGroupsTypeRow(gtr)
-//		menuItems[i] = newMenuItem(src, host, gtr.Plural.String)
-//	}
-//	menuItems = append(menuItems,
-//		newHTMLMenuItemWithArgs(allLinks{}, host, "All Links", menuItemArgs{
-//			SummaryClass: topLevelSummaryClass,
-//			IconState:    BlankIcon,
-//		}),
-//	)
-//	return menuItems
-//}
-//
-//

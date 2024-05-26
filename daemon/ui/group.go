@@ -19,7 +19,7 @@ package ui
 //	Host      string
 //}
 //
-//func (g htmlGroup) LinksQueryParams() string {
+//func (g htmlGroup) ContentQueryParams() string {
 //	return fmt.Sprintf("g=%s", g.Slug())
 //}
 //

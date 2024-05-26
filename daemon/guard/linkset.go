@@ -11,9 +11,8 @@ import (
 )
 
 type LinksetToAdd struct {
-	Action    string
-	LinkIds   []string
-	QueryJSON string
+	Action  string
+	LinkIds []string
 }
 
 func AddLinksetIfNotExists(ctx Context, ls LinksetToAdd) (err error) {

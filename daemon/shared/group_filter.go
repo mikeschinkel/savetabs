@@ -10,7 +10,37 @@ import (
 var _ FilterItem = (*GroupFilter)(nil)
 
 type GroupFilter struct {
-	Groups []FilterGroup
+	FilterGroups []FilterGroup
+}
+
+func (gf GroupFilter) HTMLId(mi MenuItemable) string {
+	mt := mi.MenuType()
+	id := fmt.Sprintf("%s-%s-%s",
+		mt.FilterType.Id(),
+		mt.Name(),
+		mi.LocalId(),
+	)
+	return id
+}
+
+func (gf GroupFilter) ContentQuery(mi MenuItemable) (u string) {
+	mt := mi.MenuType()
+	u = fmt.Sprintf("%s=%s:%s",
+		mt.FilterType.Id(),
+		mt.Name(),
+		mi.LocalId(),
+	)
+	return u
+}
+
+func newGroupFilter() GroupFilter {
+	return GroupFilter{
+		FilterGroups: make([]FilterGroup, 0),
+	}
+}
+
+func (gf GroupFilter) String() string {
+	return toQueryString(GroupFilterType.Id(), gf.FilterGroups)
 }
 
 func (g GroupFilter) FilterType() *FilterType {
@@ -18,13 +48,13 @@ func (g GroupFilter) FilterType() *FilterType {
 }
 
 func (g GroupFilter) Label() string {
-	return strings.Join(ConvertSlice(g.Groups, func(fg FilterGroup) string {
+	return strings.Join(ConvertSlice(g.FilterGroups, func(fg FilterGroup) string {
 		return fg.GroupName
 	}), ", ")
 }
 
 func (g GroupFilter) Filters() []any {
-	return ConvertSlice(g.Groups, func(fg FilterGroup) any {
+	return ConvertSlice(g.FilterGroups, func(fg FilterGroup) any {
 		return fg.String()
 	})
 }
@@ -50,7 +80,7 @@ func ParseGroupFilter(value string) (gf GroupFilter, found bool, err error) {
 		if err != nil {
 			me.Add(err)
 		}
-		gf.Groups = append(gf.Groups, fg)
+		gf.FilterGroups = append(gf.FilterGroups, fg)
 	}
 	err = me.Err()
 	found = true

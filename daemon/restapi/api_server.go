@@ -20,6 +20,9 @@ type ServerInterface interface {
 	// HTML-formatted alert
 	// (GET /html/alert)
 	GetHtmlAlert(w http.ResponseWriter, r *http.Request, params GetHtmlAlertParams)
+	// Return a context menu for the editable item
+	// (GET /html/context-menu/{itemId})
+	GetHtmlContextMenuItemId(w http.ResponseWriter, r *http.Request, itemId ItemId, params GetHtmlContextMenuItemIdParams)
 	// HTML-formatted error
 	// (GET /html/error)
 	GetHtmlError(w http.ResponseWriter, r *http.Request, params GetHtmlErrorParams)
@@ -35,14 +38,17 @@ type ServerInterface interface {
 	// Return the HTML for the Menu
 	// (GET /html/menu/{menuItem})
 	GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request, menuItem MenuItem)
+	// Update label text by ID
+	// (PUT /labels/{labelId})
+	PutLabelsLabelId(w http.ResponseWriter, r *http.Request, labelId LabelId)
 	// Send URL information to be stored
-	// (PUT /links/by-url/{link_url})
+	// (PUT /links/by-url/{linkUrl})
 	PutLinksByUrlLinkUrl(w http.ResponseWriter, r *http.Request, linkUrl LinkUrl)
 	// Adds multiple links, each with group info
 	// (POST /links/with-groups)
 	PostLinksWithGroups(w http.ResponseWriter, r *http.Request)
 	// Get information about a Link (URL)
-	// (GET /links/{link_id})
+	// (GET /links/{linkId})
 	GetLinksLinkId(w http.ResponseWriter, r *http.Request, linkId LinkId)
 	// Readiness Check
 	// (GET /readyz)
@@ -100,6 +106,43 @@ func (siw *ServerInterfaceWrapper) GetHtmlAlert(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHtmlAlert(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetHtmlContextMenuItemId operation middleware
+func (siw *ServerInterfaceWrapper) GetHtmlContextMenuItemId(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId ItemId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetHtmlContextMenuItemIdParams
+
+	// ------------- Optional query parameter "type" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "type", r.URL.Query(), &params.Type)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "type", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetHtmlContextMenuItemId(w, r, itemId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -237,18 +280,44 @@ func (siw *ServerInterfaceWrapper) GetHtmlMenuMenuItem(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// PutLabelsLabelId operation middleware
+func (siw *ServerInterfaceWrapper) PutLabelsLabelId(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "labelId" -------------
+	var labelId LabelId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "labelId", r.PathValue("labelId"), &labelId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "labelId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutLabelsLabelId(w, r, labelId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // PutLinksByUrlLinkUrl operation middleware
 func (siw *ServerInterfaceWrapper) PutLinksByUrlLinkUrl(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
-	// ------------- Path parameter "link_url" -------------
+	// ------------- Path parameter "linkUrl" -------------
 	var linkUrl LinkUrl
 
-	err = runtime.BindStyledParameterWithOptions("simple", "link_url", r.PathValue("link_url"), &linkUrl, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "linkUrl", r.PathValue("linkUrl"), &linkUrl, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "link_url", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "linkUrl", Err: err})
 		return
 	}
 
@@ -284,12 +353,12 @@ func (siw *ServerInterfaceWrapper) GetLinksLinkId(w http.ResponseWriter, r *http
 
 	var err error
 
-	// ------------- Path parameter "link_id" -------------
+	// ------------- Path parameter "linkId" -------------
 	var linkId LinkId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "link_id", r.PathValue("link_id"), &linkId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "linkId", r.PathValue("linkId"), &linkId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "link_id", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "linkId", Err: err})
 		return
 	}
 
@@ -435,14 +504,16 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
 	m.HandleFunc("GET "+options.BaseURL+"/html/alert", wrapper.GetHtmlAlert)
+	m.HandleFunc("GET "+options.BaseURL+"/html/context-menu/{itemId}", wrapper.GetHtmlContextMenuItemId)
 	m.HandleFunc("GET "+options.BaseURL+"/html/error", wrapper.GetHtmlError)
 	m.HandleFunc("GET "+options.BaseURL+"/html/linkset", wrapper.GetHtmlLinkset)
 	m.HandleFunc("POST "+options.BaseURL+"/html/linkset", wrapper.PostHtmlLinkset)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu", wrapper.GetHtmlMenu)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu/{menuItem}", wrapper.GetHtmlMenuMenuItem)
-	m.HandleFunc("PUT "+options.BaseURL+"/links/by-url/{link_url}", wrapper.PutLinksByUrlLinkUrl)
+	m.HandleFunc("PUT "+options.BaseURL+"/labels/{labelId}", wrapper.PutLabelsLabelId)
+	m.HandleFunc("PUT "+options.BaseURL+"/links/by-url/{linkUrl}", wrapper.PutLinksByUrlLinkUrl)
 	m.HandleFunc("POST "+options.BaseURL+"/links/with-groups", wrapper.PostLinksWithGroups)
-	m.HandleFunc("GET "+options.BaseURL+"/links/{link_id}", wrapper.GetLinksLinkId)
+	m.HandleFunc("GET "+options.BaseURL+"/links/{linkId}", wrapper.GetLinksLinkId)
 	m.HandleFunc("GET "+options.BaseURL+"/readyz", wrapper.GetReadyz)
 
 	return m

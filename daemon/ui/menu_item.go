@@ -10,53 +10,82 @@ import (
 	"savetabs/shared"
 )
 
+var _ shared.MenuItemParent = (*HTMLMenuItem)(nil)
 var _ shared.MenuItemable = (*HTMLMenuItem)(nil)
 
 type HTMLMenuItem struct {
-	shared.MenuItemable
-	LocalId   string
-	Label     safehtml.HTML
-	Type      *shared.MenuType
-	IconState IconState
+	parent   shared.MenuItemParent
+	localId  string
+	Label    safehtml.HTML
+	menuType *shared.MenuType
+}
+
+func (hmi HTMLMenuItem) LocalId() safehtml.Identifier {
+	return shared.MakeSafeId(hmi.localId)
+}
+
+func (hmi HTMLMenuItem) Parent() shared.MenuItemParent {
+	return hmi.parent
+}
+
+func (hmi HTMLMenuItem) MenuType() *shared.MenuType {
+	return hmi.menuType
+}
+
+func (hmi HTMLMenuItem) Level() int {
+	return hmi.Parent().Level() + 1
 }
 
 type HTMLMenuItemArgs struct {
-	shared.MenuItemable
+	Parent   shared.MenuItemParent
+	MenuType *shared.MenuType
 }
 
 var zeroStateHTMLMenuItem HTMLMenuItem
 
-func (hmi HTMLMenuItem) MenuType() *shared.MenuType {
-	return hmi.Type
+func (hmi HTMLMenuItem) APIURL() safehtml.URL {
+	return hmi.parent.APIURL()
+}
+
+func (hmi HTMLMenuItem) HTMLContextMenuURL() safehtml.URL {
+	return shared.MakeSafeURLf("%s/html/context-menu", hmi.APIURL())
 }
 
 func (hmi HTMLMenuItem) HTMLId() safehtml.Identifier {
-	return shared.MakeSafeId(fmt.Sprintf("%s-%s",
-		hmi.MenuItemable.HTMLId(),
-		hmi.LocalId,
-	))
+	ft := shared.NewFilterByFilterType(hmi.FilterType())
+	id := ft.HTMLId(hmi)
+	return shared.MakeSafeIdf("%s-%s", hmi.Parent().HTMLId(), id)
 }
 
-func (hmi HTMLMenuItem) SubmenuURL() safehtml.URL {
+func (hmi HTMLMenuItem) ChildMenuURL() safehtml.URL {
 	var u string
 	if hmi.IsLeaf() {
 		u = "#"
 		goto end
 	}
-	u = hmi.MenuType().Params(shared.ParamsArgs{
-		Equates:  "--",
-		Combines: "/",
-	})
+	// TODO: Change this to use URL encoding
+	u = fmt.Sprintf("%s--%s", hmi.MenuType().FilterType.Id(), hmi.LocalId())
+	//u = hmi.MenuType().Params(shared.ParamsArgs{
+	//	Equates:  "--",
+	//	Combines: "/",
+	//})
 end:
 	return shared.MakeSafeURL(u)
 }
 
-func (hmi HTMLMenuItem) LinksQuery() safehtml.URL {
-	mt := hmi.MenuType()
-	return shared.MakeSafeURLf("?%s", mt.Params(shared.ParamsArgs{
-		Equates:  "=",
-		Combines: "&",
-	}))
+func (hmi HTMLMenuItem) FilterType() *shared.FilterType {
+	return hmi.menuType.FilterType
+}
+
+func (hmi HTMLMenuItem) ContentQuery() safehtml.URL {
+	var pcq string
+	pmi, ok := hmi.Parent().(shared.MenuItemable)
+	if ok {
+		pcq = pmi.ContentQuery().String() + "&"
+	}
+	ft := shared.NewFilterByFilterType(hmi.FilterType())
+	u := ft.ContentQuery(hmi)
+	return shared.MakeSafeURL("?" + pcq + u)
 }
 
 func newHTMLMenuItem(mi model.MenuItem, args *HTMLMenuItemArgs) HTMLMenuItem {
@@ -66,28 +95,26 @@ func newHTMLMenuItem(mi model.MenuItem, args *HTMLMenuItemArgs) HTMLMenuItem {
 func (hmi HTMLMenuItem) Renew(mi model.MenuItem, args *HTMLMenuItemArgs) HTMLMenuItem {
 	if args == nil {
 		shared.Panicf("RenewWithArgs: args must not be nil")
+		// This next panic will never execute.
+		// It is only  here so GoLand will stop saying "`args` may be nil."
+		panic("")
 	}
 	hmi = zeroStateHTMLMenuItem
 	hmi.Label = shared.MakeSafeHTML(mi.Label)
-	hmi.LocalId = strings.ToLower(mi.LocalId)
-	hmi.MenuItemable = args.MenuItemable
-	pmt := hmi.MenuItemable.MenuType()
-	mt, err := shared.MenuTypeByParentTypeAndMenuName(pmt, mi.LocalId)
-	if err != nil {
-		mt = shared.CloneLeafMenuType()
-		mt.Parent = pmt
-		mt.SetName(hmi.LocalId)
-	}
-	hmi.Type = mt
+	hmi.localId = strings.ToLower(mi.LocalId)
+	hmi.parent = args.Parent
+	//pmt := hmi.parent.MenuType()
+	//hmi.filterType = pmt.FilterType
+	hmi.menuType = args.MenuType
 	return hmi
 }
 
 func (hmi HTMLMenuItem) IsLeaf() bool {
-	return hmi.MenuType().IsLeaf
+	return len(hmi.MenuType().Children) == 0
 }
 
 func (hmi HTMLMenuItem) IsTopLevelMenu() bool {
-	return hmi.MenuItemable.Level() <= 1
+	return hmi.Level() == 1
 }
 
 func (hmi HTMLMenuItem) NotTopLevelMenu() bool {
@@ -120,7 +147,8 @@ func GetMenuItemHTML(ctx Context, p MenuItemHTMLParams) (hr HTMLResponse, err er
 	}
 	p.Menu.MenuItems = shared.ConvertSlice(items.Items, func(item model.MenuItem) HTMLMenuItem {
 		return newHTMLMenuItem(item, &HTMLMenuItemArgs{
-			MenuItemable: *p.Menu,
+			Parent:   p.Menu,
+			MenuType: p.MenuType,
 		})
 	})
 	hr.HTML, err = menuTemplate.ExecuteToHTML(p.Menu)
@@ -130,64 +158,3 @@ end:
 	}
 	return hr, err
 }
-
-//func getMenuItemsForType(ctx Context, host, key string) (items []HTMLMenuItem, err error) {
-//	var keys []string
-//	var gt sqlc.GroupType
-//	var gs []sqlc.Group
-//	var db *storage.NestedDBTX
-//
-//	db = storage.GetNestedDBTX(v.DataStore)
-//	err = db.Exec(func(dbtx *storage.NestedDBTX) (err error) {
-//		q := v.Queries(dbtx)
-//		switch keys[1] {
-//		case shared.GroupTypeMenuType: // Group Type
-//			gs, err = q.ListGroupsByType(ctx, sqlc.ListGroupsByTypeParams{
-//				Type:           strings.ToUpper(keys[2]),
-//				GroupsArchived: storage.NotArchived,
-//				GroupsDeleted:  storage.NotDeleted,
-//			})
-//			if err != nil {
-//				goto end
-//			}
-//		}
-//		err = nil
-//		items = func(ctx Context, host string, gt groupType, gs []sqlc.Group) []HTMLMenuItem {
-//			var menuItems []HTMLMenuItem
-//
-//			// Instantiate new menu
-//			// Groups are level == 1, aka children of Group Types where level == 0
-//			m := newHTMLMenu(host, 1)
-//
-//			args := MenuItemArgs{
-//				IconState: BlankIcon,
-//			}
-//			menuItems = make([]HTMLMenuItem, len(gs)+1)
-//			menuItems[0] = newHTMLMenuItemWithArgs(&m, model.MenuItem{
-//				LocalId: "none",
-//				Label:   fmt.Sprintf("<No %s>", gt.Plural),
-//			}, args)
-//			groups, err := model.LoadGroups(ctx,model.GroupsParams{
-//				Host:       shared.NewHost(host),
-//				GroupType:  gt.Type,
-//			})
-//			for i, g := range gs {
-//				grp := model.NewGroup(g)
-//				menuItems[i+1] = newHTMLMenuItemWithArgs(&m, model.MenuItem{
-//					LocalId: strings.ToLower(grp.Type),
-//					Label:   grp.Name,
-//				}, args)
-//			}
-//			return menuItems
-//
-//		}(ctx, host, gt, gs)
-//	end:
-//		return err
-//	})
-//	if err != nil {
-//		goto end
-//	}
-//end:
-//	return items, err
-//}
-//

@@ -13,7 +13,10 @@ function apiLinkByURLEndpoint(url) {
    return `${getApiServerUrl()}/links/by-url/${url}`
 }
 function apiLinkEndpoint(id) {
-   return `${getApiServerUrl()}links/${id}`
+   return `${getApiServerUrl()}/links/${id}`
+}
+function apiLabelEndpoint(id) {
+   return `${getApiServerUrl()}/links/${id}`
 }
 
 export function getHttpOptions(method,data) {
@@ -57,7 +60,20 @@ function apiPutLink(link) {
    } else {
       throw new Error(`Link has neither '.id' nor '.url' non-empty properties.`)
    }
-   fetch(endpoint, getHttpOptions('PUT', link))
+   httpPut(endpoint, link)
+}
+
+export function apiPutLabel(label) {
+   let endpoint;
+   if (label.hasOwnProperty('id') && label.id) {
+      endpoint = apiLabelEndpoint(label.id)
+      throw new Error(`Label does not have an '.id' property.`)
+   }
+   httpPut(endpoint, label)
+}
+
+function httpPut(endpoint,item) {
+   fetch(endpoint, getHttpOptions('PUT', item))
          .then(response => {
             response.json()
          })

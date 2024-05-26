@@ -9,13 +9,28 @@ import (
 
 var _ FilterItem = (*MetaFilter)(nil)
 
-type Meta struct {
-	Key   string
-	Value string
-}
-
 type MetaFilter struct {
 	Metas []Meta
+}
+
+func (mf MetaFilter) HTMLId(mi MenuItemable) string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (mf MetaFilter) ContentQuery(itemable MenuItemable) string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func newMetaFilter() MetaFilter {
+	return MetaFilter{
+		Metas: make([]Meta, 0),
+	}
+}
+
+func (mf MetaFilter) String() string {
+	return toQueryString(MetaFilterType.Id(), mf.Metas)
 }
 
 func (mf MetaFilter) FilterType() *FilterType {

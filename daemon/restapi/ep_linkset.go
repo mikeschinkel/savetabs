@@ -11,42 +11,23 @@ import (
 )
 
 const (
-	actionField    = "action"
-	linkIdField    = "link_id"
-	queryJSONField = "query_json"
+	actionField      = "action"
+	linkIdField      = "link_id"
+	filterQueryField = "filter_query"
 )
 
 type linkSetForm struct {
-	Action    string
-	LinkIds   []string
-	queryJSON string
+	Action      string
+	LinkIds     []string
+	filterQuery string
 }
 
 func (f linkSetForm) FilterQuery() (fq shared.FilterQuery, err error) {
-	print()
-	//	var params GetHtmlLinksetParams
-	//	var filterItems  []shared.FilterItem
-	//
-	//	err = json.Unmarshal([]byte(f.queryJSON), &params)
-	//	if err != nil {
-	//		goto end
-	//	}
-	//	filterItems = make([]shared.FilterItem,3)
-	//	shared.ParseGroupTypeFilter()
-	//	filterItems[0] = shared.GroupTypeFilter{GroupTypes: *params.Gt,}
-	//
-	//
-	//}
-	//	fq = shared.FilterQuery{FilterItems: []shared.FilterItem{
-	//		*params.Gt,
-	//
-	//	}}
-	//end:
-	return fq, err
+	return shared.ParseFilterQuery(f.filterQuery)
 }
 
 func parseLinksetForm(form url.Values) (lsf linkSetForm, err error) {
-	var queryJSONs []string
+	var filterQueries []string
 
 	lsf.Action = form.Get(actionField)
 
@@ -59,12 +40,11 @@ func parseLinksetForm(form url.Values) (lsf linkSetForm, err error) {
 	for i, id := range form[linkIdField] {
 		lsf.LinkIds[i] = id
 	}
-	queryJSONs, ok = form[queryJSONField]
+	filterQueries, ok = form[filterQueryField]
 	if !ok {
-		queryJSONs = []string{"{}"}
+		goto end
 	}
-	// TODO: Verify this is still valid given the Ardan Labs changes
-	lsf.queryJSON = strings.Join(queryJSONs, "")
+	lsf.filterQuery = strings.Join(filterQueries, "&")
 
 end:
 	return lsf, err

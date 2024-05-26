@@ -8,15 +8,15 @@ import (
 )
 
 type Filter struct {
-	Type   FilterType
-	Values []string
-	Map    map[string]string
+	Type FilterType
+	Ids  []string
+	Map  map[string]string
 }
 
 var filterTypeMap = make(map[string]*FilterType)
 
 type FilterType struct {
-	value  string
+	id     string
 	Label  string
 	Plural string
 }
@@ -29,40 +29,43 @@ var filterMutex sync.Mutex
 
 func newFilterType(value, label, plural string) *FilterType {
 	ft := &FilterType{
-		value:  strings.ToLower(value),
+		id:     strings.ToLower(value),
 		Label:  label,
 		Plural: plural,
 	}
 	filterMutex.Lock()
 	defer filterMutex.Unlock()
 	dupFilterTypeCheck(ft)
-	filterTypeMap[ft.value] = ft
+	filterTypeMap[ft.id] = ft
 	FilterTypes = append(FilterTypes, ft)
 	return ft
 }
 
-func FilterTypeByValue(value string) (_ *FilterType, err error) {
-	ft, ok := filterTypeMap[strings.ToLower(value)]
+func FilterTypeById(id string) (_ *FilterType, err error) {
+	ft, ok := filterTypeMap[strings.ToLower(id)]
 	if !ok {
 		err = errors.Join(
 			ErrInvalidFilterType,
 			fmt.Errorf("filter_type=%s, valid_types=[%s]",
 				ft,
-				strings.Join(FilterTypeNames(), ","),
+				strings.Join(FilterTypeIds(), ","),
 			),
 		)
 	}
 	return ft, err
 }
 
-func FilterTypeNames() []string {
+func FilterTypeIds() []string {
 	return ConvertSlice(FilterTypes, func(ft *FilterType) string {
-		return ft.value
+		return ft.id
 	})
 }
 
+func (f FilterType) Id() string {
+	return f.id
+}
 func (f FilterType) String() string {
-	return f.value
+	return f.id
 }
 
 var (

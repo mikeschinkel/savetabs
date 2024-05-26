@@ -12,30 +12,21 @@ const LeafMenuName = "leaf"
 //goland:noinspection GoUnusedGlobalVariable
 var (
 	RootMenuType      = &MenuType{}
-	GroupTypeMenuType = newStaticMenuType(RootMenuType, String{"gt"}, 2)
+	GroupTypeMenuType = newStaticMenuType(RootMenuType, String{"gt"}, GroupTypeFilterType)
 
-	BookmarkMenuType = newStaticMenuType(GroupTypeMenuType, GroupTypeBookmark, 0)
-	TabGroupMenuType = newStaticMenuType(GroupTypeMenuType, GroupTypeTabGroup, 0)
-	TagMenuType      = newStaticMenuType(GroupTypeMenuType, GroupTypeTag, 0)
-	CategoryMenuType = newStaticMenuType(GroupTypeMenuType, GroupTypeCategory, 0)
-	KeywordMenuType  = newStaticMenuType(GroupTypeMenuType, GroupTypeKeyword, 0)
-	InvalidMenuType  = newStaticMenuType(GroupTypeMenuType, GroupTypeInvalid, 0)
-
-	// LeafMenuArchetype should never be used directly but should be copies to make a LeadMenuType
-	LeafMenuArchetype = newStaticMenuType(nil, String{LeafMenuName}, 0)
+	BookmarkMenuType = newStaticMenuType(GroupTypeMenuType, GroupTypeBookmark, GroupFilterType)
+	TabGroupMenuType = newStaticMenuType(GroupTypeMenuType, GroupTypeTabGroup, GroupFilterType)
+	TagMenuType      = newStaticMenuType(GroupTypeMenuType, GroupTypeTag, GroupFilterType)
+	CategoryMenuType = newStaticMenuType(GroupTypeMenuType, GroupTypeCategory, GroupFilterType)
+	KeywordMenuType  = newStaticMenuType(GroupTypeMenuType, GroupTypeKeyword, GroupFilterType)
+	InvalidMenuType  = newStaticMenuType(GroupTypeMenuType, GroupTypeInvalid, GroupFilterType)
 )
 
-func CloneLeafMenuType() *MenuType {
-	mt := &MenuType{}
-	*mt = *LeafMenuArchetype
-	return mt
-}
-
 type MenuType struct {
-	Parent   *MenuType
-	name     string
-	IsLeaf   bool
-	ParamCnt int
+	Parent     *MenuType
+	name       string
+	FilterType *FilterType
+	Children   []*MenuType
 }
 
 func (mt *MenuType) Id() (s string) {
@@ -86,8 +77,8 @@ var menuTypeMap = make(map[string]*MenuType, 0)
 var MenuTypes []*MenuType
 var menuTypeMutex sync.Mutex
 
-func newStaticMenuType(parent *MenuType, name fmt.Stringer, paramCnt int) *MenuType {
-	mt := NewMenuType(parent, name, paramCnt)
+func newStaticMenuType(parent *MenuType, name fmt.Stringer, ft *FilterType) *MenuType {
+	mt := NewMenuType(parent, name, ft)
 	menuTypeMutex.Lock()
 	defer menuTypeMutex.Unlock()
 	MenuTypes = append(MenuTypes, mt)
@@ -131,12 +122,14 @@ end:
 	return s
 }
 
-func NewMenuType(parent *MenuType, name fmt.Stringer, paramCnt int) *MenuType {
+func NewMenuType(parent *MenuType, name fmt.Stringer, ft *FilterType) *MenuType {
 	mt := &MenuType{
-		Parent:   parent,
-		name:     strings.ToLower(name.String()),
-		IsLeaf:   name.String() == LeafMenuName,
-		ParamCnt: paramCnt,
+		Parent:     parent,
+		name:       strings.ToLower(name.String()),
+		FilterType: ft,
+	}
+	if parent != nil {
+		parent.Children = append(parent.Children, mt)
 	}
 	return mt
 }

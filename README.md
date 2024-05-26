@@ -5,7 +5,8 @@ SaveTabs is a Chrome extension and local daemon used for keeping track of your t
 ## To Do
 
 ### Bugs to Fix
-1. Fix partial saving of Tab Group name
+1. Fix partial saving of Tab Group name.
+2. Fix regression for filter query on Linkset postback.
 
 ### Features To Add
 1. API
@@ -22,22 +23,21 @@ SaveTabs is a Chrome extension and local daemon used for keeping track of your t
          4. ~~Keywords~~
       2. ~~Groups per Group Types as tree branches~~
       3. ~~Links per Group as leaves~~
-      4. Capture from Browser
-         1. Title
-         2. Meta
-         3. Content
-         3. Other?
-      5. Capture from Caretaker
-         1. Screenshot
-         3. Other?
-      6. On-hover icon for on-click modal menu
+      4. ~~Capture from Browser~~
+         1. ~~Title~~
+      5. On-hover icon for on-click modal menu
          1. For Menu Items/Groups
          2. For Links
-      7. Menu Items for Menu Items
+      6. Menu Items for Links
          1. Rename
          2. Delete
          3. Archive
          4. Merge To
+      7. Capture/handle in Caretaker
+         1. Screenshot
+         2. Meta
+         3. Content
+         4. Other?
       8. Expand/Collapse Item for links
          1. Tabbed panel
             1. Title, Screenshot, Content
