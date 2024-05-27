@@ -21,8 +21,8 @@ type ServerInterface interface {
 	// (GET /html/alert)
 	GetHtmlAlert(w http.ResponseWriter, r *http.Request, params GetHtmlAlertParams)
 	// Return a context menu for the editable item
-	// (GET /html/context-menu/{itemId})
-	GetHtmlContextMenuItemId(w http.ResponseWriter, r *http.Request, itemId ItemId, params GetHtmlContextMenuItemIdParams)
+	// (GET /html/context-menu/{contextMenuType}/{id})
+	GetHtmlContextMenuContextMenuTypeId(w http.ResponseWriter, r *http.Request, contextMenuType ContextMenuType, id IdParameter)
 	// HTML-formatted error
 	// (GET /html/error)
 	GetHtmlError(w http.ResponseWriter, r *http.Request, params GetHtmlErrorParams)
@@ -115,34 +115,32 @@ func (siw *ServerInterfaceWrapper) GetHtmlAlert(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// GetHtmlContextMenuItemId operation middleware
-func (siw *ServerInterfaceWrapper) GetHtmlContextMenuItemId(w http.ResponseWriter, r *http.Request) {
+// GetHtmlContextMenuContextMenuTypeId operation middleware
+func (siw *ServerInterfaceWrapper) GetHtmlContextMenuContextMenuTypeId(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
-	// ------------- Path parameter "itemId" -------------
-	var itemId ItemId
+	// ------------- Path parameter "contextMenuType" -------------
+	var contextMenuType ContextMenuType
 
-	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "contextMenuType", r.PathValue("contextMenuType"), &contextMenuType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contextMenuType", Err: err})
 		return
 	}
 
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetHtmlContextMenuItemIdParams
+	// ------------- Path parameter "id" -------------
+	var id IdParameter
 
-	// ------------- Optional query parameter "type" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "type", r.URL.Query(), &params.Type)
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "type", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetHtmlContextMenuItemId(w, r, itemId, params)
+		siw.Handler.GetHtmlContextMenuContextMenuTypeId(w, r, contextMenuType, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -504,7 +502,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
 	m.HandleFunc("GET "+options.BaseURL+"/html/alert", wrapper.GetHtmlAlert)
-	m.HandleFunc("GET "+options.BaseURL+"/html/context-menu/{itemId}", wrapper.GetHtmlContextMenuItemId)
+	m.HandleFunc("GET "+options.BaseURL+"/html/context-menu/{contextMenuType}/{id}", wrapper.GetHtmlContextMenuContextMenuTypeId)
 	m.HandleFunc("GET "+options.BaseURL+"/html/error", wrapper.GetHtmlError)
 	m.HandleFunc("GET "+options.BaseURL+"/html/linkset", wrapper.GetHtmlLinkset)
 	m.HandleFunc("POST "+options.BaseURL+"/html/linkset", wrapper.PostHtmlLinkset)

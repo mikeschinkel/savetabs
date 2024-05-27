@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.1.0
 info:
   title: SaveTabs Daemon API
   version: 1.0.0
@@ -19,12 +19,12 @@ paths:
         default:
           $ref: '#/components/responses/UnexpectedError'
 
-  /html/context-menu/{itemId}:
+  /html/context-menu/{contextMenuType}/{id}:
     get:
       summary: Return a context menu for the editable item
       parameters:
-      - $ref: '#/components/parameters/ItemId'
-      - $ref: '#/components/parameters/ItemType'
+      - $ref: '#/components/parameters/ContextMenuType'
+      - $ref: '#/components/parameters/IdParameter'
       responses:
         '200':
           $ref: '#/components/responses/HtmlResponse'
@@ -227,20 +227,13 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/IdString'
-    ItemId:
-      name: itemId
+    ContextMenuType:
+      name: contextMenuType
       in: path
-      description: HTML ID for the item to edit
+      description: Slug for contextMenuType
       required: true
       schema:
         $ref: '#/components/schemas/IdString'
-    ItemType:
-      name: type
-      in: query
-      description: Type of Item for ItemId
-      required: false
-      schema:
-        $ref: '#/components/schemas/TypeString'
     LinkId:
       name: linkId
       in: path

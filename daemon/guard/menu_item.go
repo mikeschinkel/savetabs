@@ -34,7 +34,7 @@ func GetMenuItemHTML(ctx Context, host string, menuItem string) (_ HTMLResponse,
 		hr.SetCode(http.StatusBadRequest)
 		goto end
 	}
-	mt, err = shared.MenuTypeByValue(menuItem)
+	mt, err = shared.MenuTypeByName(menuItem)
 	if err != nil {
 		goto end
 	}

@@ -1,7 +1,7 @@
 {{- /*gotype:savetabs/ui.menuItem*/ -}}
 <ul class="menu p-0 mb-4 min-h-full bg-base-200 text-base-content x-data">
 {{range .MenuItems}}
-  <li id="{{.HTMLId}}" class="{{if .IsLeaf }}h-7 {{end}}m-0 p-0 flex">
+  <li id="{{.HTMLId}}" class="{{if .IsLeaf }}h-7 {{end}}m-0 p-0 flex" hx-trigger="contextmenu" hx-get="{{.HTMLContextMenuURL}}/{{.ContextMenuType}}/{{.ContextMenuDBId}}" hx-target="#context-menu">
     <details x-data="preventable" class="grow {{if .NotTopLevelMenu}}p-0 m-0{{end}}" @click="preventExpandOnIconClick">
       <summary class="{{if .IsLeaf}}p-0 m-0{{else}}py-3 my-0{{end}} rounded-sm list-none flex items-center w-full gap-2">
         {{if .IsLeaf }}
@@ -15,13 +15,11 @@
           </span>
         {{end}}
         <div class="w-full pl-2 cursor-pointer" hx-get="{{$.HTMLLinksURL}}{{.ContentQuery}}" hx-target="#links-section">
-          <span id="{{.HTMLId}}-label" hx-trigger="contextmenu" hx-get="{{.HTMLContextMenuURL}}/{{.HTMLId}}?type=label" hx-target="#context-menu">
-						{{.Label}}
-					</span>
+					<label>{{.Label}}</label>
         </div>
       </summary>
       <div id="{{.HTMLId}}-kids" class="pl-4 m-0"></div>
     </details>
-  </li>
+</li>
 {{end}}
 </ul>

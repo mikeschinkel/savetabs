@@ -6,16 +6,18 @@ import (
 
 type MenuItem struct {
 	*Menu
-	LocalId    string
-	Label      string
-	FilterType *shared.FilterType
+	LocalId     string
+	Label       string
+	FilterType  *shared.FilterType
+	ContextMenu shared.ContextMenu
 }
 
 type MenuItemArgs struct {
-	LocalId  string
-	Label    string
-	MenuType *shared.MenuType
-	Menu     *Menu
+	LocalId     string
+	Label       string
+	MenuType    *shared.MenuType
+	Menu        *Menu
+	ContextMenu shared.ContextMenu
 }
 
 func newMenuItem(p MenuItemArgs) MenuItem {
@@ -32,6 +34,7 @@ func (mi MenuItem) Renew(args MenuItemArgs) MenuItem {
 	mi.LocalId = args.LocalId
 	mi.Menu = args.Menu
 	mi.Label = args.Label
+	mi.ContextMenu = args.ContextMenu
 
 	if args.MenuType == nil {
 		mt, err := shared.MenuTypeByParentTypeAndMenuName(args.Menu.Type, args.LocalId)
@@ -71,10 +74,11 @@ func LoadMenuItems(ctx Context, p LoadMenuItemParams) (items MenuItems, err erro
 
 	items.Items = shared.ConvertSlice(groups.Groups, func(grp Group) MenuItem {
 		return newMenuItem(MenuItemArgs{
-			LocalId:  shared.Slugify(grp.Name),
-			Label:    grp.Name,
-			Menu:     p.Menu,
-			MenuType: shared.GroupTypeMenuType,
+			LocalId:     shared.Slugify(grp.Name),
+			Label:       grp.Name,
+			Menu:        p.Menu,
+			MenuType:    shared.GroupTypeMenuType,
+			ContextMenu: shared.NewContextMenu(shared.GroupContextMenuType, grp.Id),
 		})
 	})
 end:

@@ -95,8 +95,8 @@ type ClientInterface interface {
 	// GetHtmlAlert request
 	GetHtmlAlert(ctx context.Context, params *GetHtmlAlertParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetHtmlContextMenuItemId request
-	GetHtmlContextMenuItemId(ctx context.Context, itemId ItemId, params *GetHtmlContextMenuItemIdParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetHtmlContextMenuContextMenuTypeId request
+	GetHtmlContextMenuContextMenuTypeId(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetHtmlError request
 	GetHtmlError(ctx context.Context, params *GetHtmlErrorParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -157,8 +157,8 @@ func (c *Client) GetHtmlAlert(ctx context.Context, params *GetHtmlAlertParams, r
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetHtmlContextMenuItemId(ctx context.Context, itemId ItemId, params *GetHtmlContextMenuItemIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetHtmlContextMenuItemIdRequest(c.Server, itemId, params)
+func (c *Client) GetHtmlContextMenuContextMenuTypeId(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHtmlContextMenuContextMenuTypeIdRequest(c.Server, contextMenuType, id)
 	if err != nil {
 		return nil, err
 	}
@@ -405,13 +405,20 @@ func NewGetHtmlAlertRequest(server string, params *GetHtmlAlertParams) (*http.Re
 	return req, nil
 }
 
-// NewGetHtmlContextMenuItemIdRequest generates requests for GetHtmlContextMenuItemId
-func NewGetHtmlContextMenuItemIdRequest(server string, itemId ItemId, params *GetHtmlContextMenuItemIdParams) (*http.Request, error) {
+// NewGetHtmlContextMenuContextMenuTypeIdRequest generates requests for GetHtmlContextMenuContextMenuTypeId
+func NewGetHtmlContextMenuContextMenuTypeIdRequest(server string, contextMenuType ContextMenuType, id IdParameter) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "itemId", runtime.ParamLocationPath, itemId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "contextMenuType", runtime.ParamLocationPath, contextMenuType)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
 	if err != nil {
 		return nil, err
 	}
@@ -421,7 +428,7 @@ func NewGetHtmlContextMenuItemIdRequest(server string, itemId ItemId, params *Ge
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/html/context-menu/%s", pathParam0)
+	operationPath := fmt.Sprintf("/html/context-menu/%s/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -429,28 +436,6 @@ func NewGetHtmlContextMenuItemIdRequest(server string, itemId ItemId, params *Ge
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.Type != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "type", runtime.ParamLocationQuery, *params.Type); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -910,8 +895,8 @@ type ClientWithResponsesInterface interface {
 	// GetHtmlAlertWithResponse request
 	GetHtmlAlertWithResponse(ctx context.Context, params *GetHtmlAlertParams, reqEditors ...RequestEditorFn) (*GetHtmlAlertResponse, error)
 
-	// GetHtmlContextMenuItemIdWithResponse request
-	GetHtmlContextMenuItemIdWithResponse(ctx context.Context, itemId ItemId, params *GetHtmlContextMenuItemIdParams, reqEditors ...RequestEditorFn) (*GetHtmlContextMenuItemIdResponse, error)
+	// GetHtmlContextMenuContextMenuTypeIdWithResponse request
+	GetHtmlContextMenuContextMenuTypeIdWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, reqEditors ...RequestEditorFn) (*GetHtmlContextMenuContextMenuTypeIdResponse, error)
 
 	// GetHtmlErrorWithResponse request
 	GetHtmlErrorWithResponse(ctx context.Context, params *GetHtmlErrorParams, reqEditors ...RequestEditorFn) (*GetHtmlErrorResponse, error)
@@ -992,14 +977,14 @@ func (r GetHtmlAlertResponse) StatusCode() int {
 	return 0
 }
 
-type GetHtmlContextMenuItemIdResponse struct {
+type GetHtmlContextMenuContextMenuTypeIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSONDefault  *UnexpectedError
 }
 
 // Status returns HTTPResponse.Status
-func (r GetHtmlContextMenuItemIdResponse) Status() string {
+func (r GetHtmlContextMenuContextMenuTypeIdResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1007,7 +992,7 @@ func (r GetHtmlContextMenuItemIdResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetHtmlContextMenuItemIdResponse) StatusCode() int {
+func (r GetHtmlContextMenuContextMenuTypeIdResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1257,13 +1242,13 @@ func (c *ClientWithResponses) GetHtmlAlertWithResponse(ctx context.Context, para
 	return ParseGetHtmlAlertResponse(rsp)
 }
 
-// GetHtmlContextMenuItemIdWithResponse request returning *GetHtmlContextMenuItemIdResponse
-func (c *ClientWithResponses) GetHtmlContextMenuItemIdWithResponse(ctx context.Context, itemId ItemId, params *GetHtmlContextMenuItemIdParams, reqEditors ...RequestEditorFn) (*GetHtmlContextMenuItemIdResponse, error) {
-	rsp, err := c.GetHtmlContextMenuItemId(ctx, itemId, params, reqEditors...)
+// GetHtmlContextMenuContextMenuTypeIdWithResponse request returning *GetHtmlContextMenuContextMenuTypeIdResponse
+func (c *ClientWithResponses) GetHtmlContextMenuContextMenuTypeIdWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, reqEditors ...RequestEditorFn) (*GetHtmlContextMenuContextMenuTypeIdResponse, error) {
+	rsp, err := c.GetHtmlContextMenuContextMenuTypeId(ctx, contextMenuType, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetHtmlContextMenuItemIdResponse(rsp)
+	return ParseGetHtmlContextMenuContextMenuTypeIdResponse(rsp)
 }
 
 // GetHtmlErrorWithResponse request returning *GetHtmlErrorResponse
@@ -1424,15 +1409,15 @@ func ParseGetHtmlAlertResponse(rsp *http.Response) (*GetHtmlAlertResponse, error
 	return response, nil
 }
 
-// ParseGetHtmlContextMenuItemIdResponse parses an HTTP response from a GetHtmlContextMenuItemIdWithResponse call
-func ParseGetHtmlContextMenuItemIdResponse(rsp *http.Response) (*GetHtmlContextMenuItemIdResponse, error) {
+// ParseGetHtmlContextMenuContextMenuTypeIdResponse parses an HTTP response from a GetHtmlContextMenuContextMenuTypeIdWithResponse call
+func ParseGetHtmlContextMenuContextMenuTypeIdResponse(rsp *http.Response) (*GetHtmlContextMenuContextMenuTypeIdResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetHtmlContextMenuItemIdResponse{
+	response := &GetHtmlContextMenuContextMenuTypeIdResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

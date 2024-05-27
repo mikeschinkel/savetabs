@@ -14,10 +14,18 @@ var _ shared.MenuItemParent = (*HTMLMenuItem)(nil)
 var _ shared.MenuItemable = (*HTMLMenuItem)(nil)
 
 type HTMLMenuItem struct {
-	parent   shared.MenuItemParent
-	localId  string
-	Label    safehtml.HTML
-	menuType *shared.MenuType
+	parent      shared.MenuItemParent
+	localId     string
+	Label       safehtml.HTML
+	menuType    *shared.MenuType
+	contextMenu shared.ContextMenu
+}
+
+func (hmi HTMLMenuItem) ContextMenuType() (id safehtml.Identifier) {
+	return shared.MakeSafeId(hmi.contextMenu.Type.Name)
+}
+func (hmi HTMLMenuItem) ContextMenuDBId() int64 {
+	return hmi.contextMenu.Id
 }
 
 func (hmi HTMLMenuItem) LocalId() safehtml.Identifier {
@@ -103,6 +111,7 @@ func (hmi HTMLMenuItem) Renew(mi model.MenuItem, args *HTMLMenuItemArgs) HTMLMen
 	hmi.Label = shared.MakeSafeHTML(mi.Label)
 	hmi.localId = strings.ToLower(mi.LocalId)
 	hmi.parent = args.Parent
+	hmi.contextMenu = mi.ContextMenu
 	//pmt := hmi.parent.MenuType()
 	//hmi.filterType = pmt.FilterType
 	hmi.menuType = args.MenuType

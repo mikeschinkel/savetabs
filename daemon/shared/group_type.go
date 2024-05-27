@@ -31,6 +31,7 @@ func (gt GroupType) Empty() bool {
 	return gt.Letter == ""
 }
 
+var groupTypeIndex = make(map[GroupType]int, 0)
 var groupTypeBySlugMap = make(map[string]GroupType, 0)
 var groupTypeByLetterMap = make(map[string]GroupType, 0)
 
@@ -47,17 +48,42 @@ func newGroupType(ltr, slug, label, plural string) GroupType {
 	}
 	groupTypeBySlugMap[gt.Slug] = gt
 	groupTypeByLetterMap[gt.Letter] = gt
+	groupTypeIndex[gt] = len(groupTypeIndex)
 	return gt
 }
 
 var (
 	GroupTypeBookmark = newGroupType("B", "bookmark", "Bookmark", "Bookmarks")
-	GroupTypeTabGroup = newGroupType("G", "tabgroup", "Tag Groups", "Tag Groups")
+	GroupTypeTabGroup = newGroupType("G", "tabgroup", "Tab Group", "Tab Groups")
 	GroupTypeTag      = newGroupType("T", "tag", "Tag", "Tags")
 	GroupTypeCategory = newGroupType("C", "category", "Category", "Categories")
 	GroupTypeKeyword  = newGroupType("K", "keyword", "Keyword", "Keywords")
 	GroupTypeInvalid  = newGroupType("I", "invalid", "Invalid", "Invalids")
 )
+
+func GroupTypeIndexByLetter(ltr string) (index int, err error) {
+	var gt GroupType
+
+	gt, err = ParseGroupTypeByLetter(ltr)
+	if err != nil {
+		goto end
+	}
+	index, err = GroupTypeIndex(gt)
+end:
+	return index, err
+}
+
+func GroupTypeIndex(gt GroupType) (index int, err error) {
+	var ok bool
+	index, ok = groupTypeIndex[gt]
+	if !ok {
+		err = errors.Join(
+			ErrGroupTypeIndexNotFound,
+			fmt.Errorf("group_type=%s", gt),
+		)
+	}
+	return index, err
+}
 
 func ParseGroupTypeBySlug(slug string) (gt GroupType, err error) {
 	var ok bool

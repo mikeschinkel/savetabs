@@ -139,15 +139,15 @@ func MenuTypeByParentTypeAndMenuName(parent *MenuType, name string) (mt *MenuTyp
 		err = errors.Join(ErrMenuTypeIsNil, fmt.Errorf("child_name=%s", name))
 		goto end
 	}
-	mt, err = MenuTypeByValue(fmt.Sprintf("%s--%s", parent.Id(), name))
+	mt, err = MenuTypeByName(fmt.Sprintf("%s--%s", parent.Id(), name))
 end:
 	return mt, err
 }
 
-func MenuTypeByValue(value string) (mt *MenuType, err error) {
-	mt, found := menuTypeMap[strings.ToLower(value)]
-	if !found {
-		err = errors.Join(ErrMenuTypeNotFound, fmt.Errorf("value=%s", value))
+func MenuTypeByName(name string) (mt *MenuType, err error) {
+	mt, ok := menuTypeMap[strings.ToLower(name)]
+	if !ok {
+		err = errors.Join(ErrMenuTypeNotFound, fmt.Errorf("name=%s", name))
 	}
 	return mt, err
 }

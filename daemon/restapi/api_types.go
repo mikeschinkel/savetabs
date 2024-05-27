@@ -71,14 +71,14 @@ type LinkWithGroup struct {
 // LinksWithGroups defines model for LinksWithGroups.
 type LinksWithGroups = []LinkWithGroup
 
-// TypeString Type of item
-type TypeString = string
-
 // AlertMsg defines model for AlertMsg.
 type AlertMsg = string
 
 // AlertType defines model for AlertType.
 type AlertType string
+
+// ContextMenuType String-based Id
+type ContextMenuType = IdString
 
 // ErrorMsg defines model for ErrorMsg.
 type ErrorMsg = string
@@ -89,11 +89,8 @@ type GroupFilter = []string
 // GroupTypeFilter defines model for GroupTypeFilter.
 type GroupTypeFilter = []string
 
-// ItemId String-based Id
-type ItemId = IdString
-
-// ItemType Type of item
-type ItemType = TypeString
+// IdParameter defines model for IdParameter.
+type IdParameter = int64
 
 // LabelId String-based Id
 type LabelId = IdString
@@ -124,12 +121,6 @@ type GetHtmlAlertParams struct {
 
 // GetHtmlAlertParamsTyp defines parameters for GetHtmlAlert.
 type GetHtmlAlertParamsTyp string
-
-// GetHtmlContextMenuItemIdParams defines parameters for GetHtmlContextMenuItemId.
-type GetHtmlContextMenuItemIdParams struct {
-	// Type Type of Item for ItemId
-	Type *ItemType `form:"type,omitempty" json:"type,omitempty"`
-}
 
 // GetHtmlErrorParams defines parameters for GetHtmlError.
 type GetHtmlErrorParams struct {
