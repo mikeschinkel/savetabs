@@ -8,13 +8,11 @@ import (
 )
 
 var (
-	GroupContextMenuName     = "group"
-	GroupTypeContextMenuName = "group_type"
+	GroupContextMenuName = "group"
 )
 
 var (
-	GroupContextMenuType     = newContextMenuType(GroupContextMenuName)
-	GroupTypeContextMenuType = newContextMenuType(GroupTypeContextMenuName)
+	GroupContextMenuType = newContextMenuType(GroupContextMenuName)
 )
 
 var (
@@ -38,7 +36,9 @@ type ContextMenuItem struct {
 }
 
 func NewContextMenuItem(label string) ContextMenuItem {
-	return ContextMenuItem{Label: label}
+	return ContextMenuItem{
+		Label: label,
+	}
 }
 
 func (cmt ContextMenuType) Table() string {

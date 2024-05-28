@@ -73,6 +73,7 @@ end:
 	return index, err
 }
 
+// GroupTypeIndex returns 1-based index for group types
 func GroupTypeIndex(gt GroupType) (index int, err error) {
 	var ok bool
 	index, ok = groupTypeIndex[gt]
@@ -82,7 +83,7 @@ func GroupTypeIndex(gt GroupType) (index int, err error) {
 			fmt.Errorf("group_type=%s", gt),
 		)
 	}
-	return index, err
+	return index + 1, err
 }
 
 func ParseGroupTypeBySlug(slug string) (gt GroupType, err error) {

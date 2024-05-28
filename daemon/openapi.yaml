@@ -4,21 +4,6 @@ info:
   version: 1.0.0
 paths:
 
-  /labels/{labelId}:
-    put:
-      summary: Update label text by ID
-      parameters:
-      - $ref: '#/components/parameters/LabelId'
-      responses:
-        '204': # No content
-          description: The label text was updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdObject'
-        default:
-          $ref: '#/components/responses/UnexpectedError'
-
   /html/context-menu/{contextMenuType}/{id}:
     get:
       summary: Return a context menu for the editable item
@@ -28,6 +13,36 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/HtmlResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+
+  /html/context-menu/{contextMenuType}/{id}/rename-form:
+    get:
+      summary: Return a form for renaming an element targeted by a context menu item
+      parameters:
+      - $ref: '#/components/parameters/ContextMenuType'
+      - $ref: '#/components/parameters/IdParameter'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+
+  /context-menu/{contextMenuType}/{id}/name:
+    put:
+      summary: Update name text by context menu type and DB ID
+      parameters:
+      - $ref: '#/components/parameters/ContextMenuType'
+      - $ref: '#/components/parameters/IdParameter'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NameToRename'
+      responses:
+        '204': # No content
+          description: The name was updated
         default:
           $ref: '#/components/responses/UnexpectedError'
 
@@ -425,6 +440,15 @@ components:
             groupType:
               type: string
               nullable: false
+    NameToRename:
+      allOf:
+      - $ref: '#/components/schemas/Id'
+        type: object
+        properties:
+          name:
+            type: string
+            description: Name of Item to rename
+            nullable: false
     LinkIds:
       type: array
       items:

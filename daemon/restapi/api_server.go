@@ -14,6 +14,9 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Update name text by context menu type and DB ID
+	// (PUT /context-menu/{contextMenuType}/{id}/name)
+	PutContextMenuContextMenuTypeIdName(w http.ResponseWriter, r *http.Request, contextMenuType ContextMenuType, id IdParameter)
 	// Health Check
 	// (GET /healthz)
 	GetHealthz(w http.ResponseWriter, r *http.Request)
@@ -23,6 +26,9 @@ type ServerInterface interface {
 	// Return a context menu for the editable item
 	// (GET /html/context-menu/{contextMenuType}/{id})
 	GetHtmlContextMenuContextMenuTypeId(w http.ResponseWriter, r *http.Request, contextMenuType ContextMenuType, id IdParameter)
+	// Return a form for renaming an element targeted by a context menu item
+	// (GET /html/context-menu/{contextMenuType}/{id}/rename-form)
+	GetHtmlContextMenuContextMenuTypeIdRenameForm(w http.ResponseWriter, r *http.Request, contextMenuType ContextMenuType, id IdParameter)
 	// HTML-formatted error
 	// (GET /html/error)
 	GetHtmlError(w http.ResponseWriter, r *http.Request, params GetHtmlErrorParams)
@@ -38,9 +44,6 @@ type ServerInterface interface {
 	// Return the HTML for the Menu
 	// (GET /html/menu/{menuItem})
 	GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request, menuItem MenuItem)
-	// Update label text by ID
-	// (PUT /labels/{labelId})
-	PutLabelsLabelId(w http.ResponseWriter, r *http.Request, labelId LabelId)
 	// Send URL information to be stored
 	// (PUT /links/by-url/{linkUrl})
 	PutLinksByUrlLinkUrl(w http.ResponseWriter, r *http.Request, linkUrl LinkUrl)
@@ -63,6 +66,41 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// PutContextMenuContextMenuTypeIdName operation middleware
+func (siw *ServerInterfaceWrapper) PutContextMenuContextMenuTypeIdName(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "contextMenuType" -------------
+	var contextMenuType ContextMenuType
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contextMenuType", r.PathValue("contextMenuType"), &contextMenuType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contextMenuType", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id IdParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutContextMenuContextMenuTypeIdName(w, r, contextMenuType, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
 
 // GetHealthz operation middleware
 func (siw *ServerInterfaceWrapper) GetHealthz(w http.ResponseWriter, r *http.Request) {
@@ -141,6 +179,41 @@ func (siw *ServerInterfaceWrapper) GetHtmlContextMenuContextMenuTypeId(w http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHtmlContextMenuContextMenuTypeId(w, r, contextMenuType, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetHtmlContextMenuContextMenuTypeIdRenameForm operation middleware
+func (siw *ServerInterfaceWrapper) GetHtmlContextMenuContextMenuTypeIdRenameForm(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "contextMenuType" -------------
+	var contextMenuType ContextMenuType
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contextMenuType", r.PathValue("contextMenuType"), &contextMenuType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contextMenuType", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id IdParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetHtmlContextMenuContextMenuTypeIdRenameForm(w, r, contextMenuType, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -269,32 +342,6 @@ func (siw *ServerInterfaceWrapper) GetHtmlMenuMenuItem(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHtmlMenuMenuItem(w, r, menuItem)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r.WithContext(ctx))
-}
-
-// PutLabelsLabelId operation middleware
-func (siw *ServerInterfaceWrapper) PutLabelsLabelId(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var err error
-
-	// ------------- Path parameter "labelId" -------------
-	var labelId LabelId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "labelId", r.PathValue("labelId"), &labelId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "labelId", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PutLabelsLabelId(w, r, labelId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -500,15 +547,16 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc("PUT "+options.BaseURL+"/context-menu/{contextMenuType}/{id}/name", wrapper.PutContextMenuContextMenuTypeIdName)
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
 	m.HandleFunc("GET "+options.BaseURL+"/html/alert", wrapper.GetHtmlAlert)
 	m.HandleFunc("GET "+options.BaseURL+"/html/context-menu/{contextMenuType}/{id}", wrapper.GetHtmlContextMenuContextMenuTypeId)
+	m.HandleFunc("GET "+options.BaseURL+"/html/context-menu/{contextMenuType}/{id}/rename-form", wrapper.GetHtmlContextMenuContextMenuTypeIdRenameForm)
 	m.HandleFunc("GET "+options.BaseURL+"/html/error", wrapper.GetHtmlError)
 	m.HandleFunc("GET "+options.BaseURL+"/html/linkset", wrapper.GetHtmlLinkset)
 	m.HandleFunc("POST "+options.BaseURL+"/html/linkset", wrapper.PostHtmlLinkset)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu", wrapper.GetHtmlMenu)
 	m.HandleFunc("GET "+options.BaseURL+"/html/menu/{menuItem}", wrapper.GetHtmlMenuMenuItem)
-	m.HandleFunc("PUT "+options.BaseURL+"/labels/{labelId}", wrapper.PutLabelsLabelId)
 	m.HandleFunc("PUT "+options.BaseURL+"/links/by-url/{linkUrl}", wrapper.PutLinksByUrlLinkUrl)
 	m.HandleFunc("POST "+options.BaseURL+"/links/with-groups", wrapper.PostLinksWithGroups)
 	m.HandleFunc("GET "+options.BaseURL+"/links/{linkId}", wrapper.GetLinksLinkId)

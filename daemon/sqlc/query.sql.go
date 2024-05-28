@@ -945,6 +945,17 @@ func (q *Queries) LoadGroup(ctx context.Context, arg LoadGroupParams) (Group, er
 	return i, err
 }
 
+const loadGroupName = `-- name: LoadGroupName :one
+SELECT name FROM ` + "`" + `group` + "`" + ` WHERE id = ?
+`
+
+func (q *Queries) LoadGroupName(ctx context.Context, id int64) (string, error) {
+	row := q.db.QueryRowContext(ctx, loadGroupName, id)
+	var name string
+	err := row.Scan(&name)
+	return name, err
+}
+
 const loadGroupType = `-- name: LoadGroupType :one
 SELECT type, sort, name, plural, description FROM group_type WHERE type = ? LIMIT 1
 `

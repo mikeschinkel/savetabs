@@ -77,6 +77,9 @@ func routeContentType(route *routers.Route) (ct string) {
 func (a *API) openApiOptions() *middleware.Options {
 	return &middleware.Options{
 		ErrorHandlerWithOpts: func(w http.ResponseWriter, message string, statusCode int, opts middleware.ErrorHandlerOpts) {
+			if opts.Route == nil {
+				goto err
+			}
 			switch routeContentType(opts.Route) {
 			case "application/json":
 			case "text/html":
@@ -84,12 +87,14 @@ func (a *API) openApiOptions() *middleware.Options {
 				w.Header().Set("Content-Type", "text/html; charset=utf-8")
 				w.Header().Set("X-Content-Type-Options", "nosniff")
 				a.sendError(w, opts.Request, statusCode, message)
+				return
 			case "text/plain":
 				fallthrough
 			default:
-				slog.Error("HTTP ERROR", "status_code", statusCode, "error_msg", message)
-				http.Error(w, message, statusCode)
 			}
+		err:
+			slog.Error("HTTP ERROR", "status_code", statusCode, "error_msg", message)
+			http.Error(w, message, statusCode)
 		},
 	}
 }

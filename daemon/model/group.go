@@ -45,6 +45,9 @@ func NewGroups(groups storage.Groups) Groups {
 	}
 }
 
+func LoadGroupName(ctx Context, groupId int64) (name string, err error) {
+	return storage.LoadGroupName(ctx, groupId)
+}
 func LoadGroups(ctx Context, params GroupsParams) (groups Groups, err error) {
 	var gs storage.Groups
 	gs, err = storage.GroupsLoad(ctx, storage.GroupsParams(params))

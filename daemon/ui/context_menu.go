@@ -1,57 +1,91 @@
 package ui
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/google/safehtml"
+	"savetabs/model"
 	"savetabs/shared"
 )
 
 var contextMenuTemplate = GetTemplate("context-menu")
+var contextMenuItemRenameFormTemplate = GetTemplate("context-menu-item-rename-form")
 
 type ContextMenuArgs struct {
-	APIURL      safehtml.URL
-	ContextMenu ContextMenu
+	ContextMenu *ContextMenu
 	Items       []ContextMenuItem
-}
-
-type ContextMenuItems struct {
-	Items []ContextMenuItem
-}
-
-func newContextMenuItems(items []ContextMenuItem) ContextMenuItems {
-	return ContextMenuItems{
-		Items: items,
-	}
+	DBId        int64
 }
 
 type ContextMenu struct {
-	Type  *shared.ContextMenuType
-	Items []ContextMenuItem
+	apiURL safehtml.URL
+	Type   *shared.ContextMenuType
+	DBid   int64
+	Items  []ContextMenuItem
+	Name   safehtml.HTML
 }
 
-func NewContextMenu(cmt *shared.ContextMenuType) ContextMenu {
-	return ContextMenu{
-		Type:  cmt,
-		Items: make([]ContextMenuItem, 0),
+func NewContextMenu(cmt *shared.ContextMenuType, host string) *ContextMenu {
+	return &ContextMenu{
+		apiURL: shared.MakeSafeAPIURL(host),
+		Type:   cmt,
+		Items:  make([]ContextMenuItem, 0),
 	}
 }
+func (cm ContextMenu) String() string {
+	return fmt.Sprintf("%s-%d", cm.Type.Name, cm.DBid)
+}
 
-type ContextMenuItem struct {
-	Label           safehtml.HTML
-	ContextMenuType *shared.ContextMenuType
+func (cm ContextMenu) LoadName(ctx Context) (_ safehtml.HTML, err error) {
+	var name string
+	switch cm.Type {
+	case shared.GroupContextMenuType:
+		name, err = model.LoadGroupName(ctx, cm.DBid)
+	}
+	return shared.MakeSafeHTML(name), err
+}
+
+func (cm ContextMenu) RenameFormURL() safehtml.URL {
+	return shared.MakeSafeURLf("%s/html/context-menu/%s/%d/rename-form",
+		cm.apiURL,
+		cm.Type.Name,
+		cm.DBid,
+	)
+}
+
+func (cm ContextMenu) NameURL() safehtml.URL {
+	return shared.MakeSafeURLf("%s/context-menu/%s/%d/name",
+		cm.apiURL,
+		cm.Type.Name,
+		cm.DBid,
+	)
 }
 
 func GetContextMenuHTML(ctx Context, args ContextMenuArgs) (_ HTMLResponse, err error) {
-	var items ContextMenuItems
-
 	hr := NewHTMLResponse()
-
-	items = newContextMenuItems(args.Items)
-	hr.HTML, err = menuTemplate.ExecuteToHTML(items)
-
+	cm := args.ContextMenu
+	cm.Items = args.Items
+	hr.HTML, err = contextMenuTemplate.ExecuteToHTML(cm)
 	if err != nil {
 		hr.SetCode(http.StatusInternalServerError)
 	}
+	return hr, err
+}
+
+func GetContextMenuRenameFormHTML(ctx Context, args ContextMenuArgs) (_ HTMLResponse, err error) {
+	cm := args.ContextMenu
+	hr := NewHTMLResponse()
+
+	cm.Name, err = cm.LoadName(ctx)
+	if err != nil {
+		goto end
+	}
+
+	hr.HTML, err = contextMenuItemRenameFormTemplate.ExecuteToHTML(cm)
+	if err != nil {
+		hr.SetCode(http.StatusInternalServerError)
+	}
+end:
 	return hr, err
 }

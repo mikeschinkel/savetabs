@@ -82,7 +82,7 @@ func GetMenuHTML(ctx Context, p HTMLMenuParams) (hr HTMLResponse, err error) {
 
 	hr = NewHTMLResponse()
 
-	menu, err = model.MenuLoad(ctx, model.MenuParams{
+	menu, err = model.LoadMenu(ctx, model.MenuParams{
 		Type: menuType,
 	})
 	if err != nil {

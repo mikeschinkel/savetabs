@@ -71,6 +71,9 @@ type LinkWithGroup struct {
 // LinksWithGroups defines model for LinksWithGroups.
 type LinksWithGroups = []LinkWithGroup
 
+// NameToRename Primary key identifier
+type NameToRename = Id
+
 // AlertMsg defines model for AlertMsg.
 type AlertMsg = string
 
@@ -91,9 +94,6 @@ type GroupTypeFilter = []string
 
 // IdParameter defines model for IdParameter.
 type IdParameter = int64
-
-// LabelId String-based Id
-type LabelId = IdString
 
 // LinkId Primary key identifier
 type LinkId = Id
@@ -145,6 +145,9 @@ type PostHtmlLinksetFormdataBody struct {
 	Action *string `form:"action,omitempty" json:"action,omitempty"`
 	LinkId *[]Id   `form:"linkId,omitempty" json:"linkId,omitempty"`
 }
+
+// PutContextMenuContextMenuTypeIdNameJSONRequestBody defines body for PutContextMenuContextMenuTypeIdName for application/json ContentType.
+type PutContextMenuContextMenuTypeIdNameJSONRequestBody = NameToRename
 
 // PostHtmlLinksetFormdataRequestBody defines body for PostHtmlLinkset for application/x-www-form-urlencoded ContentType.
 type PostHtmlLinksetFormdataRequestBody PostHtmlLinksetFormdataBody

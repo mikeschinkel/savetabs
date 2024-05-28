@@ -28,6 +28,15 @@ type Groups struct {
 	Params GroupsParams
 }
 
+func LoadGroupName(ctx Context, groupId int64) (name string, err error) {
+	err = ExecWithNestedTx(func(dbtx *NestedDBTX) (err error) {
+		q := dbtx.DataStore.Queries(dbtx)
+		name, err = q.LoadGroupName(ctx, groupId)
+		return err
+	})
+	return name, err
+}
+
 func GroupsLoad(ctx Context, params GroupsParams) (gs Groups, err error) {
 	var groups []sqlc.ListGroupsByTypeRow
 	gs.Params = params

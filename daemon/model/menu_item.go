@@ -9,7 +9,7 @@ type MenuItem struct {
 	LocalId     string
 	Label       string
 	FilterType  *shared.FilterType
-	ContextMenu shared.ContextMenu
+	ContextMenu *shared.ContextMenu
 }
 
 type MenuItemArgs struct {
@@ -17,7 +17,7 @@ type MenuItemArgs struct {
 	Label       string
 	MenuType    *shared.MenuType
 	Menu        *Menu
-	ContextMenu shared.ContextMenu
+	ContextMenu *shared.ContextMenu
 }
 
 func newMenuItem(p MenuItemArgs) MenuItem {

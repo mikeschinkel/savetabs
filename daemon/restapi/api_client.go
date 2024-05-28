@@ -89,6 +89,11 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// PutContextMenuContextMenuTypeIdNameWithBody request with any body
+	PutContextMenuContextMenuTypeIdNameWithBody(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutContextMenuContextMenuTypeIdName(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetHealthz request
 	GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -97,6 +102,9 @@ type ClientInterface interface {
 
 	// GetHtmlContextMenuContextMenuTypeId request
 	GetHtmlContextMenuContextMenuTypeId(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetHtmlContextMenuContextMenuTypeIdRenameForm request
+	GetHtmlContextMenuContextMenuTypeIdRenameForm(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetHtmlError request
 	GetHtmlError(ctx context.Context, params *GetHtmlErrorParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -115,9 +123,6 @@ type ClientInterface interface {
 	// GetHtmlMenuMenuItem request
 	GetHtmlMenuMenuItem(ctx context.Context, menuItem MenuItem, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PutLabelsLabelId request
-	PutLabelsLabelId(ctx context.Context, labelId LabelId, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// PutLinksByUrlLinkUrl request
 	PutLinksByUrlLinkUrl(ctx context.Context, linkUrl LinkUrl, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -131,6 +136,30 @@ type ClientInterface interface {
 
 	// GetReadyz request
 	GetReadyz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) PutContextMenuContextMenuTypeIdNameWithBody(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutContextMenuContextMenuTypeIdNameRequestWithBody(c.Server, contextMenuType, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutContextMenuContextMenuTypeIdName(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutContextMenuContextMenuTypeIdNameRequest(c.Server, contextMenuType, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -159,6 +188,18 @@ func (c *Client) GetHtmlAlert(ctx context.Context, params *GetHtmlAlertParams, r
 
 func (c *Client) GetHtmlContextMenuContextMenuTypeId(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetHtmlContextMenuContextMenuTypeIdRequest(c.Server, contextMenuType, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetHtmlContextMenuContextMenuTypeIdRenameForm(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHtmlContextMenuContextMenuTypeIdRenameFormRequest(c.Server, contextMenuType, id)
 	if err != nil {
 		return nil, err
 	}
@@ -241,18 +282,6 @@ func (c *Client) GetHtmlMenuMenuItem(ctx context.Context, menuItem MenuItem, req
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutLabelsLabelId(ctx context.Context, labelId LabelId, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutLabelsLabelIdRequest(c.Server, labelId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) PutLinksByUrlLinkUrl(ctx context.Context, linkUrl LinkUrl, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutLinksByUrlLinkUrlRequest(c.Server, linkUrl)
 	if err != nil {
@@ -311,6 +340,60 @@ func (c *Client) GetReadyz(ctx context.Context, reqEditors ...RequestEditorFn) (
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewPutContextMenuContextMenuTypeIdNameRequest calls the generic PutContextMenuContextMenuTypeIdName builder with application/json body
+func NewPutContextMenuContextMenuTypeIdNameRequest(server string, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutContextMenuContextMenuTypeIdNameRequestWithBody(server, contextMenuType, id, "application/json", bodyReader)
+}
+
+// NewPutContextMenuContextMenuTypeIdNameRequestWithBody generates requests for PutContextMenuContextMenuTypeIdName with any type of body
+func NewPutContextMenuContextMenuTypeIdNameRequestWithBody(server string, contextMenuType ContextMenuType, id IdParameter, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "contextMenuType", runtime.ParamLocationPath, contextMenuType)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/context-menu/%s/%s/name", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
 }
 
 // NewGetHealthzRequest generates requests for GetHealthz
@@ -429,6 +512,47 @@ func NewGetHtmlContextMenuContextMenuTypeIdRequest(server string, contextMenuTyp
 	}
 
 	operationPath := fmt.Sprintf("/html/context-menu/%s/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetHtmlContextMenuContextMenuTypeIdRenameFormRequest generates requests for GetHtmlContextMenuContextMenuTypeIdRenameForm
+func NewGetHtmlContextMenuContextMenuTypeIdRenameFormRequest(server string, contextMenuType ContextMenuType, id IdParameter) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "contextMenuType", runtime.ParamLocationPath, contextMenuType)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/html/context-menu/%s/%s/rename-form", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -677,40 +801,6 @@ func NewGetHtmlMenuMenuItemRequest(server string, menuItem MenuItem) (*http.Requ
 	return req, nil
 }
 
-// NewPutLabelsLabelIdRequest generates requests for PutLabelsLabelId
-func NewPutLabelsLabelIdRequest(server string, labelId LabelId) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "labelId", runtime.ParamLocationPath, labelId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/labels/%s", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("PUT", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewPutLinksByUrlLinkUrlRequest generates requests for PutLinksByUrlLinkUrl
 func NewPutLinksByUrlLinkUrlRequest(server string, linkUrl LinkUrl) (*http.Request, error) {
 	var err error
@@ -889,6 +979,11 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// PutContextMenuContextMenuTypeIdNameWithBodyWithResponse request with any body
+	PutContextMenuContextMenuTypeIdNameWithBodyWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutContextMenuContextMenuTypeIdNameResponse, error)
+
+	PutContextMenuContextMenuTypeIdNameWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameJSONRequestBody, reqEditors ...RequestEditorFn) (*PutContextMenuContextMenuTypeIdNameResponse, error)
+
 	// GetHealthzWithResponse request
 	GetHealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthzResponse, error)
 
@@ -897,6 +992,9 @@ type ClientWithResponsesInterface interface {
 
 	// GetHtmlContextMenuContextMenuTypeIdWithResponse request
 	GetHtmlContextMenuContextMenuTypeIdWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, reqEditors ...RequestEditorFn) (*GetHtmlContextMenuContextMenuTypeIdResponse, error)
+
+	// GetHtmlContextMenuContextMenuTypeIdRenameFormWithResponse request
+	GetHtmlContextMenuContextMenuTypeIdRenameFormWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, reqEditors ...RequestEditorFn) (*GetHtmlContextMenuContextMenuTypeIdRenameFormResponse, error)
 
 	// GetHtmlErrorWithResponse request
 	GetHtmlErrorWithResponse(ctx context.Context, params *GetHtmlErrorParams, reqEditors ...RequestEditorFn) (*GetHtmlErrorResponse, error)
@@ -915,9 +1013,6 @@ type ClientWithResponsesInterface interface {
 	// GetHtmlMenuMenuItemWithResponse request
 	GetHtmlMenuMenuItemWithResponse(ctx context.Context, menuItem MenuItem, reqEditors ...RequestEditorFn) (*GetHtmlMenuMenuItemResponse, error)
 
-	// PutLabelsLabelIdWithResponse request
-	PutLabelsLabelIdWithResponse(ctx context.Context, labelId LabelId, reqEditors ...RequestEditorFn) (*PutLabelsLabelIdResponse, error)
-
 	// PutLinksByUrlLinkUrlWithResponse request
 	PutLinksByUrlLinkUrlWithResponse(ctx context.Context, linkUrl LinkUrl, reqEditors ...RequestEditorFn) (*PutLinksByUrlLinkUrlResponse, error)
 
@@ -931,6 +1026,28 @@ type ClientWithResponsesInterface interface {
 
 	// GetReadyzWithResponse request
 	GetReadyzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetReadyzResponse, error)
+}
+
+type PutContextMenuContextMenuTypeIdNameResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSONDefault  *UnexpectedError
+}
+
+// Status returns HTTPResponse.Status
+func (r PutContextMenuContextMenuTypeIdNameResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutContextMenuContextMenuTypeIdNameResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetHealthzResponse struct {
@@ -993,6 +1110,28 @@ func (r GetHtmlContextMenuContextMenuTypeIdResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetHtmlContextMenuContextMenuTypeIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetHtmlContextMenuContextMenuTypeIdRenameFormResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSONDefault  *UnexpectedError
+}
+
+// Status returns HTTPResponse.Status
+func (r GetHtmlContextMenuContextMenuTypeIdRenameFormResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetHtmlContextMenuContextMenuTypeIdRenameFormResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1109,29 +1248,6 @@ func (r GetHtmlMenuMenuItemResponse) StatusCode() int {
 	return 0
 }
 
-type PutLabelsLabelIdResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON204      *IdObject
-	JSONDefault  *UnexpectedError
-}
-
-// Status returns HTTPResponse.Status
-func (r PutLabelsLabelIdResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r PutLabelsLabelIdResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type PutLinksByUrlLinkUrlResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1224,6 +1340,23 @@ func (r GetReadyzResponse) StatusCode() int {
 	return 0
 }
 
+// PutContextMenuContextMenuTypeIdNameWithBodyWithResponse request with arbitrary body returning *PutContextMenuContextMenuTypeIdNameResponse
+func (c *ClientWithResponses) PutContextMenuContextMenuTypeIdNameWithBodyWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutContextMenuContextMenuTypeIdNameResponse, error) {
+	rsp, err := c.PutContextMenuContextMenuTypeIdNameWithBody(ctx, contextMenuType, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutContextMenuContextMenuTypeIdNameResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutContextMenuContextMenuTypeIdNameWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameJSONRequestBody, reqEditors ...RequestEditorFn) (*PutContextMenuContextMenuTypeIdNameResponse, error) {
+	rsp, err := c.PutContextMenuContextMenuTypeIdName(ctx, contextMenuType, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutContextMenuContextMenuTypeIdNameResponse(rsp)
+}
+
 // GetHealthzWithResponse request returning *GetHealthzResponse
 func (c *ClientWithResponses) GetHealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthzResponse, error) {
 	rsp, err := c.GetHealthz(ctx, reqEditors...)
@@ -1249,6 +1382,15 @@ func (c *ClientWithResponses) GetHtmlContextMenuContextMenuTypeIdWithResponse(ct
 		return nil, err
 	}
 	return ParseGetHtmlContextMenuContextMenuTypeIdResponse(rsp)
+}
+
+// GetHtmlContextMenuContextMenuTypeIdRenameFormWithResponse request returning *GetHtmlContextMenuContextMenuTypeIdRenameFormResponse
+func (c *ClientWithResponses) GetHtmlContextMenuContextMenuTypeIdRenameFormWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, reqEditors ...RequestEditorFn) (*GetHtmlContextMenuContextMenuTypeIdRenameFormResponse, error) {
+	rsp, err := c.GetHtmlContextMenuContextMenuTypeIdRenameForm(ctx, contextMenuType, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetHtmlContextMenuContextMenuTypeIdRenameFormResponse(rsp)
 }
 
 // GetHtmlErrorWithResponse request returning *GetHtmlErrorResponse
@@ -1304,15 +1446,6 @@ func (c *ClientWithResponses) GetHtmlMenuMenuItemWithResponse(ctx context.Contex
 	return ParseGetHtmlMenuMenuItemResponse(rsp)
 }
 
-// PutLabelsLabelIdWithResponse request returning *PutLabelsLabelIdResponse
-func (c *ClientWithResponses) PutLabelsLabelIdWithResponse(ctx context.Context, labelId LabelId, reqEditors ...RequestEditorFn) (*PutLabelsLabelIdResponse, error) {
-	rsp, err := c.PutLabelsLabelId(ctx, labelId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePutLabelsLabelIdResponse(rsp)
-}
-
 // PutLinksByUrlLinkUrlWithResponse request returning *PutLinksByUrlLinkUrlResponse
 func (c *ClientWithResponses) PutLinksByUrlLinkUrlWithResponse(ctx context.Context, linkUrl LinkUrl, reqEditors ...RequestEditorFn) (*PutLinksByUrlLinkUrlResponse, error) {
 	rsp, err := c.PutLinksByUrlLinkUrl(ctx, linkUrl, reqEditors...)
@@ -1355,6 +1488,32 @@ func (c *ClientWithResponses) GetReadyzWithResponse(ctx context.Context, reqEdit
 		return nil, err
 	}
 	return ParseGetReadyzResponse(rsp)
+}
+
+// ParsePutContextMenuContextMenuTypeIdNameResponse parses an HTTP response from a PutContextMenuContextMenuTypeIdNameWithResponse call
+func ParsePutContextMenuContextMenuTypeIdNameResponse(rsp *http.Response) (*PutContextMenuContextMenuTypeIdNameResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutContextMenuContextMenuTypeIdNameResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest UnexpectedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseGetHealthzResponse parses an HTTP response from a GetHealthzWithResponse call
@@ -1418,6 +1577,32 @@ func ParseGetHtmlContextMenuContextMenuTypeIdResponse(rsp *http.Response) (*GetH
 	}
 
 	response := &GetHtmlContextMenuContextMenuTypeIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest UnexpectedError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetHtmlContextMenuContextMenuTypeIdRenameFormResponse parses an HTTP response from a GetHtmlContextMenuContextMenuTypeIdRenameFormWithResponse call
+func ParseGetHtmlContextMenuContextMenuTypeIdRenameFormResponse(rsp *http.Response) (*GetHtmlContextMenuContextMenuTypeIdRenameFormResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetHtmlContextMenuContextMenuTypeIdRenameFormResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1553,39 +1738,6 @@ func ParseGetHtmlMenuMenuItemResponse(rsp *http.Response) (*GetHtmlMenuMenuItemR
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSONDefault = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParsePutLabelsLabelIdResponse parses an HTTP response from a PutLabelsLabelIdWithResponse call
-func ParsePutLabelsLabelIdResponse(rsp *http.Response) (*PutLabelsLabelIdResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &PutLabelsLabelIdResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 204:
-		var dest IdObject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON204 = &dest
-
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest UnexpectedError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {

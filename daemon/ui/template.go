@@ -17,12 +17,12 @@ func GetTemplate(name string) *template.Template {
 }
 
 func init() {
-	elements := template.MakeTrustedStringSlice("a", "li", "section", "img", "div", "expand-icon", "span", "form")
+	elements := template.MakeTrustedStringSlice("a", "li", "section", "img", "div", "expand-icon", "span", "form", "input")
 
 	template.AddTrustedElementsAndAttributesForContext("url", elements,
-		template.MakeTrustedStringSlice("hx-get", "hx-post"),
+		template.MakeTrustedStringSlice("hx-target", "hx-get", "hx-put", "hx-delete", "hx-post", "hx-patch"),
 	)
 	template.AddTrustedElementsAndAttributesForContext("identifier", elements,
-		template.MakeTrustedStringSlice("hx-target", "hx-trigger", "hx-sync", "x-data", "x-init"),
+		template.MakeTrustedStringSlice("hx-trigger", "hx-sync", "x-data", "x-init"),
 	)
 }

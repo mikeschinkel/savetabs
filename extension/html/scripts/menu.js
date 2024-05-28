@@ -1,7 +1,7 @@
 let clicked = false;
 
 window.isBranchCollapsed = (id) => {
-   let el = document.getElementById(id)
+   const el = document.getElementById(id)
    if (el === null) {
       return true
    }
@@ -20,6 +20,20 @@ window.isBranchCollapsed = (id) => {
 }
 
 document.addEventListener('alpine:init', () => {
+   Alpine.data('contextMenuer', () => ({
+      show(event) {
+         const hidden = "hidden"
+         const cm = this.getContextMenu()
+         const style = cm.style;
+         event.preventDefault()
+         style.left = `${event.pageX}px`;
+         style.top = `${event.pageY}px`;
+         cm.classList.remove(hidden);
+      },
+      getContextMenu() {
+         return document.getElementById('context-menu');
+      }
+   }));
    Alpine.data('preventable', () => ({
       preventExpandOnIconClick: function (event) {
          if (['svg','path'].includes(event.target.tagName.toLowerCase())) {

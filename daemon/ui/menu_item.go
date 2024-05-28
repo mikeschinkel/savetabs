@@ -18,7 +18,7 @@ type HTMLMenuItem struct {
 	localId     string
 	Label       safehtml.HTML
 	menuType    *shared.MenuType
-	contextMenu shared.ContextMenu
+	contextMenu *shared.ContextMenu
 }
 
 func (hmi HTMLMenuItem) ContextMenuType() (id safehtml.Identifier) {
@@ -26,6 +26,9 @@ func (hmi HTMLMenuItem) ContextMenuType() (id safehtml.Identifier) {
 }
 func (hmi HTMLMenuItem) ContextMenuDBId() int64 {
 	return hmi.contextMenu.Id
+}
+func (hmi HTMLMenuItem) ContextMenuId() safehtml.Identifier {
+	return shared.MakeSafeId(hmi.contextMenu.String())
 }
 
 func (hmi HTMLMenuItem) LocalId() safehtml.Identifier {
@@ -55,8 +58,16 @@ func (hmi HTMLMenuItem) APIURL() safehtml.URL {
 	return hmi.parent.APIURL()
 }
 
+func (hmi HTMLMenuItem) RenameEndpoint() safehtml.URL {
+	return shared.MakeSafeURLf("%s/groups/99999999999/name", hmi.APIURL()) // TODO:  Update this to actual URL
+}
+
 func (hmi HTMLMenuItem) HTMLContextMenuURL() safehtml.URL {
 	return shared.MakeSafeURLf("%s/html/context-menu", hmi.APIURL())
+}
+
+func (hmi HTMLMenuItem) HasContextMenu() bool {
+	return hmi.contextMenu != nil
 }
 
 func (hmi HTMLMenuItem) HTMLId() safehtml.Identifier {

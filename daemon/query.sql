@@ -6,6 +6,9 @@ WHERE true
    AND deleted IN (sqlc.slice('groups_deleted'))
 LIMIT 1;
 
+-- name: LoadGroupName :one
+SELECT name FROM `group` WHERE id = ?;
+
 -- name: LoadGroupType :one
 SELECT * FROM group_type WHERE type = ? LIMIT 1;
 

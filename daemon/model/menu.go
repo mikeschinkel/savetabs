@@ -24,8 +24,8 @@ type MenuParams struct {
 	Level int
 }
 
-// MenuLoad loads the top level menu
-func MenuLoad(ctx Context, p MenuParams) (m *Menu, err error) {
+// LoadMenu loads the top level menu
+func LoadMenu(ctx Context, p MenuParams) (m *Menu, err error) {
 	var gts storage.GroupTypes
 	var invalidGTWithStats storage.GroupType
 	var cnt int
@@ -47,7 +47,6 @@ func MenuLoad(ctx Context, p MenuParams) (m *Menu, err error) {
 		goto end
 	}
 	m.Items = shared.ConvertSliceWithFilter(gts.GroupTypes, func(gt storage.GroupType) (item MenuItem, _ bool) {
-		var gtIndex int
 		if excludeGroupTypeAsMenuItem(gt, invalidGTWithStats) {
 			return item, false
 		}
@@ -55,17 +54,12 @@ func MenuLoad(ctx Context, p MenuParams) (m *Menu, err error) {
 		if err != nil {
 			shared.Panicf("Invalid group type '%s' loaded from database", gt.Type)
 		}
-		gtIndex, err = shared.GroupTypeIndexByLetter(gt.Type)
-		if err != nil {
-			shared.Panicf("Invalid group type '%#v' loaded from database", gt)
-		}
 		cnt++
 		item = item.Renew(MenuItemArgs{
-			LocalId:     strings.ToLower(gt.Type),
-			Label:       gt.Plural,
-			Menu:        m,
-			MenuType:    mt,
-			ContextMenu: shared.NewContextMenu(shared.GroupTypeContextMenuType, int64(gtIndex)),
+			LocalId:  strings.ToLower(gt.Type),
+			Label:    gt.Plural,
+			Menu:     m,
+			MenuType: mt,
 		})
 		return item, true
 	})

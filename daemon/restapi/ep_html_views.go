@@ -16,6 +16,15 @@ func (a *API) GetHtmlContextMenuContextMenuTypeId(w http.ResponseWriter, r *http
 		})
 	})
 }
+func (a *API) GetHtmlContextMenuContextMenuTypeIdRenameForm(w http.ResponseWriter, r *http.Request, contextMenuType ContextMenuType, id IdParameter) {
+	a.sendView(context.Background(), w, r, func(ctx Context) (guard.HTMLResponse, error) {
+		return guard.GetContextMenuRenameFormHTML(ctx, guard.ContextMenuArgs{
+			Host:            r.Host,
+			ContextMenuType: contextMenuType,
+			DBId:            id,
+		})
+	})
+}
 
 func (a *API) GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request, menuItem MenuItem) {
 	a.sendView(context.Background(), w, r, func(ctx Context) (guard.HTMLResponse, error) {

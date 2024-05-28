@@ -1,7 +1,7 @@
 {{- /*gotype:savetabs/ui.menuItem*/ -}}
-<ul class="menu p-0 mb-4 min-h-full bg-base-200 text-base-content x-data">
+<ul class="menu p-0 mb-4 min-h-full bg-base-200 text-base-content" x-data="contextMenuer">
 {{range .MenuItems}}
-  <li id="{{.HTMLId}}" class="{{if .IsLeaf }}h-7 {{end}}m-0 p-0 flex" hx-trigger="contextmenu" hx-get="{{.HTMLContextMenuURL}}/{{.ContextMenuType}}/{{.ContextMenuDBId}}" hx-target="#context-menu">
+  <li id="{{.HTMLId}}" class="{{if .IsLeaf }}h-7 {{end}}m-0 p-0 flex" {{if .HasContextMenu }}hx-trigger="contextmenu consume" @contextmenu="show" hx-get="{{.HTMLContextMenuURL}}/{{.ContextMenuType}}/{{.ContextMenuDBId}}" hx-target="#context-menu"{{end}}>
     <details x-data="preventable" class="grow {{if .NotTopLevelMenu}}p-0 m-0{{end}}" @click="preventExpandOnIconClick">
       <summary class="{{if .IsLeaf}}p-0 m-0{{else}}py-3 my-0{{end}} rounded-sm list-none flex items-center w-full gap-2">
         {{if .IsLeaf }}
@@ -15,7 +15,7 @@
           </span>
         {{end}}
         <div class="w-full pl-2 cursor-pointer" hx-get="{{$.HTMLLinksURL}}{{.ContentQuery}}" hx-target="#links-section">
-					<label>{{.Label}}</label>
+					<label {{if .HasContextMenu }}id="{{.ContextMenuId}}"{{end}}>{{.Label}}</label>
         </div>
       </summary>
       <div id="{{.HTMLId}}-kids" class="pl-4 m-0"></div>
@@ -23,3 +23,4 @@
 </li>
 {{end}}
 </ul>
+
