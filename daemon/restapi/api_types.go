@@ -71,9 +71,6 @@ type LinkWithGroup struct {
 // LinksWithGroups defines model for LinksWithGroups.
 type LinksWithGroups = []LinkWithGroup
 
-// NameToRename Primary key identifier
-type NameToRename = Id
-
 // AlertMsg defines model for AlertMsg.
 type AlertMsg = string
 
@@ -109,6 +106,10 @@ type MetaFilter map[string]string
 
 // UnexpectedError defines model for UnexpectedError.
 type UnexpectedError = JSONError
+
+// PutContextMenuContextMenuTypeIdNameFormdataBody defines parameters for PutContextMenuContextMenuTypeIdName.
+type PutContextMenuContextMenuTypeIdNameFormdataBody struct {
+}
 
 // GetHtmlAlertParams defines parameters for GetHtmlAlert.
 type GetHtmlAlertParams struct {
@@ -146,8 +147,8 @@ type PostHtmlLinksetFormdataBody struct {
 	LinkId *[]Id   `form:"linkId,omitempty" json:"linkId,omitempty"`
 }
 
-// PutContextMenuContextMenuTypeIdNameJSONRequestBody defines body for PutContextMenuContextMenuTypeIdName for application/json ContentType.
-type PutContextMenuContextMenuTypeIdNameJSONRequestBody = NameToRename
+// PutContextMenuContextMenuTypeIdNameFormdataRequestBody defines body for PutContextMenuContextMenuTypeIdName for application/x-www-form-urlencoded ContentType.
+type PutContextMenuContextMenuTypeIdNameFormdataRequestBody PutContextMenuContextMenuTypeIdNameFormdataBody
 
 // PostHtmlLinksetFormdataRequestBody defines body for PostHtmlLinkset for application/x-www-form-urlencoded ContentType.
 type PostHtmlLinksetFormdataRequestBody PostHtmlLinksetFormdataBody

@@ -55,12 +55,12 @@ func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
-		a.sendError(w, r, http.StatusBadRequest, err.Error())
+		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 	form, err = parseLinksetForm(r.Form)
 	if err != nil {
-		a.sendError(w, r, http.StatusBadRequest, err.Error())
+		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -75,7 +75,7 @@ func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 		var alert guard.HTMLResponse
 		fq, err := form.FilterQuery()
 		if err != nil {
-			a.sendError(w, r, http.StatusBadRequest, err.Error())
+			a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
 			return
 		}
 		hr, err := guard.GetLinksetHTML(ctx, guard.LinksetParams{
@@ -84,25 +84,25 @@ func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 			Host:        r.Host,
 		})
 		if err != nil {
-			a.sendError(w, r, hr.Code(), err.Error())
+			a.sendHTMLError(w, r, hr.Code(), err.Error())
 			return
 		}
 		alert, err = guard.GetLinksetSuccessAlertHTML(ctx, form.LinkIds)
 		if err != nil {
 			//goland:noinspection GoDfaErrorMayBeNotNil
-			a.sendError(w, r, alert.Code(), err.Error())
+			a.sendHTMLError(w, r, alert.Code(), err.Error())
 			return
 		}
 		a.sendHTML(w, hr.HTML, alert.HTML)
 		return
 	case errors.Is(err, ErrFailedToUnmarshal):
-		a.sendError(w, r, http.StatusBadRequest, err.Error())
+		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
 		return
 	case errors.Is(err, ErrFailedUpsertLinks):
 		// TODO: Break out errors into different status for different reasons
 		fallthrough
 	default:
-		a.sendError(w, r, http.StatusInternalServerError, err.Error())
+		a.sendHTMLError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 }

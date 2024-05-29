@@ -19,7 +19,7 @@ func (a *API) PutLinksByUrlLinkUrl(w http.ResponseWriter, r *http.Request, linkU
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		// TODO: Find a better status result than "Bad Gateway"
-		a.sendError(w, r, http.StatusBadGateway, err.Error())
+		a.sendHTMLError(w, r, http.StatusBadGateway, err.Error())
 		return
 	}
 	var link struct {
@@ -30,12 +30,12 @@ func (a *API) PutLinksByUrlLinkUrl(w http.ResponseWriter, r *http.Request, linkU
 	}
 	err = json.Unmarshal(body, &link)
 	if err != nil {
-		a.sendError(w, r, http.StatusBadRequest, err.Error())
+		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if linkUrl != link.URL {
-		a.sendError(w, r,
+		a.sendHTMLError(w, r,
 			http.StatusBadRequest,
 			fmt.Sprintf("Mismatch in URL in body vs. in URL path: bodyURL=%s, pathURL=%s",
 				link.URL,
@@ -60,19 +60,19 @@ func (a *API) PutLinksByUrlLinkUrl(w http.ResponseWriter, r *http.Request, linkU
 			Id int64 `json:"id"`
 		}{Id: linkId})
 	case errors.Is(err, ErrFailedToUnmarshal):
-		a.sendError(w, r, http.StatusBadRequest, err.Error())
+		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
 	case errors.Is(err, ErrFailedUpsertLinks):
 		// TODO: Break out errors into different status for different reasons
 		fallthrough
 	default:
-		a.sendError(w, r, http.StatusInternalServerError, err.Error())
+		a.sendHTMLError(w, r, http.StatusInternalServerError, err.Error())
 	}
 }
 
 func (a *API) GetLinksLinkId(w http.ResponseWriter, r *http.Request, linkId LinkId) {
 	link, err := guard.LoadLink(context.TODO(), linkId)
 	if err != nil {
-		a.sendError(w, r, http.StatusInternalServerError, err.Error())
+		a.sendHTMLError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 	sendJSON(w, http.StatusOK, link)

@@ -18,10 +18,11 @@ type Context = context.Context
 type Buffer = bytes.Buffer
 
 type jsonResponse struct {
-	Success bool `json:"success"`
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
 }
 
-func JSONResponse(ok bool) jsonResponse {
+func newJSONResponse(ok bool) jsonResponse {
 	var resp jsonResponse
 	resp.Success = ok
 	return resp
@@ -33,9 +34,9 @@ func urlForRequest(r *http.Request) string {
 	return r.URL.String()
 }
 
-// sendError wraps sending of an error in the Error format, and
+// sendHTMLError wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
-func (a *API) sendError(w http.ResponseWriter, r *http.Request, code int, msg string) {
+func (a *API) sendHTMLError(w http.ResponseWriter, r *http.Request, code int, msg string) {
 	msg = fmt.Sprintf("ERROR[%d]: '%s' from %s.", code, msg, urlForRequest(r))
 	hr, err := guard.GetErrorHTML(guard.ErrorParams{
 		Host: r.Host,
@@ -51,6 +52,17 @@ func (a *API) sendError(w http.ResponseWriter, r *http.Request, code int, msg st
 	}
 	w.WriteHeader(code)
 	_, _ = fmt.Fprint(w, hr.HTML.String()) // TODO: Change this to use safehtml
+}
+
+func (a *API) sendPlainError(w http.ResponseWriter, r *http.Request, code int, msg string) {
+	msg = fmt.Sprintf("ERROR[%d]: '%s' from %s.", code, msg, urlForRequest(r))
+	w.Header().Set("Content-Type", "text/plain")
+	if code == 0 {
+		code = http.StatusInternalServerError
+		slog.Warn("HTTP Status code not set", "error", msg)
+	}
+	w.WriteHeader(code)
+	_, _ = fmt.Fprint(w, msg) // TODO: Change this to use safehtml
 }
 
 // sendJSON sends a success code and json encoded content
@@ -76,7 +88,7 @@ func (a *API) sendHTML(w http.ResponseWriter, html ...safehtml.HTML) {
 func (a *API) sendView(ctx Context, w http.ResponseWriter, r *http.Request, fn func(ctx Context) (guard.HTMLResponse, error)) {
 	hr, err := fn(ctx)
 	if err != nil {
-		a.sendError(w, r, hr.Code(), err.Error())
+		a.sendHTMLError(w, r, hr.Code(), err.Error())
 		return
 	}
 	a.sendHTML(w, hr.HTML)

@@ -1,6 +1,6 @@
 {{- /*gotype:savetabs/ui.ContextMenuItem*/ -}}
-<ul class="menu bg-base-200 w-56 rounded-box">
+<ul class="menu menu-sm max-w-sm bg-gray-200 p-0.5" x-data="contextMenuer">
 {{range .Items}}
-  <li><a hx-get="{{.MethodURL}}" hx-target="{{.Target}}">{{.Label}}</a></li>
+  <li><a hx-get="{{.MethodURL}}" hx-target="{{.Target}}" @click="hide" class="px-0.5 py-1 rounded-sm">{{.Label}}</a></li>
 {{end}}
 </ul>

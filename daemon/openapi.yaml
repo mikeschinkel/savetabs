@@ -37,12 +37,12 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NameToRename'
+          application/x-www-form-urlencoded:
+            $ref: '#/components/schemas/NameToRename'
       responses:
-        '204': # No content
+        '200':
           description: The name was updated
+          $ref: '#/components/responses/HtmlResponse'
         default:
           $ref: '#/components/responses/UnexpectedError'
 
@@ -363,6 +363,14 @@ components:
         format: int64
 
   responses:
+    NoJSONResponse:
+      description: No response to a non-HTML request
+      content:
+        application/json:
+          schema:
+            type: string
+            example: ""
+
     HtmlResponse:
       description: HTML or HTML snippet returned successfully
       content:
@@ -441,14 +449,15 @@ components:
               type: string
               nullable: false
     NameToRename:
-      allOf:
-      - $ref: '#/components/schemas/Id'
-        type: object
-        properties:
-          name:
-            type: string
-            description: Name of Item to rename
-            nullable: false
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of Item to rename
+          nullable: false
+      encoding:
+        name:
+          style: form
     LinkIds:
       type: array
       items:

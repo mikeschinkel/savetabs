@@ -25,13 +25,13 @@ func (a *API) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		// TODO: Find a better status result than "Bad Gateway"
-		a.sendError(w, r, http.StatusBadGateway, err.Error())
+		a.sendHTMLError(w, r, http.StatusBadGateway, err.Error())
 		return
 	}
 	var jsonLinks []linkWithGroupForJSON
 	err = json.Unmarshal(body, &jsonLinks)
 	if err != nil {
-		a.sendError(w, r, http.StatusBadRequest, err.Error())
+		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -49,13 +49,13 @@ func (a *API) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case err == nil:
-		sendJSON(w, http.StatusOK, JSONResponse(true))
+		sendJSON(w, http.StatusOK, newJSONResponse(true))
 	case errors.Is(err, ErrFailedToUnmarshal):
-		sendJSON(w, http.StatusBadRequest, JSONResponse(false))
+		sendJSON(w, http.StatusBadRequest, newJSONResponse(false))
 	case errors.Is(err, ErrFailedUpsertLinks):
 		// TODO: Break out errors for all different error types
 		fallthrough
 	default:
-		sendJSON(w, http.StatusInternalServerError, JSONResponse(false))
+		sendJSON(w, http.StatusInternalServerError, newJSONResponse(false))
 	}
 }

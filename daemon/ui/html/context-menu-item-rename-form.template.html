@@ -1,4 +1,4 @@
 {{- /*gotype:savetabs/ui.ContextMenu*/ -}}
-<form hx-put="{{.NameURL}}">
-	<input type="text" name="name" value="{{.Name}}">
+<form hx-put="{{.NameURL}}" x-data="contextMenuer">
+	<input type="text" name="name" value="{{.Name}}" class="h-5 p-1">
 </form>

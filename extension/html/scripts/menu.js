@@ -20,18 +20,48 @@ window.isBranchCollapsed = (id) => {
 }
 
 document.addEventListener('alpine:init', () => {
+   const hidden = "hidden"
    Alpine.data('contextMenuer', () => ({
-      show(event) {
-         const hidden = "hidden"
-         const cm = this.getContextMenu()
-         const style = cm.style;
-         event.preventDefault()
-         style.left = `${event.pageX}px`;
-         style.top = `${event.pageY}px`;
-         cm.classList.remove(hidden);
+      contextMenu: document.getElementById('context-menu'),
+      targetItem: null,
+      originalValue: '',
+      init() {
+         this.contextMenu.addEventListener('close',this.onClose.bind(this))
       },
-      getContextMenu() {
-         return document.getElementById('context-menu');
+      focusInput() {
+         if (this.targetItem !== null) {
+            const input = this.targetItem.querySelector('input');
+            this.originalValue = input.value
+            this.$nextTick(() => input.select())
+            this.targetItem.removeEventListener('htmx:afterSettle', this.focusInput)
+         }
+      },
+      submit(event) {
+      },
+      show(event) {
+         event.preventDefault()
+
+         this.targetItem = event.currentTarget
+         this.targetItem.addEventListener('htmx:afterSettle', this.focusInput.bind(this))
+
+         const style = this.contextMenu.style
+         style.marginLeft = `${event.pageX}px`;
+         style.marginTop = `${event.pageY}px`;
+
+         const classList = event.currentTarget.classList
+         classList.add('bg-gray-400')
+         classList.add('text-white')
+         this.contextMenu.showModal();
+      },
+      onClose(event) {
+         if (this.targetItem !== null) {
+            const classList = this.targetItem.classList
+            classList.remove('bg-gray-400')
+            classList.remove('text-white')
+         }
+      },
+      hide(event) {
+         this.contextMenu.close();
       }
    }));
    Alpine.data('preventable', () => ({
@@ -64,3 +94,5 @@ document.addEventListener('alpine:init', () => {
       },
    }))
 })
+
+

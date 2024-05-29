@@ -92,7 +92,7 @@ type ClientInterface interface {
 	// PutContextMenuContextMenuTypeIdNameWithBody request with any body
 	PutContextMenuContextMenuTypeIdNameWithBody(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PutContextMenuContextMenuTypeIdName(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PutContextMenuContextMenuTypeIdNameWithFormdataBody(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetHealthz request
 	GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -150,8 +150,8 @@ func (c *Client) PutContextMenuContextMenuTypeIdNameWithBody(ctx context.Context
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutContextMenuContextMenuTypeIdName(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPutContextMenuContextMenuTypeIdNameRequest(c.Server, contextMenuType, id, body)
+func (c *Client) PutContextMenuContextMenuTypeIdNameWithFormdataBody(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutContextMenuContextMenuTypeIdNameRequestWithFormdataBody(c.Server, contextMenuType, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -342,15 +342,15 @@ func (c *Client) GetReadyz(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
-// NewPutContextMenuContextMenuTypeIdNameRequest calls the generic PutContextMenuContextMenuTypeIdName builder with application/json body
-func NewPutContextMenuContextMenuTypeIdNameRequest(server string, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameJSONRequestBody) (*http.Request, error) {
+// NewPutContextMenuContextMenuTypeIdNameRequestWithFormdataBody calls the generic PutContextMenuContextMenuTypeIdName builder with application/x-www-form-urlencoded body
+func NewPutContextMenuContextMenuTypeIdNameRequestWithFormdataBody(server string, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameFormdataRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	bodyStr, err := runtime.MarshalForm(body, nil)
 	if err != nil {
 		return nil, err
 	}
-	bodyReader = bytes.NewReader(buf)
-	return NewPutContextMenuContextMenuTypeIdNameRequestWithBody(server, contextMenuType, id, "application/json", bodyReader)
+	bodyReader = strings.NewReader(bodyStr.Encode())
+	return NewPutContextMenuContextMenuTypeIdNameRequestWithBody(server, contextMenuType, id, "application/x-www-form-urlencoded", bodyReader)
 }
 
 // NewPutContextMenuContextMenuTypeIdNameRequestWithBody generates requests for PutContextMenuContextMenuTypeIdName with any type of body
@@ -982,7 +982,7 @@ type ClientWithResponsesInterface interface {
 	// PutContextMenuContextMenuTypeIdNameWithBodyWithResponse request with any body
 	PutContextMenuContextMenuTypeIdNameWithBodyWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutContextMenuContextMenuTypeIdNameResponse, error)
 
-	PutContextMenuContextMenuTypeIdNameWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameJSONRequestBody, reqEditors ...RequestEditorFn) (*PutContextMenuContextMenuTypeIdNameResponse, error)
+	PutContextMenuContextMenuTypeIdNameWithFormdataBodyWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameFormdataRequestBody, reqEditors ...RequestEditorFn) (*PutContextMenuContextMenuTypeIdNameResponse, error)
 
 	// GetHealthzWithResponse request
 	GetHealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthzResponse, error)
@@ -1349,8 +1349,8 @@ func (c *ClientWithResponses) PutContextMenuContextMenuTypeIdNameWithBodyWithRes
 	return ParsePutContextMenuContextMenuTypeIdNameResponse(rsp)
 }
 
-func (c *ClientWithResponses) PutContextMenuContextMenuTypeIdNameWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameJSONRequestBody, reqEditors ...RequestEditorFn) (*PutContextMenuContextMenuTypeIdNameResponse, error) {
-	rsp, err := c.PutContextMenuContextMenuTypeIdName(ctx, contextMenuType, id, body, reqEditors...)
+func (c *ClientWithResponses) PutContextMenuContextMenuTypeIdNameWithFormdataBodyWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameFormdataRequestBody, reqEditors ...RequestEditorFn) (*PutContextMenuContextMenuTypeIdNameResponse, error) {
+	rsp, err := c.PutContextMenuContextMenuTypeIdNameWithFormdataBody(ctx, contextMenuType, id, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

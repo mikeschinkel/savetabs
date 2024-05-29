@@ -32,7 +32,7 @@ func (a *API) catchPanic(next http.Handler) http.Handler {
 				break
 			}
 			slog.Error(msg)
-			a.sendError(w, r, http.StatusInternalServerError, msg)
+			a.sendHTMLError(w, r, http.StatusInternalServerError, msg)
 		}()
 		next.ServeHTTP(w, r)
 	})

@@ -68,9 +68,16 @@ func NewAPI(args APIArgs) *API {
 func routeContentType(route *routers.Route) (ct string) {
 	m := route.Operation.Responses.Map()
 	type mt = map[string]*openapi3.MediaType
-	for key := range mt(m["200"].Value.Content) {
-		ct = key
+	for key := range m {
+		if key[:1] != "2" {
+			continue
+		}
+		for content0 := range mt(m[key].Value.Content) {
+			ct = content0
+			goto end
+		}
 	}
+end:
 	return ct
 }
 
@@ -82,15 +89,22 @@ func (a *API) openApiOptions() *middleware.Options {
 			}
 			switch routeContentType(opts.Route) {
 			case "application/json":
+				jr := newJSONResponse(false)
+				jr.Message = message
+				sendJSON(w, statusCode, jr)
 			case "text/html":
 				// TODO: Call function in ui package to display error message
 				w.Header().Set("Content-Type", "text/html; charset=utf-8")
 				w.Header().Set("X-Content-Type-Options", "nosniff")
-				a.sendError(w, opts.Request, statusCode, message)
+				a.sendHTMLError(w, opts.Request, statusCode, message)
 				return
 			case "text/plain":
 				fallthrough
 			default:
+				w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+				w.Header().Set("X-Content-Type-Options", "nosniff")
+				a.sendPlainError(w, opts.Request, statusCode, message)
+				return
 			}
 		err:
 			slog.Error("HTTP ERROR", "status_code", statusCode, "error_msg", message)
