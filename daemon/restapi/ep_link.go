@@ -48,7 +48,7 @@ func (a *API) PutLinksByUrlLinkUrl(w http.ResponseWriter, r *http.Request, linkU
 	slog.Debug("PUT Link by URL:", "link", link)
 
 	var linkId int64
-	linkId, err = guard.LinkUpsert(ctx, guard.UpsertLink{
+	linkId, err = guard.UpsertLink(ctx, guard.UpsertLinkArgs{
 		URL:   link.URL,
 		Title: link.Title,
 		HTML:  link.HTML,

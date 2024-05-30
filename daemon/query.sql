@@ -9,6 +9,24 @@ LIMIT 1;
 -- name: LoadGroupName :one
 SELECT name FROM `group` WHERE id = ?;
 
+-- name: LoadGroupTypeAndName :one
+SELECT type,name FROM `group` WHERE id = ?;
+
+-- name: MergeLinksGroups :exec
+UPDATE OR IGNORE link_group
+SET group_id = ?
+WHERE group_id IN (sqlc.slice('group_ids'));
+
+-- name: MarkGroupsDeleted :exec
+UPDATE `group` SET deleted = 1 WHERE id IN (sqlc.slice('group_ids'));
+
+-- name: LoadAltGroupIdsByName :many
+SELECT id FROM `group` WHERE id <> ? AND name = ?;
+
+-- name: UpdateGroupName :exec
+UPDATE `group` SET name = ?, slug = ?
+WHERE id = ?;
+
 -- name: LoadGroupType :one
 SELECT * FROM group_type WHERE type = ? LIMIT 1;
 
@@ -155,10 +173,18 @@ SET archived=1
 WHERE id IN (sqlc.slice('link_ids'))
 ;
 
--- name: DeleteLinks :exec
+-- name: MarkLinksDeleted :exec
 UPDATE link
 SET deleted=1
 WHERE id IN (sqlc.slice('link_ids'))
+;
+
+-- name: MarkLinksDeletedByGroupIds :exec
+UPDATE link
+SET deleted=1
+WHERE true
+   AND id NOT IN (SELECT lg.link_id FROM link_group lg WHERE lg.group_id=?)
+   AND id IN (SELECT lg.link_id FROM link_group lg WHERE lg.group_id IN (sqlc.slice('group_ids')))
 ;
 
 -- name: ListFilteredLinks :many

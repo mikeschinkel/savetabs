@@ -34,29 +34,6 @@ func (q *Queries) ArchiveLinks(ctx context.Context, linkIds []int64) error {
 	return err
 }
 
-const deleteLinks = `-- name: DeleteLinks :exec
-;
-
-UPDATE link
-SET deleted=1
-WHERE id IN (/*SLICE:link_ids*/?)
-`
-
-func (q *Queries) DeleteLinks(ctx context.Context, linkIds []int64) error {
-	query := deleteLinks
-	var queryParams []interface{}
-	if len(linkIds) > 0 {
-		for _, v := range linkIds {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:link_ids*/?", strings.Repeat(",?", len(linkIds))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:link_ids*/?", "NULL", 1)
-	}
-	_, err := q.db.ExecContext(ctx, query, queryParams...)
-	return err
-}
-
 const deleteVar = `-- name: DeleteVar :exec
 DELETE FROM var WHERE id = ?
 `
@@ -893,6 +870,38 @@ func (q *Queries) ListLinks(ctx context.Context, arg ListLinksParams) ([]Link, e
 	return items, nil
 }
 
+const loadAltGroupIdsByName = `-- name: LoadAltGroupIdsByName :many
+SELECT id FROM ` + "`" + `group` + "`" + ` WHERE id <> ? AND name = ?
+`
+
+type LoadAltGroupIdsByNameParams struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+func (q *Queries) LoadAltGroupIdsByName(ctx context.Context, arg LoadAltGroupIdsByNameParams) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, loadAltGroupIdsByName, arg.ID, arg.Name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const loadGroup = `-- name: LoadGroup :one
 SELECT id, name, type, slug, created_time, latest_time, created, latest, archived, deleted FROM ` + "`" + `group` + "`" + `
 WHERE true
@@ -970,6 +979,22 @@ func (q *Queries) LoadGroupType(ctx context.Context, type_ string) (GroupType, e
 		&i.Plural,
 		&i.Description,
 	)
+	return i, err
+}
+
+const loadGroupTypeAndName = `-- name: LoadGroupTypeAndName :one
+SELECT type,name FROM ` + "`" + `group` + "`" + ` WHERE id = ?
+`
+
+type LoadGroupTypeAndNameRow struct {
+	Type string `json:"type"`
+	Name string `json:"name"`
+}
+
+func (q *Queries) LoadGroupTypeAndName(ctx context.Context, id int64) (LoadGroupTypeAndNameRow, error) {
+	row := q.db.QueryRowContext(ctx, loadGroupTypeAndName, id)
+	var i LoadGroupTypeAndNameRow
+	err := row.Scan(&i.Type, &i.Name)
 	return i, err
 }
 
@@ -1147,6 +1172,122 @@ func (q *Queries) LoadLinkIdByUrl(ctx context.Context, originalUrl string) (int6
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const markGroupsDeleted = `-- name: MarkGroupsDeleted :exec
+UPDATE ` + "`" + `group` + "`" + ` SET deleted = 1 WHERE id IN (/*SLICE:group_ids*/?)
+`
+
+func (q *Queries) MarkGroupsDeleted(ctx context.Context, groupIds []int64) error {
+	query := markGroupsDeleted
+	var queryParams []interface{}
+	if len(groupIds) > 0 {
+		for _, v := range groupIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:group_ids*/?", strings.Repeat(",?", len(groupIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:group_ids*/?", "NULL", 1)
+	}
+	_, err := q.db.ExecContext(ctx, query, queryParams...)
+	return err
+}
+
+const markLinksDeleted = `-- name: MarkLinksDeleted :exec
+;
+
+UPDATE link
+SET deleted=1
+WHERE id IN (/*SLICE:link_ids*/?)
+`
+
+func (q *Queries) MarkLinksDeleted(ctx context.Context, linkIds []int64) error {
+	query := markLinksDeleted
+	var queryParams []interface{}
+	if len(linkIds) > 0 {
+		for _, v := range linkIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_ids*/?", strings.Repeat(",?", len(linkIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_ids*/?", "NULL", 1)
+	}
+	_, err := q.db.ExecContext(ctx, query, queryParams...)
+	return err
+}
+
+const markLinksDeletedByGroupIds = `-- name: MarkLinksDeletedByGroupIds :exec
+;
+
+UPDATE link
+SET deleted=1
+WHERE true
+   AND id NOT IN (SELECT lg.link_id FROM link_group lg WHERE lg.group_id=?)
+   AND id IN (SELECT lg.link_id FROM link_group lg WHERE lg.group_id IN (/*SLICE:group_ids*/?))
+`
+
+type MarkLinksDeletedByGroupIdsParams struct {
+	GroupID  int64   `json:"group_id"`
+	GroupIds []int64 `json:"group_ids"`
+}
+
+func (q *Queries) MarkLinksDeletedByGroupIds(ctx context.Context, arg MarkLinksDeletedByGroupIdsParams) error {
+	query := markLinksDeletedByGroupIds
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.GroupID)
+	if len(arg.GroupIds) > 0 {
+		for _, v := range arg.GroupIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:group_ids*/?", strings.Repeat(",?", len(arg.GroupIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:group_ids*/?", "NULL", 1)
+	}
+	_, err := q.db.ExecContext(ctx, query, queryParams...)
+	return err
+}
+
+const mergeLinksGroups = `-- name: MergeLinksGroups :exec
+UPDATE OR IGNORE link_group
+SET group_id = ?
+WHERE group_id IN (/*SLICE:group_ids*/?)
+`
+
+type MergeLinksGroupsParams struct {
+	GroupID  int64   `json:"group_id"`
+	GroupIds []int64 `json:"group_ids"`
+}
+
+func (q *Queries) MergeLinksGroups(ctx context.Context, arg MergeLinksGroupsParams) error {
+	query := mergeLinksGroups
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.GroupID)
+	if len(arg.GroupIds) > 0 {
+		for _, v := range arg.GroupIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:group_ids*/?", strings.Repeat(",?", len(arg.GroupIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:group_ids*/?", "NULL", 1)
+	}
+	_, err := q.db.ExecContext(ctx, query, queryParams...)
+	return err
+}
+
+const updateGroupName = `-- name: UpdateGroupName :exec
+UPDATE ` + "`" + `group` + "`" + ` SET name = ?, slug = ?
+WHERE id = ?
+`
+
+type UpdateGroupNameParams struct {
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+	ID   int64  `json:"id"`
+}
+
+func (q *Queries) UpdateGroupName(ctx context.Context, arg UpdateGroupNameParams) error {
+	_, err := q.db.ExecContext(ctx, updateGroupName, arg.Name, arg.Slug, arg.ID)
+	return err
 }
 
 const updateParsedLink = `-- name: UpdateParsedLink :exec

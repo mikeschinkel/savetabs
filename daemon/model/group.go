@@ -18,11 +18,11 @@ func (grp Group) Slug() string {
 }
 
 type Groups struct {
+	GroupsArgs
 	Groups []Group
-	Params GroupsParams
 }
 
-type GroupsParams storage.GroupsParams
+type GroupsArgs storage.GroupsArgs
 
 func NewGroups(groups storage.Groups) Groups {
 	gs := make([]Group, len(groups.Groups))
@@ -40,17 +40,18 @@ func NewGroups(groups storage.Groups) Groups {
 		}
 	}
 	return Groups{
-		Groups: gs,
-		Params: GroupsParams(groups.Params),
+		GroupsArgs: GroupsArgs(groups.Args),
+		Groups:     gs,
 	}
 }
 
 func LoadGroupName(ctx Context, groupId int64) (name string, err error) {
-	return storage.LoadGroupName(ctx, groupId)
+	return storage.LoadGroupName(ctx, nil, groupId)
 }
-func LoadGroups(ctx Context, params GroupsParams) (groups Groups, err error) {
+
+func LoadGroups(ctx Context, params GroupsArgs) (groups Groups, err error) {
 	var gs storage.Groups
-	gs, err = storage.GroupsLoad(ctx, storage.GroupsParams(params))
+	gs, err = storage.LoadGroups(ctx, storage.GroupsArgs(params))
 	if err != nil {
 		goto end
 	}

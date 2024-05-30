@@ -1,6 +1,7 @@
 package guard
 
 import (
+	"savetabs/model"
 	"savetabs/shared"
 	"savetabs/ui"
 )
@@ -19,7 +20,7 @@ func (args ContextMenuArgs) contextMenu() (cm *ui.ContextMenu, err error) {
 		goto end
 	}
 	cm = ui.NewContextMenu(cmt, args.Host)
-	cm.DBid = args.DBId
+	cm.DBId = args.DBId
 end:
 	return cm, err
 }
@@ -63,4 +64,25 @@ func GetContextMenuRenameFormHTML(ctx Context, args ContextMenuArgs) (_ HTMLResp
 	})
 end:
 	return HTMLResponse{hr}, err
+}
+
+type ContextMenuItemArgs struct {
+	ContextMenuArgs
+	Name string
+}
+
+func UpdateContextMenuItemName(ctx Context, args ContextMenuItemArgs) (merged bool, err error) {
+	cmt, err := shared.ContextMenuTypeByName(args.ContextMenuType)
+	if err != nil {
+		goto end
+	}
+	merged, err = model.UpdateContextMenuItemName(ctx, model.ContextMenuItemArgs{
+		Name: args.Name,
+		ContextMenuArgs: model.ContextMenuArgs{
+			ContextMenuType: cmt,
+			DBId:            args.DBId,
+		},
+	})
+end:
+	return merged, err
 }

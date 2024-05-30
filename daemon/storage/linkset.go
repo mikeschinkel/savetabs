@@ -26,9 +26,9 @@ func LinksetUpsert(ctx Context, ds DataStore, ls UpsertLinkset) (err error) {
 				goto end
 			}
 		case shared.DeleteAction:
-			err = q.DeleteLinks(ctx, ls.LinkIds)
+			err = q.MarkLinksDeleted(ctx, ls.LinkIds)
 			if err != nil {
-				err = errors.Join(ErrFailedToDeleteLinks, err)
+				err = errors.Join(ErrFailedToMarkLinksDeleted, err)
 				goto end
 			}
 		}

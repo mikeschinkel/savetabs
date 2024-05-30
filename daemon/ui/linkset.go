@@ -128,7 +128,9 @@ end:
 }
 
 func GetLinksetSuccessAlertHTML(ctx Context, linkIds []int64) HTMLResponse {
-	linkIds = linkIds[:4]
+	if len(linkIds) > 3 {
+		linkIds = linkIds[:4]
+	}
 	linkURLs, err := model.LoadLinkURLs(ctx, linkIds)
 	if err != nil {
 		slog.Error("Failed to get link URLs for %v", "link_ids", linkIds)

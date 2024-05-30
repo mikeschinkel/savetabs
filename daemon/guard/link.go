@@ -9,18 +9,18 @@ import (
 	"savetabs/shared"
 )
 
-type UpsertLink struct {
+type UpsertLinkArgs struct {
 	Id    int64
 	URL   string
 	Title string
 	HTML  string
 }
 
-func (link UpsertLink) Sanitize() (_ UpsertLink, err error) {
+func (link UpsertLinkArgs) Sanitize() (_ UpsertLinkArgs, err error) {
 	return link, err
 }
 
-func (link UpsertLink) Validate() (err error) {
+func (link UpsertLinkArgs) Validate() (err error) {
 	if link.URL == "" {
 		err = ErrUrlNotSpecified
 		goto end
@@ -29,7 +29,7 @@ end:
 	return err
 }
 
-func LinkUpsert(ctx Context, link UpsertLink) (linkId int64, err error) {
+func UpsertLink(ctx Context, link UpsertLinkArgs) (linkId int64, err error) {
 	var content model.Content
 	var lu *url.URL
 

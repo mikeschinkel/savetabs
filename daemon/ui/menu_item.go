@@ -84,10 +84,6 @@ func (hmi HTMLMenuItem) ChildMenuURL() safehtml.URL {
 	}
 	// TODO: Change this to use URL encoding
 	u = fmt.Sprintf("%s--%s", hmi.MenuType().FilterType.Id(), hmi.LocalId())
-	//u = hmi.MenuType().Params(shared.ParamsArgs{
-	//	Equates:  "--",
-	//	Combines: "/",
-	//})
 end:
 	return shared.MakeSafeURL(u)
 }

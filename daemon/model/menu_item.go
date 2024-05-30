@@ -65,7 +65,7 @@ func LoadMenuItems(ctx Context, p LoadMenuItemParams) (items MenuItems, err erro
 		panic(err.Error())
 	}
 
-	groups, err = LoadGroups(ctx, GroupsParams{
+	groups, err = LoadGroups(ctx, GroupsArgs{
 		GroupType: gt,
 	})
 	if err != nil {
