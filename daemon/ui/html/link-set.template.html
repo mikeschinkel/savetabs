@@ -4,19 +4,18 @@
 <form id="link-actions"
       hx-post="{{.HTMLLinksURL}}{{.URLQuery}}"
       hx-target="#links-section"
-      x-data="allCheckboxChecker">
+      x-data="checkboxChecker">
   <input type="hidden" name="action">
   <input type="hidden" name="url_query" value="{{.URLQuery}}">
   <input type="hidden" name="filter_query" value="{{.FilterQuery}}">
   <nav class="navbar bg-base-300 min-h-0 h-8 border-solid border-gray-400 border-t">
-    <span class="text-base font-semibold">{{.Label}}</span>
-  </nav>
-  <nav class="navbar bg-base-300 min-h-0 h-8 border-solid border-gray-400 border-t">
-    <div class="navbar-start gap-2">
+		<div class="flex-none">
       <input class="btn min-h-0 h-4" type="submit" value="Archive" data-action="archive">
       <input class="btn min-h-0 h-4" type="submit" value="Delete" data-action="delete">
+		</div>
+    <div class="flex-1">
+	    <div class="pl-4 text-base font-semibold">{{.Label}}</div>
     </div>
-<!--    <div class="navbar-center"></div>-->
 <!--    <div class="navbar-end"></div>-->
   </nav>
   <div class="overflow-x-auto p-4">
@@ -75,12 +74,12 @@
     </table>
   </div>
 
-  <div x-show="showConfirmationDialog" class="modal modal-open">
-    <div class="modal-box">
-      <h3 class="font-bold text-lg" x-text="getConfirmationPrompt"></h3>
-      <div class="modal-action">
-        <button class="btn btn-primary" @click="changeAllCheckboxes">Yes</button>
-        <button class="btn btn-ghost" @click="closeConfirmationDialog">Cancel</button>
+  <div x-show="showConfirmDialog" x-ref="confirmDialog" class="hidden" {{/* class="modal modal-open" <== this will be set by confirmChecker object */}}>
+    <div class="modal-box bg-white p-4">
+      <h3 class="font-bold text-lg" x-text="getConfirmPrompt"></h3>
+      <div class="modal-action mt-3">
+        <button class="btn btn-sm btn-primary" @click="changeAllCheckboxes">Yes</button>
+        <button class="btn btn-sm btn-ghost" @click="closeConfirmDialog">Cancel</button>
       </div>
     </div>
   </div>

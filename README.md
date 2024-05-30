@@ -7,7 +7,7 @@ SaveTabs is a Chrome extension and local daemon used for keeping track of your t
 ### Bugs to Fix
 1. Fix partial saving of Tab Group name.
 2. Fix regression for filter query on Linkset postback.
-3. Fix non-scrolling of longer lists of links
+3. ~~Fix non-scrolling of longer lists of links~~
 4. Disable triggering of events while editing label names
 5. Update ContentURL when edited label is returned by HTML API
 
@@ -28,32 +28,34 @@ SaveTabs is a Chrome extension and local daemon used for keeping track of your t
       3. ~~Links per Group as leaves~~
       4. ~~Capture from Browser~~
          1. ~~Title~~
-      5. On-hover icon for on-click modal menu
-         1. For Menu Items/Groups
-         2. For Links
-      6. Menu Items for Links
+      5. ~~On-hover for on-click modal menu~~
+         1. ~~For Menu Items/Groups~~
+         2. ~~For Links~~
+      6. Make Fixed layout w/sticky elements
+         1. Make `<nav>`, `<thead>`, `<tbody>` sticky 
+      7. Menu Items for Links
          1. ~~Rename~~
          2. Delete
          3. Archive
          4. Merge To
-      7. Capture/handle in Caretaker
+      8. Capture/handle in Caretaker
          1. Screenshot
          2. Meta
          3. Content
          4. Other?
-      8. Expand/Collapse Item for links
+      9. Expand/Collapse Item for links
          1. Tabbed panel
             1. Title, Screenshot, Content
             2. URL exploded into component parts
-      9. Merging of Groups
-         1. Drag & Drop menu items
-         2. Via On-Hover menu 
-      10. Column resizing
-      11. Table Row Sorting
+      10. Merging of Groups
+          1. Drag & Drop menu items
+          2. Via On-Hover menu 
+      11. Column resizing
+      12. Table Row Sorting
           1. By clicking table Headers
           2. Toolbar control to add a sort
           3. Allow multiple sort levels
-      12. Table Row Filters
+      13. Table Row Filters
           1. Use Flex to allow many filters
           2. Filters
              1. Archived — Default=0

@@ -20,16 +20,16 @@ document.addEventListener('alpine:init', () => {
          }
       }
    }));
-   Alpine.data('allCheckboxChecker', () => {
+   Alpine.data('checkboxChecker', () => {
       return ({
-         confirmationDialogState: 'closed',
-         confirmationPrompt: '',
+         confirmDialogState: 'closed',
+         confirmPrompt: '',
          checkedCheckbox: {},
-         getConfirmationPrompt() {
-            return this.confirmationPrompt;
+         getConfirmPrompt() {
+            return this.confirmPrompt;
          },
-         showConfirmationDialog() {
-            return this.confirmationDialogState === 'open';
+         showConfirmDialog() {
+            return this.confirmDialogState === 'open'
          },
          getRowCheckboxes(obj){
             const form = obj.closest('form');
@@ -60,10 +60,14 @@ document.addEventListener('alpine:init', () => {
                this.changeAllCheckboxes(event);
                return
             }
-            // Ask for confirmation since some rows checked, some rows not
+            const classList = this.$refs.confirmDialog.classList
+            classList.add("modal-open")
+            classList.add("modal")
+            classList.remove("hidden")
+            // Ask for confirm since some rows checked, some rows not
             const action = event.target.checked ? 'select' : 'deselect';
-            this.confirmationPrompt = `Are you sure you want to ${action} ALL?`;
-            this.confirmationDialogState = 'open';
+            this.confirmPrompt = `Are you sure you want to ${action} ALL?`;
+            this.confirmDialogState = 'open';
             return true;
          },
          changeAllCheckboxes(event) {
@@ -75,13 +79,20 @@ document.addEventListener('alpine:init', () => {
                _.checked = checkbox.checked;
                _.dispatchEvent(new Event('click'));
             });
-            this.confirmationDialogState = 'closed';
+            this.setClosed();
          },
-         closeConfirmationDialog(event) {
+         setClosed() {
+            const classList = this.$refs.confirmDialog.classList
+            classList.add("hidden")
+            classList.remove("modal")
+            classList.remove("modal-open")
+            this.confirmDialogState = 'closed';
+         },
+         closeConfirmDialog(event) {
             event.stopPropagation();
             event.preventDefault();
             this.checkedCheckbox.checked = !this.checkedCheckbox.checked
-            this.confirmationDialogState = 'closed';
+            this.setClosed();
          },
       });
    });
