@@ -43,10 +43,11 @@ func (ls htmlLinkset) HTMLLinksURL() string {
 }
 func (ls htmlLinkset) TableHeaderFooterHTML() safehtml.HTML {
 	return safehtml.HTMLFromConstant(`
+<th class="w-1"></th>
 <th class="p-0.5">#</th>
 <th class="p-0.5">
 	<label>
-		<input type="checkbox" @change="maybeConfirmCheckAll" class="check-all"> 
+		<input type="checkbox" @change="maybeConfirmCheckAll" class="link-check-all"> 
 	</label>
 </th>
 <th class="p-0.5 text-center">Link</th>

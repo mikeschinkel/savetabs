@@ -24,6 +24,10 @@ func NewHTMLMenu(args HTMLMenuArgs) *HTMLMenu {
 
 var zeroStateMenu HTMLMenu
 
+func (hm HTMLMenu) IsTopLevelMenu() bool {
+	return hm.menuType.Level() <= 1
+}
+
 func (hm HTMLMenu) Renew(args HTMLMenuArgs) *HTMLMenu {
 	hm = zeroStateMenu
 	hm.apiURL = args.APIURL

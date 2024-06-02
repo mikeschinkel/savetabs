@@ -25,14 +25,19 @@
 <div class="bg-error"> background colors</div>
 
 <div class="relative absolute">positioning</div>
-<div class="right-1 right-2">positioning</div>
-<div class="top-1/2 top-1 top-2">positioning</div>
+<div class="right-1 right-2">right-*</div>
+<div class="top-0 top-1/2 top-[0.01rem] top-[2rem] top-[4rem]">top-*</div>
+<div class="bottom-0">bottom-*</div>
+<div class="left-0">left-*</div>
 
 <div class="transform">transform</div>
 <div class="-translate-y-1/2">translate</div>
 
-<div class="flex flex-none flex-1 flex-col">flex</div>
+<div class="flex flex-none flex-row flex-grow flex-shrink-0 flex-1 flex-col flex-end">flex-*</div>
 
+<div class="basis-full">basis-*</div>
+
+<div class="opacity-100">opacity-*</div>
 <div class="items-center items-start">items-*</div>
 
 <div class="align-top align-text-top">align-*</div>
@@ -48,7 +53,7 @@
 <div class="px-3 px-4 px-5 px-6">px-*</div>
 <div class="pb-0 pb-4">pb-*</div>
 
-<div class="p-0 p-0.5 p-1 p-2 p-4">p-*</div>
+<div class="p-0 p-0.5 p-1 p-2 p-3 p-4">p-*</div>
 <div class="pl-0 pl-0.5 pl-1 pl-2 pl-4">pl-*</div>
 
 <div class="m-0 m-0.5 m-1 m-1.5 m-2 m-2.5 m-3 m-4 m-5 m-6 m-7 m-8 m-80">m-*</div>
@@ -60,13 +65,23 @@
 
 <div class="my-0.5 my-1">my-1</div>
 
-<div class="min-h-0.5 min-h-1 min-h-full">min-h-*</div>
+<div class="min-h-0.5 min-h-1 min-h-[2rem] min-h-full">min-h-*</div>
+
 <div class="max-h-0.5 max-h-1 max-h-4 max-h-24 max-h-fit">max-h-*</div>
+
+
 
 <div class="min-w-0 min-w-max">min-w-*</div>
 <div class="w-fit">w-fit</div>
-<div class="w-0.5 w-1 w1.5 w-2 w-2.5 w-3 w-3.5 w-4 w-4.5 w-5 w-5.5">w-*</div>
+<div class="w-0.5 w-1 w1.5 w-2 w-2.5 w-3 w-3.5 w-4 w-4.5 w-5 w-5.5 w-full">w-*</div>
 <div class="h-0.5 h-1 h1.5 h-2 h-2.5 h-3 h-3.5 h-4 h-4.5 h-5 h-5.5 h-7">h-*</div>
+
+<div class=".ow-span-full row-span-1 row-span-2 .row-span-6">row-span-*</div>
+<div class="grid-row">grid-row</div>
+<div class="grid-rows-1">grid-rows-*</div>
+<div class="grid-cols-1">grid-cols-*</div>
+
+<div class="row-start-1 row-start-2 row-start-5">row-start-*</div>
 
 <div class="rounded-none rounded-sm">rounded</div>
 <div class="block inline">display</div>
@@ -80,11 +95,16 @@
 <div class="bg-gray-400 hover:bg-gray-400">bg-gray-400</div>
 <div class="bg-gray-600 hover:bg-gray-600">bg-gray-600</div>
 
-<div class="overflow-x-auto overflow-scroll">overflow-*</div>
+<div class="overflow-visible overflow-auto overflow-x-auto overflow-y-auto overflow-scroll overflow-hidden overflow-none">overflow-*</div>
 <div class="text-3xl text-2xl text-xl text-lg text-base text-sm text-xs">text-*</div>
 
+<div class="h-screen min-h-screen max-h-screen min-h-max">*-h-screen</div>
+<div class="w-screen min-w-screen max-w-screen min-w-max">*-w-screen</div>
 <table class="table-sm">table-*</table>
 <button class="btn-sm">btn-*</button>
+
+<div class="z-0 z-10 z-20">z-*</div>
+<div class="sticky">sticky</div>
 <div class="border-solid border-t border-b border-gray-300 border-gray-400 border-gray-500 border-gray-600 border-gray-700">border-*</div>
 
 </body>

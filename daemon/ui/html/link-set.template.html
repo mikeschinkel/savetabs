@@ -1,87 +1,93 @@
 <!--suppress CssUnusedSymbol -->
 {{- /*gotype:savetabs/ui.linkset*/ -}}
 
-<form id="link-actions"
-      hx-post="{{.HTMLLinksURL}}{{.URLQuery}}"
-      hx-target="#links-section"
-      x-data="checkboxChecker">
-  <input type="hidden" name="action">
-  <input type="hidden" name="url_query" value="{{.URLQuery}}">
-  <input type="hidden" name="filter_query" value="{{.FilterQuery}}">
-  <nav class="navbar bg-base-300 min-h-0 h-8 border-solid border-gray-400 border-t">
-		<div class="flex-none">
-      <input class="btn min-h-0 h-4" type="submit" value="Archive" data-action="archive">
-      <input class="btn min-h-0 h-4" type="submit" value="Delete" data-action="delete">
-		</div>
-    <div class="flex-1">
-	    <div class="pl-4 text-base font-semibold">{{.Label}}</div>
-    </div>
-<!--    <div class="navbar-end"></div>-->
-  </nav>
-  <div class="overflow-x-auto p-4">
-    <table id="link-rows" class="table table-md">
-      <thead>
-      <tr id="{{.HeaderHTMLId}}">
-        {{.TableHeaderFooterHTML}}
-      </tr>
-      </thead>
-      <tbody>
-      {{range .Links}}
-      <tr
-        id="{{.RowHTMLId}}"
-        class="p-0.5 hover:bg-gray-200"
-        x-data="checkedHighlighter"
-        data-highlight="bg-gray-100">
-        <td class="p-0.5">{{.RowId}}</td>
-        <td class="p-0.5">
-          <label>
-            <input
-              type="checkbox"
-              id="{{.HTMLId}}-cb"
-              name="link_id"
-              value="{{.Id}}"
-              @click="highlight"
-            />
-          </label>
-        </td>
-        <td id="{{.HTMLId}}" class="p-0.5 text-center">
-          <!--suppress HtmlUnknownTarget -->
-          <a class="btn btn-secondary min-h-0 h-4"
-             target="_blank"
-             href="{{.URL}}"
-             title="{{.Title}}"
-             aria-label="{{.ARIALabel}}"
-          >Open</a>
-        </td>
-        <td class="p-0.5 max-w-[10vw]">{{.Domain}}</td>
-        <td class="p-0.5 max-w-[15vw] break-word">{{.Path}}</td>
-        <td class="p-0.5 max-w-[20vw] whitespace-nowrap">{{.Query}}</td>
-        <td class="p-0.5 max-w-[20vw] whitespace-nowrap">{{.Fragment}}</td>
-        <td class="p-0.5 max-w-[20vw] break-word">{{.Title}}</td>
-        <td class="p-0.5">{{.Scheme}}</td>
-        <td class="p-0.5 text-right">{{.Subdomain}}</td>
-        <td class="p-0.5">{{.SecondLevelDomain}}</td>
-        <td class="p-0.5">{{.TopLevelDomain}}</td>
-        <td class="p-0.5">{{.Port}}</td>
-      </tr>
-      {{end}}
-      </tbody>
-      <tfoot>
-      <tr id="{{.FooterHTMLId}}">
-        {{.TableHeaderFooterHTML}}
-      </tr>
-      </tfoot>
-    </table>
+<nav id="content-nav" class="bg-gray-300 p-2 flex gap-4 items-center">
+	<div class="flex flex-none gap-2">
+    <input class="btn min-h-0 h-4" type="submit" value="Archive" data-action="archive">
+    <input class="btn min-h-0 h-4" type="submit" value="Delete" data-action="delete">
+	</div>
+  <div class="flex-1">
+    <div class="pl-4 text-base font-semibold">{{.Label}}</div>
   </div>
+</nav>
+<div id="scroll-container" class="overflow-auto h-full">
+   <div id="status-panel" class="w-full px-2.5"></div>
+   <div id="content-inner" class="p-0 flex flex-col m-h-full box-border">
+			<table id="link-rows"  class="border-collapse flex-grow">
+			  <thead class="bg-base-300 sticky top-0 z-10">
+			    <tr id="{{.HeaderHTMLId}}">
+			      {{.TableHeaderFooterHTML}}
+			    </tr>
+			  </thead>
+			  <tbody>
+			  {{range .Links}}
+			  <tr
+			    id="{{.RowHTMLId}}"
+			    class="p-0.5 hover:bg-gray-200"
+			    x-data="checkedHighlighter"
+			    data-highlight="bg-gray-100">
+			    <td class="w-1"></td>
+			    <td class="p-0.5">{{.RowId}}</td>
+			    <td class="p-0.5">
+			      <label>
+			        <input
+			          class="link-checkbox"
+			          type="checkbox"
+			          id="{{.HTMLId}}-cb"
+			          name="link_id"
+			          value="{{.Id}}"
+			          @click="highlight"
+			        />
+			      </label>
+			    </td>
+			    <td id="{{.HTMLId}}" class="p-0.5 text-center">
+			      <!--suppress HtmlUnknownTarget -->
+			      <a class="btn btn-secondary min-h-0 h-4"
+			         target="_blank"
+			         href="{{.URL}}"
+			         title="{{.Title}}"
+			         aria-label="{{.ARIALabel}}"
+			      >Open</a>
+			    </td>
+			    <td class="p-0.5 max-w-[10vw]">{{.Domain}}</td>
+			    <td class="p-0.5 max-w-[15vw] break-word">{{.Path}}</td>
+			    <td class="p-0.5 max-w-[20vw] whitespace-nowrap">{{.Query}}</td>
+			    <td class="p-0.5 max-w-[20vw] whitespace-nowrap">{{.Fragment}}</td>
+			    <td class="p-0.5 max-w-[20vw] break-word">{{.Title}}</td>
+			    <td class="p-0.5">{{.Scheme}}</td>
+			    <td class="p-0.5 text-right">{{.Subdomain}}</td>
+			    <td class="p-0.5">{{.SecondLevelDomain}}</td>
+			    <td class="p-0.5">{{.TopLevelDomain}}</td>
+			    <td class="p-0.5">{{.Port}}</td>
+			  </tr>
+			  {{end}}
+			  </tbody>
+			  <tfoot class="sticky bottom-0 z-10 bg-gray-300">
+			    <tr id="{{.FooterHTMLId}}">
+			      {{.TableHeaderFooterHTML}}
+			    </tr>
+			  </tfoot>
+			</table>
+   </div>
+</div>
 
-  <div x-show="showConfirmDialog" x-ref="confirmDialog" class="hidden" {{/* class="modal modal-open" <== this will be set by confirmChecker object */}}>
-    <div class="modal-box bg-white p-4">
-      <h3 class="font-bold text-lg" x-text="getConfirmPrompt"></h3>
-      <div class="modal-action mt-3">
-        <button class="btn btn-sm btn-primary" @click="changeAllCheckboxes">Yes</button>
-        <button class="btn btn-sm btn-ghost" @click="closeConfirmDialog">Cancel</button>
-      </div>
-    </div>
-  </div>
+<form id="link-actions" x-ref="checkboxCheckerForm"
+    hx-post="{{.HTMLLinksURL}}{{.URLQuery}}"
+    hx-target="#links-section"
+    hx-include=".link-checkbox">
+  <input type="hidden" name="action" value="to be set by 'htmx:trigger' event listener">
+  <input type="hidden" name="filter_query" value="{{.FilterQuery}}">
 </form>
+
+ {{/* class="modal modal-open" <== this will be set by confirmChecker object */}}
+ <div x-show="showConfirmDialog" x-ref="confirmDialog" class="hidden">
+    <div class="modal-box bg-white p-4">
+       <h3 class="font-bold text-lg" x-text="getConfirmPrompt"></h3>
+       <div class="modal-action mt-3">
+          <button class="btn btn-sm btn-primary" @click="changeAllCheckboxes">Yes</button>
+          <button class="btn btn-sm btn-ghost" @click="closeConfirmDialog">Cancel</button>
+       </div>
+    </div>
+ </div>
+
 

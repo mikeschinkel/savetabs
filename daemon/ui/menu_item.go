@@ -126,18 +126,21 @@ func (hmi HTMLMenuItem) Renew(mi model.MenuItem, args *HTMLMenuItemArgs) HTMLMen
 }
 
 func (hmi HTMLMenuItem) IsLeaf() bool {
-	return len(hmi.MenuType().Children) == 0
+	return hmi.MenuType().IsLeaf()
+}
+func (hmi HTMLMenuItem) HasChildren() bool {
+	return hmi.MenuType().HasChildren()
 }
 
 func (hmi HTMLMenuItem) IsTopLevelMenu() bool {
-	return hmi.Level() == 1
+	return false
 }
 
-func (hmi HTMLMenuItem) NotTopLevelMenu() bool {
-	return !hmi.IsTopLevelMenu()
+func (hmi HTMLMenuItem) NotTopLevelMenuItem() bool {
+	return hmi.parent.Level() > 0
 }
 
-type MenuItemHTMLParams struct {
+type SubmenuHTMLArgs struct {
 	Menu     *HTMLMenu
 	MenuType *shared.MenuType
 }
@@ -145,29 +148,29 @@ type MenuItemHTMLParams struct {
 // GetMenuItemHTML responds to HTTP GET request with an text/html response
 // containing the HTMX=flavored HTML for a menu item, which also includes its
 // children.
-func GetMenuItemHTML(ctx Context, p MenuItemHTMLParams) (hr HTMLResponse, err error) {
+func GetSubmenuHTML(ctx Context, args SubmenuHTMLArgs) (hr HTMLResponse, err error) {
 	var items model.MenuItems
 
 	hr = NewHTMLResponse()
 
-	if p.Menu == nil {
-		panic("ERROR: A nil HTMLMenu was passed to ui.GetMenuItemHTML().")
-	}
+	mt := args.MenuType
 
+	//if args.Menu == nil {
+	//	panic("ERROR: A nil HTMLMenu was passed to ui.GetMenuItemHTML().")
+	//}
 	items, err = model.LoadMenuItems(ctx, model.LoadMenuItemParams{
-		MenuType: p.MenuType,
-		Menu:     model.NewMenu(p.MenuType),
+		MenuType: mt,
 	})
 	if err != nil {
 		goto end
 	}
-	p.Menu.MenuItems = shared.ConvertSlice(items.Items, func(item model.MenuItem) HTMLMenuItem {
+	args.Menu.MenuItems = shared.ConvertSlice(items.Items, func(item model.MenuItem) HTMLMenuItem {
 		return newHTMLMenuItem(item, &HTMLMenuItemArgs{
-			Parent:   p.Menu,
-			MenuType: p.MenuType,
+			Parent:   args.Menu,
+			MenuType: mt,
 		})
 	})
-	hr.HTML, err = menuTemplate.ExecuteToHTML(p.Menu)
+	hr.HTML, err = menuTemplate.ExecuteToHTML(args.Menu)
 end:
 	if err != nil {
 		hr.SetCode(http.StatusInternalServerError)

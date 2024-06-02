@@ -5,6 +5,8 @@ import {} from './icons.js'
 import {} from './alpine-loader.js'
 
 console.log("SaveTabs daemon:", getApiServerUrl())
+const requestFormEvent ='get-checkbox-checker-form';
+const receiveFormEvent ='checkbox-checker-form';
 
 document.addEventListener('alpine:init', () => {
    Alpine.data('checkedHighlighter', () => ({
@@ -31,15 +33,17 @@ document.addEventListener('alpine:init', () => {
          showConfirmDialog() {
             return this.confirmDialogState === 'open'
          },
+         getForm(){
+            return this.$refs.checkboxCheckerForm;
+         },
          getRowCheckboxes(obj){
-            const form = obj.closest('form');
-            return Array.from(form.querySelectorAll(`input[type="checkbox"]:not(.check-all)`));
+            const form = this.getForm(); // TODO: Use hx-include to get selector
+            return Array.from(form.querySelectorAll(`input[type="checkbox"].link-checkbox`));
          },
          getHeadOrFootCheckbox(obj){
-            const tableId = obj.closest('table').id;
-            const form = obj.closest('form');
-            const trId = obj.closest('tr').id;
-            return form.querySelectorAll(`input[type="checkbox"].check-all:not(tr#${trId} input)`)[0];
+            const form =  this.getForm();
+            const trId = obj.closest('tr').id; // TODO: Test then improve this
+            return form.querySelectorAll(`input[type="checkbox"].link-check-all:not(tr#${trId} input)`)[0];
          },
          allChecked(checkboxes) {
             return checkboxes.every(_ =>  _.checked);
@@ -110,19 +114,14 @@ document.addEventListener('htmx:trigger', function(event) {
    if (type !== 'submit') {
       return
    }
-   const form = el.closest('form')
-   if (!form) {
-      alert(`<form> not found for ${el.name}`);
-      return
-   }
-   const input = form.querySelector('input[type="hidden"][name="action"]');
-   if (!input) {
-      alert(`<input name="action"> not found for ${el.name}`);
-      return
-   }
    const action = el.getAttribute('data-action')
    if (action==="") {
       alert(`<input name="action" data-action="..."> not found for ${el.name}`);
+      return
+   }
+   const input = document.querySelector('form#link-actions input[type="hidden"][name="action"]');
+   if (!input) {
+      alert(`<input name="action"> not found for ${el.name}`);
       return
    }
    input.value = action;

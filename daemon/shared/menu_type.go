@@ -50,6 +50,13 @@ func (mt *MenuType) Level() (n int) {
 	return n
 }
 
+func (mt MenuType) HasChildren() bool {
+	return len(mt.Children) != 0
+}
+func (mt MenuType) IsLeaf() bool {
+	return len(mt.Children) == 0
+}
+
 func (mt *MenuType) Slice() []string {
 	if mt.Parent == nil {
 		return []string{}

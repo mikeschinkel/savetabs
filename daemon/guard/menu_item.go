@@ -39,11 +39,11 @@ func GetMenuItemHTML(ctx Context, host string, menuItem string) (_ HTMLResponse,
 		goto end
 	}
 	apiURL = shared.MakeSafeURL(shared.NewHost(host).URL())
-	hr, err = ui.GetMenuItemHTML(ctx, ui.MenuItemHTMLParams{
+	hr, err = ui.GetSubmenuHTML(ctx, ui.SubmenuHTMLArgs{
 		MenuType: mt,
 		Menu: ui.NewHTMLMenu(ui.HTMLMenuArgs{
 			APIURL:   apiURL,
-			MenuType: mt.Parent,
+			MenuType: mt,
 		}),
 	})
 end:

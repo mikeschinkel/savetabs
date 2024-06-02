@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaveTabs UI</title>
+    <link rel="stylesheet" type="text/css" href="styles/dist.css">
+</head>
+<body class="h-screen min-w-max bg-base-100  overflow-x-hidden">
+<nav class="flex navbar bg-base-300 min-h-[2rem] sticky top-0 left-0 z-10">
+       <div class="flex-none px-2">
+           <img src="assets/savetabs-16.png" alt="SaveTabs Icon">
+       </div>
+       <div class="flex-1">
+           <p class="text-sm">SaveTabs</p>
+       </div>
+   </nav>
+<div class="flex-1 pd-0 bg-gray-100  sticky top-[2rem] flex flex-row">
+  <div id="sidebar" class="flex-shrink flex-col opacity-100 sticky left-0 z-20">
+       <section id="menu-section" class="flex-grow border-t overflow-auto h-screen">
+           <ul class="menu bg-base-200">
+              <li id="mi-gt-g">
+                 <details class="" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>TabGroups</label>
+                   </span>
+                    </summary>
+                    <div id="mi-gt-g-kids" class="pl-4 m-0">
+                       <ul class="menu bg-base-200">
+                          <li id="mi-grp-g-1-miscellaneous" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>1. Miscellaneous</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-2024-03-07" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-acme" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                       </ul>
+                    </div>
+                 </details>
+              </li>
+              <li id="mi-gt-c">
+                 <details class="" @click="preventExpandOnIconClick" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>Categories</label>
+                   </span>
+                    </summary>
+                 </details>
+              </li>
+              <li id="mi-gt-g">
+                 <details class="" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>TabGroups</label>
+                   </span>
+                    </summary>
+                    <div id="mi-gt-g-kids" class="pl-4 m-0">
+                       <ul class="menu bg-base-200">
+                          <li id="mi-grp-g-1-miscellaneous" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>1. Miscellaneous</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-2024-03-07" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-acme" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                       </ul>
+                    </div>
+                 </details>
+              </li>
+              <li id="mi-gt-c">
+                 <details class="" @click="preventExpandOnIconClick" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>Categories</label>
+                   </span>
+                    </summary>
+                 </details>
+              </li>
+              <li id="mi-gt-g">
+                 <details class="" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>TabGroups</label>
+                   </span>
+                    </summary>
+                    <div id="mi-gt-g-kids" class="pl-4 m-0">
+                       <ul class="menu bg-base-200">
+                          <li id="mi-grp-g-1-miscellaneous" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>1. Miscellaneous</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-2024-03-07" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-acme" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                       </ul>
+                    </div>
+                 </details>
+              </li>
+              <li id="mi-gt-c">
+                 <details class="" @click="preventExpandOnIconClick" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>Categories</label>
+                   </span>
+                    </summary>
+                 </details>
+              </li>
+              <li id="mi-gt-g">
+                 <details class="" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>TabGroups</label>
+                   </span>
+                    </summary>
+                    <div id="mi-gt-g-kids" class="pl-4 m-0">
+                       <ul class="menu bg-base-200">
+                          <li id="mi-grp-g-1-miscellaneous" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>1. Miscellaneous</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-2024-03-07" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-acme" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                       </ul>
+                    </div>
+                 </details>
+              </li>
+              <li id="mi-gt-c">
+                 <details class="" @click="preventExpandOnIconClick" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>Categories</label>
+                   </span>
+                    </summary>
+                 </details>
+              </li>
+              <li id="mi-gt-g">
+                 <details class="" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>TabGroups</label>
+                   </span>
+                    </summary>
+                    <div id="mi-gt-g-kids" class="pl-4 m-0">
+                       <ul class="menu bg-base-200">
+                          <li id="mi-grp-g-1-miscellaneous" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>1. Miscellaneous</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-2024-03-07" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-acme" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                       </ul>
+                    </div>
+                 </details>
+              </li>
+              <li id="mi-gt-c">
+                 <details class="" @click="preventExpandOnIconClick" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>Categories</label>
+                   </span>
+                    </summary>
+                 </details>
+              </li>
+              <li id="mi-gt-g">
+                 <details class="" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>TabGroups</label>
+                   </span>
+                    </summary>
+                    <div id="mi-gt-g-kids" class="pl-4 m-0">
+                       <ul class="menu bg-base-200">
+                          <li id="mi-grp-g-1-miscellaneous" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>1. Miscellaneous</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-2024-03-07" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-acme" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                       </ul>
+                    </div>
+                 </details>
+              </li>
+              <li id="mi-gt-c">
+                 <details class="" @click="preventExpandOnIconClick" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>Categories</label>
+                   </span>
+                    </summary>
+                 </details>
+              </li>
+              <li id="mi-gt-g">
+                 <details class="" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>TabGroups</label>
+                   </span>
+                    </summary>
+                    <div id="mi-gt-g-kids" class="pl-4 m-0">
+                       <ul class="menu bg-base-200">
+                          <li id="mi-grp-g-1-miscellaneous" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>1. Miscellaneous</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-2024-03-07" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-acme" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                       </ul>
+                    </div>
+                 </details>
+              </li>
+              <li id="mi-gt-c">
+                 <details class="" @click="preventExpandOnIconClick" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>Categories</label>
+                   </span>
+                    </summary>
+                 </details>
+              </li>
+              <li id="mi-gt-g">
+                 <details class="" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>TabGroups</label>
+                   </span>
+                    </summary>
+                    <div id="mi-gt-g-kids" class="pl-4 m-0">
+                       <ul class="menu bg-base-200">
+                          <li id="mi-grp-g-1-miscellaneous" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>1. Miscellaneous</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-2024-03-07" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-acme" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                       </ul>
+                    </div>
+                 </details>
+              </li>
+              <li id="mi-gt-c">
+                 <details class="" @click="preventExpandOnIconClick" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>Categories</label>
+                   </span>
+                    </summary>
+                 </details>
+              </li>
+              <li id="mi-gt-g">
+                 <details class="" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>TabGroups</label>
+                   </span>
+                    </summary>
+                    <div id="mi-gt-g-kids" class="pl-4 m-0">
+                       <ul class="menu bg-base-200">
+                          <li id="mi-grp-g-1-miscellaneous" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>1. Miscellaneous</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-2024-03-07" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-acme" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                       </ul>
+                    </div>
+                 </details>
+              </li>
+              <li id="mi-gt-c">
+                 <details class="" @click="preventExpandOnIconClick" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>Categories</label>
+                   </span>
+                    </summary>
+                 </details>
+              </li>
+              <li id="mi-gt-g">
+                 <details class="" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>TabGroups</label>
+                   </span>
+                    </summary>
+                    <div id="mi-gt-g-kids" class="pl-4 m-0">
+                       <ul class="menu bg-base-200">
+                          <li id="mi-grp-g-1-miscellaneous" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>1. Miscellaneous</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-2024-03-07" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                          <li id="mi-grp-g-acme" class="">
+                             <details class="">
+                                <summary class="">
+                                   <span class="grow-0 py-2 cursor-pointer">
+                                       <expand-icon></expand-icon>
+                                   </span>
+                                   <span class="">
+                                       <label>2024-03-07</label>
+                                   </span>
+                                </summary>
+                             </details>
+                          </li>
+                       </ul>
+                    </div>
+                 </details>
+              </li>
+              <li id="mi-gt-c">
+                 <details class="" @click="preventExpandOnIconClick" open="">
+                    <summary class="">
+                   <span class="grow-0 py-2 cursor-pointer">
+                       <expand-icon></expand-icon>
+                   </span>
+                       <span class="w-full pl-2 cursor-pointer">
+                       <label>Categories</label>
+                   </span>
+                    </summary>
+                 </details>
+              </li>
+           </ul>
+       </section>
+   </div>
+  <div id="content" class="flex-1">
+     <div id="status-panel" class="w-full px-2.5"></div>
+     <section id="links-section" class="">
+        <form id="link-actions">
+           <input type="hidden" name="action">
+           <input type="hidden" name="filter_query" value="?grp=g:alpinejs">
+               <nav class="flex flex-row opacity-100 bg-gray-200 min-h-[2rem] gap-2 items-center sticky top-[2rem] z-20">
+                  <div class="flex flex-row gap-2 pl-2">
+                     <input type="submit" value="Archive" data-action="archive" class="btn btn-active btn-sm">
+                     <input type="submit" value="Delete" data-action="delete" class="btn btn-active btn-sm">
+                  </div>
+                  <div>
+                     <span>Groups: alpinejs</span>
+                  </div>
+               </nav>
+           <div class="w-screen grid grid-cols-1 grid-rows-1 overflow-auto h-screen" style="width:1405px;">
+              <table id="link-rows" class="relative min-w-max  min-h-max">
+                 <thead class="opacity-100 bg-gray-200  min-h-[2rem] z-10 sticky top-0 ">
+                 <tr id="links-row-head" class="">
+                    <th></th>
+                    <th>#</th>
+                    <th><label><input type="checkbox"></label></th>
+                    <th>Link</th>
+                    <th>Domain</th>
+                    <th>/Path</th>
+                    <th>Query</th>
+                    <th>#Fragment</th>
+                    <th>Title</th>
+                    <th>Scheme</th>
+                    <th>Sub</th>
+                    <th>SLD</th>
+                    <th>TLD</th>
+                    <th>:Port</th>
+
+                 </tr>
+                 </thead>
+                 <tbody class="overflow-auto z-10">
+
+                 <tr id="links-row-1" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>1</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-161463-cb" name="link_id" value="161463">
+                       </label>
+                    </td>
+                    <td id="htmlLink-161463">
+
+                       <a target="_blank" href="https://alpinejs.dev/advanced/csp#api-restrictions"
+                          title="CSP — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/advanced/csp#api-restrictions">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/advanced/csp</td>
+                    <td></td>
+                    <td>#api-restrictions</td>
+                    <td>CSP — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-2" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>2</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166002-cb" name="link_id" value="166002">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166002">
+
+                       <a target="_blank" href="https://alpinejs.dev/advanced/extending"
+                          title="Extending — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/advanced/extending">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/advanced/extending</td>
+                    <td></td>
+                    <td></td>
+                    <td>Extending — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-3" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>3</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-155950-cb" name="link_id" value="155950">
+                       </label>
+                    </td>
+                    <td id="htmlLink-155950">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/cloak"
+                          title="https://alpinejs.dev/directives/cloak"
+                          aria-label="External Link: https://alpinejs.dev/directives/cloak">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/cloak</td>
+                    <td></td>
+                    <td></td>
+                    <td>https://alpinejs.dev/directives/cloak</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-4" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>4</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-158121-cb" name="link_id" value="158121">
+                       </label>
+                    </td>
+                    <td id="htmlLink-158121">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/on" title="on — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/directives/on">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/on</td>
+                    <td></td>
+                    <td></td>
+                    <td>on — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-5" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>5</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-181012-cb" name="link_id" value="181012">
+                       </label>
+                    </td>
+                    <td id="htmlLink-181012">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/on#stop"
+                          title="https://alpinejs.dev/directives/on#stop"
+                          aria-label="External Link: https://alpinejs.dev/directives/on#stop">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/on</td>
+                    <td></td>
+                    <td>#stop</td>
+                    <td>https://alpinejs.dev/directives/on#stop</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-6" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>6</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-181250-cb" name="link_id" value="181250">
+                       </label>
+                    </td>
+                    <td id="htmlLink-181250">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/on#the-event-object"
+                          title="on — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/directives/on#the-event-object">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/on</td>
+                    <td></td>
+                    <td>#the-event-object</td>
+                    <td>on — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-7" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>7</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-155949-cb" name="link_id" value="155949">
+                       </label>
+                    </td>
+                    <td id="htmlLink-155949">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/show"
+                          title="https://alpinejs.dev/directives/show"
+                          aria-label="External Link: https://alpinejs.dev/directives/show">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/show</td>
+                    <td></td>
+                    <td></td>
+                    <td>https://alpinejs.dev/directives/show</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-8" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>8</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-158120-cb" name="link_id" value="158120">
+                       </label>
+                    </td>
+                    <td id="htmlLink-158120">
+
+                       <a target="_blank" href="https://alpinejs.dev/globals/alpine-data"
+                          title="data() — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/globals/alpine-data">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/globals/alpine-data</td>
+                    <td></td>
+                    <td></td>
+                    <td>data() — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-9" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>9</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166001-cb" name="link_id" value="166001">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166001">
+
+                       <a target="_blank" href="https://alpinejs.dev/plugins/morph" title="Morph — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/plugins/morph">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/plugins/morph</td>
+                    <td></td>
+                    <td></td>
+                    <td>Morph — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-10" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>10</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166240-cb" name="link_id" value="166240">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166240">
+
+                       <a target="_blank"
+                          href="https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/alpinejs/index.d.ts"
+                          title="DefinitelyTyped/types/alpinejs/index.d.ts at master · DefinitelyTyped/DefinitelyTyped"
+                          aria-label="External Link: https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/alpinejs/index.d.ts">Open</a>
+                    </td>
+                    <td>https://github.com</td>
+                    <td>/DefinitelyTyped/DefinitelyTyped/blob/master/types/alpinejs/index.d.ts</td>
+                    <td></td>
+                    <td></td>
+                    <td>DefinitelyTyped/types/alpinejs/index.d.ts at master · DefinitelyTyped/DefinitelyTyped
+                    </td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>github</td>
+                    <td>.com</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-11" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>11</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166004-cb" name="link_id" value="166004">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166004">
+
+                       <a target="_blank" href="https://github.com/vuejs/core/tree/main/packages/reactivity"
+                          title="core/packages/reactivity at main · vuejs/core"
+                          aria-label="External Link: https://github.com/vuejs/core/tree/main/packages/reactivity">Open</a>
+                    </td>
+                    <td>https://github.com</td>
+                    <td>/vuejs/core/tree/main/packages/reactivity</td>
+                    <td></td>
+                    <td></td>
+                    <td>core/packages/reactivity at main · vuejs/core</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>github</td>
+                    <td>.com</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-12" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>12</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166005-cb" name="link_id" value="166005">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166005">
+
+                       <a target="_blank" href="https://twitter.com/Alpine_JS"
+                          title="AlpineJS (@Alpine_JS) / X"
+                          aria-label="External Link: https://twitter.com/Alpine_JS">Open</a>
+                    </td>
+                    <td>https://twitter.com</td>
+                    <td>/Alpine_JS</td>
+                    <td></td>
+                    <td></td>
+                    <td>AlpineJS (@Alpine_JS) / X</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>twitter</td>
+                    <td>.com</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-13" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>13</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-174432-cb" name="link_id" value="174432">
+                       </label>
+                    </td>
+                    <td id="htmlLink-174432">
+
+                       <a target="_blank" href="https://x.com/Alpine_JS" title="AlpineJS (@Alpine_JS) / X"
+                          aria-label="External Link: https://x.com/Alpine_JS">Open</a>
+                    </td>
+                    <td>https://x.com</td>
+                    <td>/Alpine_JS</td>
+                    <td></td>
+                    <td></td>
+                    <td>AlpineJS (@Alpine_JS) / X</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>x</td>
+                    <td>.com</td>
+                    <td></td>
+                 </tr>
+
+
+                 <tr id="links-row-1" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>1</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-161463-cb" name="link_id" value="161463">
+                       </label>
+                    </td>
+                    <td id="htmlLink-161463">
+
+                       <a target="_blank" href="https://alpinejs.dev/advanced/csp#api-restrictions"
+                          title="CSP — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/advanced/csp#api-restrictions">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/advanced/csp</td>
+                    <td></td>
+                    <td>#api-restrictions</td>
+                    <td>CSP — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-2" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>2</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166002-cb" name="link_id" value="166002">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166002">
+
+                       <a target="_blank" href="https://alpinejs.dev/advanced/extending"
+                          title="Extending — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/advanced/extending">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/advanced/extending</td>
+                    <td></td>
+                    <td></td>
+                    <td>Extending — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-3" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>3</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-155950-cb" name="link_id" value="155950">
+                       </label>
+                    </td>
+                    <td id="htmlLink-155950">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/cloak"
+                          title="https://alpinejs.dev/directives/cloak"
+                          aria-label="External Link: https://alpinejs.dev/directives/cloak">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/cloak</td>
+                    <td></td>
+                    <td></td>
+                    <td>https://alpinejs.dev/directives/cloak</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-4" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>4</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-158121-cb" name="link_id" value="158121">
+                       </label>
+                    </td>
+                    <td id="htmlLink-158121">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/on" title="on — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/directives/on">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/on</td>
+                    <td></td>
+                    <td></td>
+                    <td>on — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-5" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>5</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-181012-cb" name="link_id" value="181012">
+                       </label>
+                    </td>
+                    <td id="htmlLink-181012">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/on#stop"
+                          title="https://alpinejs.dev/directives/on#stop"
+                          aria-label="External Link: https://alpinejs.dev/directives/on#stop">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/on</td>
+                    <td></td>
+                    <td>#stop</td>
+                    <td>https://alpinejs.dev/directives/on#stop</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-6" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>6</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-181250-cb" name="link_id" value="181250">
+                       </label>
+                    </td>
+                    <td id="htmlLink-181250">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/on#the-event-object"
+                          title="on — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/directives/on#the-event-object">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/on</td>
+                    <td></td>
+                    <td>#the-event-object</td>
+                    <td>on — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-7" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>7</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-155949-cb" name="link_id" value="155949">
+                       </label>
+                    </td>
+                    <td id="htmlLink-155949">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/show"
+                          title="https://alpinejs.dev/directives/show"
+                          aria-label="External Link: https://alpinejs.dev/directives/show">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/show</td>
+                    <td></td>
+                    <td></td>
+                    <td>https://alpinejs.dev/directives/show</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-8" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>8</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-158120-cb" name="link_id" value="158120">
+                       </label>
+                    </td>
+                    <td id="htmlLink-158120">
+
+                       <a target="_blank" href="https://alpinejs.dev/globals/alpine-data"
+                          title="data() — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/globals/alpine-data">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/globals/alpine-data</td>
+                    <td></td>
+                    <td></td>
+                    <td>data() — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-9" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>9</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166001-cb" name="link_id" value="166001">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166001">
+
+                       <a target="_blank" href="https://alpinejs.dev/plugins/morph" title="Morph — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/plugins/morph">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/plugins/morph</td>
+                    <td></td>
+                    <td></td>
+                    <td>Morph — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-10" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>10</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166240-cb" name="link_id" value="166240">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166240">
+
+                       <a target="_blank"
+                          href="https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/alpinejs/index.d.ts"
+                          title="DefinitelyTyped/types/alpinejs/index.d.ts at master · DefinitelyTyped/DefinitelyTyped"
+                          aria-label="External Link: https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/alpinejs/index.d.ts">Open</a>
+                    </td>
+                    <td>https://github.com</td>
+                    <td>/DefinitelyTyped/DefinitelyTyped/blob/master/types/alpinejs/index.d.ts</td>
+                    <td></td>
+                    <td></td>
+                    <td>DefinitelyTyped/types/alpinejs/index.d.ts at master · DefinitelyTyped/DefinitelyTyped
+                    </td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>github</td>
+                    <td>.com</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-11" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>11</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166004-cb" name="link_id" value="166004">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166004">
+
+                       <a target="_blank" href="https://github.com/vuejs/core/tree/main/packages/reactivity"
+                          title="core/packages/reactivity at main · vuejs/core"
+                          aria-label="External Link: https://github.com/vuejs/core/tree/main/packages/reactivity">Open</a>
+                    </td>
+                    <td>https://github.com</td>
+                    <td>/vuejs/core/tree/main/packages/reactivity</td>
+                    <td></td>
+                    <td></td>
+                    <td>core/packages/reactivity at main · vuejs/core</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>github</td>
+                    <td>.com</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-12" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>12</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166005-cb" name="link_id" value="166005">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166005">
+
+                       <a target="_blank" href="https://twitter.com/Alpine_JS"
+                          title="AlpineJS (@Alpine_JS) / X"
+                          aria-label="External Link: https://twitter.com/Alpine_JS">Open</a>
+                    </td>
+                    <td>https://twitter.com</td>
+                    <td>/Alpine_JS</td>
+                    <td></td>
+                    <td></td>
+                    <td>AlpineJS (@Alpine_JS) / X</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>twitter</td>
+                    <td>.com</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-13" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>13</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-174432-cb" name="link_id" value="174432">
+                       </label>
+                    </td>
+                    <td id="htmlLink-174432">
+
+                       <a target="_blank" href="https://x.com/Alpine_JS" title="AlpineJS (@Alpine_JS) / X"
+                          aria-label="External Link: https://x.com/Alpine_JS">Open</a>
+                    </td>
+                    <td>https://x.com</td>
+                    <td>/Alpine_JS</td>
+                    <td></td>
+                    <td></td>
+                    <td>AlpineJS (@Alpine_JS) / X</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>x</td>
+                    <td>.com</td>
+                    <td></td>
+                 </tr>
+
+
+                 <tr id="links-row-1" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>1</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-161463-cb" name="link_id" value="161463">
+                       </label>
+                    </td>
+                    <td id="htmlLink-161463">
+
+                       <a target="_blank" href="https://alpinejs.dev/advanced/csp#api-restrictions"
+                          title="CSP — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/advanced/csp#api-restrictions">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/advanced/csp</td>
+                    <td></td>
+                    <td>#api-restrictions</td>
+                    <td>CSP — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-2" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>2</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166002-cb" name="link_id" value="166002">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166002">
+
+                       <a target="_blank" href="https://alpinejs.dev/advanced/extending"
+                          title="Extending — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/advanced/extending">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/advanced/extending</td>
+                    <td></td>
+                    <td></td>
+                    <td>Extending — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-3" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>3</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-155950-cb" name="link_id" value="155950">
+                       </label>
+                    </td>
+                    <td id="htmlLink-155950">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/cloak"
+                          title="https://alpinejs.dev/directives/cloak"
+                          aria-label="External Link: https://alpinejs.dev/directives/cloak">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/cloak</td>
+                    <td></td>
+                    <td></td>
+                    <td>https://alpinejs.dev/directives/cloak</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-4" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>4</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-158121-cb" name="link_id" value="158121">
+                       </label>
+                    </td>
+                    <td id="htmlLink-158121">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/on" title="on — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/directives/on">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/on</td>
+                    <td></td>
+                    <td></td>
+                    <td>on — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-5" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>5</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-181012-cb" name="link_id" value="181012">
+                       </label>
+                    </td>
+                    <td id="htmlLink-181012">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/on#stop"
+                          title="https://alpinejs.dev/directives/on#stop"
+                          aria-label="External Link: https://alpinejs.dev/directives/on#stop">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/on</td>
+                    <td></td>
+                    <td>#stop</td>
+                    <td>https://alpinejs.dev/directives/on#stop</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-6" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>6</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-181250-cb" name="link_id" value="181250">
+                       </label>
+                    </td>
+                    <td id="htmlLink-181250">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/on#the-event-object"
+                          title="on — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/directives/on#the-event-object">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/on</td>
+                    <td></td>
+                    <td>#the-event-object</td>
+                    <td>on — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-7" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>7</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-155949-cb" name="link_id" value="155949">
+                       </label>
+                    </td>
+                    <td id="htmlLink-155949">
+
+                       <a target="_blank" href="https://alpinejs.dev/directives/show"
+                          title="https://alpinejs.dev/directives/show"
+                          aria-label="External Link: https://alpinejs.dev/directives/show">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/directives/show</td>
+                    <td></td>
+                    <td></td>
+                    <td>https://alpinejs.dev/directives/show</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-8" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>8</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-158120-cb" name="link_id" value="158120">
+                       </label>
+                    </td>
+                    <td id="htmlLink-158120">
+
+                       <a target="_blank" href="https://alpinejs.dev/globals/alpine-data"
+                          title="data() — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/globals/alpine-data">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/globals/alpine-data</td>
+                    <td></td>
+                    <td></td>
+                    <td>data() — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-9" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>9</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166001-cb" name="link_id" value="166001">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166001">
+
+                       <a target="_blank" href="https://alpinejs.dev/plugins/morph" title="Morph — Alpine.js"
+                          aria-label="External Link: https://alpinejs.dev/plugins/morph">Open</a>
+                    </td>
+                    <td>https://alpinejs.dev</td>
+                    <td>/plugins/morph</td>
+                    <td></td>
+                    <td></td>
+                    <td>Morph — Alpine.js</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>alpinejs</td>
+                    <td>.dev</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-10" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>10</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166240-cb" name="link_id" value="166240">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166240">
+
+                       <a target="_blank"
+                          href="https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/alpinejs/index.d.ts"
+                          title="DefinitelyTyped/types/alpinejs/index.d.ts at master · DefinitelyTyped/DefinitelyTyped"
+                          aria-label="External Link: https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/alpinejs/index.d.ts">Open</a>
+                    </td>
+                    <td>https://github.com</td>
+                    <td>/DefinitelyTyped/DefinitelyTyped/blob/master/types/alpinejs/index.d.ts</td>
+                    <td></td>
+                    <td></td>
+                    <td>DefinitelyTyped/types/alpinejs/index.d.ts at master · DefinitelyTyped/DefinitelyTyped
+                    </td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>github</td>
+                    <td>.com</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-11" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>11</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166004-cb" name="link_id" value="166004">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166004">
+
+                       <a target="_blank" href="https://github.com/vuejs/core/tree/main/packages/reactivity"
+                          title="core/packages/reactivity at main · vuejs/core"
+                          aria-label="External Link: https://github.com/vuejs/core/tree/main/packages/reactivity">Open</a>
+                    </td>
+                    <td>https://github.com</td>
+                    <td>/vuejs/core/tree/main/packages/reactivity</td>
+                    <td></td>
+                    <td></td>
+                    <td>core/packages/reactivity at main · vuejs/core</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>github</td>
+                    <td>.com</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-12" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>12</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-166005-cb" name="link_id" value="166005">
+                       </label>
+                    </td>
+                    <td id="htmlLink-166005">
+
+                       <a target="_blank" href="https://twitter.com/Alpine_JS"
+                          title="AlpineJS (@Alpine_JS) / X"
+                          aria-label="External Link: https://twitter.com/Alpine_JS">Open</a>
+                    </td>
+                    <td>https://twitter.com</td>
+                    <td>/Alpine_JS</td>
+                    <td></td>
+                    <td></td>
+                    <td>AlpineJS (@Alpine_JS) / X</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>twitter</td>
+                    <td>.com</td>
+                    <td></td>
+                 </tr>
+
+                 <tr id="links-row-13" data-highlight="bg-gray-100">
+                    <td></td>
+                    <td>13</td>
+                    <td>
+                       <label>
+                          <input type="checkbox" id="htmlLink-174432-cb" name="link_id" value="174432">
+                       </label>
+                    </td>
+                    <td id="htmlLink-174432">
+
+                       <a target="_blank" href="https://x.com/Alpine_JS" title="AlpineJS (@Alpine_JS) / X"
+                          aria-label="External Link: https://x.com/Alpine_JS">Open</a>
+                    </td>
+                    <td>https://x.com</td>
+                    <td>/Alpine_JS</td>
+                    <td></td>
+                    <td></td>
+                    <td>AlpineJS (@Alpine_JS) / X</td>
+                    <td>https://</td>
+                    <td></td>
+                    <td>x</td>
+                    <td>.com</td>
+                    <td></td>
+                 </tr>
+
+                 </tbody>
+                 <tfoot class="opacity-100 bg-gray-200  min-h-[2rem] sticky bottom-0 z-10">
+                 <tr id="links-row-foot">
+
+                    <th></th>
+                    <th>#</th>
+                    <th>
+                       <label>
+                          <input type="checkbox">
+                       </label>
+                    </th>
+                    <th>Link</th>
+                    <th>Domain</th>
+                    <th>/Path</th>
+                    <th>Query</th>
+                    <th>#Fragment</th>
+                    <th>Title</th>
+                    <th>Scheme</th>
+                    <th>Sub</th>
+                    <th>SLD</th>
+                    <th>TLD</th>
+                    <th>:Port</th>
+
+                 </tr>
+                 </tfoot>
+              </table>
+           </div>
+        </form>
+     </section>
+  </div>
+</div>
+</body>
+</html>

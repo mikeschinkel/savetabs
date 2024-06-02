@@ -10,6 +10,7 @@ SaveTabs is a Chrome extension and local daemon used for keeping track of your t
 3. ~~Fix non-scrolling of longer lists of links~~
 4. Disable triggering of events while editing label names
 5. Update ContentURL when edited label is returned by HTML API
+6. Fix "Invalid group filter foramt" for slashes ('/') in group name
 
 ### Features To Add
 1. API

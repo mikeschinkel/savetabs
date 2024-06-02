@@ -48,7 +48,6 @@ func (mi MenuItem) Renew(args MenuItemArgs) MenuItem {
 
 type LoadMenuItemParams struct {
 	MenuType *shared.MenuType
-	Menu     *Menu
 }
 type MenuItems struct {
 	Items []MenuItem
@@ -57,6 +56,7 @@ type MenuItems struct {
 func LoadMenuItems(ctx Context, p LoadMenuItemParams) (items MenuItems, err error) {
 	var groups Groups
 	var gt shared.GroupType
+	var menu *Menu
 
 	gt, err = shared.ParseGroupTypeByLetter(p.MenuType.Name())
 	if err != nil {
@@ -72,11 +72,13 @@ func LoadMenuItems(ctx Context, p LoadMenuItemParams) (items MenuItems, err erro
 		goto end
 	}
 
+	menu = NewMenu(p.MenuType)
+
 	items.Items = shared.ConvertSlice(groups.Groups, func(grp Group) MenuItem {
 		return newMenuItem(MenuItemArgs{
 			LocalId:     shared.Slugify(grp.Name),
 			Label:       grp.Name,
-			Menu:        p.Menu,
+			Menu:        menu,
 			MenuType:    shared.GroupTypeMenuType,
 			ContextMenu: shared.NewContextMenu(shared.GroupContextMenuType, grp.Id),
 		})

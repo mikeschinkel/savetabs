@@ -29,12 +29,16 @@ document.addEventListener('alpine:init', () => {
          this.contextMenu.addEventListener('close',this.onClose.bind(this))
       },
       focusInput() {
-         if (this.targetItem !== null) {
-            const input = this.targetItem.querySelector('input');
-            this.originalValue = input.value
-            this.$nextTick(() => input.select())
-            this.targetItem.removeEventListener('htmx:afterSettle', this.focusInput)
+         this.targetItem.removeEventListener('htmx:afterSettle', this.focusInput)
+         if (this.targetItem === null) {
+            return
          }
+         const input = this.targetItem.querySelector('input');
+         if (input==null) {
+            return
+         }
+         this.originalValue = input.value
+         this.$nextTick(() => input.select())
       },
       submit(event) {
       },
