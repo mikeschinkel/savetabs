@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="SaveTabs UI" type="JavascriptDebugType" editBeforeRun="true" focusToolWindowBeforeRun="true" uri="chrome-extension://jnnlfckgpfafkiiefolamnaakfeepagh/html/ui.html" useFirstLineBreakpoints="true">
+    <mapping url="chrome-extension://jnnlfckgpfafkiiefolamnaakfeepagh/html" local-file="$PROJECT_DIR$/html/ui.html" />
+    <method v="2" />
+  </configuration>
+</component>

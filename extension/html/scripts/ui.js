@@ -37,13 +37,15 @@ document.addEventListener('alpine:init', () => {
             return this.$refs.checkboxCheckerForm;
          },
          getRowCheckboxes(obj){
-            const form = this.getForm(); // TODO: Use hx-include to get selector
-            return Array.from(form.querySelectorAll(`input[type="checkbox"].link-checkbox`));
+            const selector = this.getForm().getAttribute('hx-include');
+            const links = document.querySelectorAll(selector);
+            return Array.from(links);
          },
          getHeadOrFootCheckbox(obj){
-            const form =  this.getForm();
-            const trId = obj.closest('tr').id; // TODO: Test then improve this
-            return form.querySelectorAll(`input[type="checkbox"].link-check-all:not(tr#${trId} input)`)[0];
+            const selector = this.getForm().getAttribute('data-check-all');
+            const trId = obj.closest('tr').id;
+            const inputs = document.querySelectorAll(`${selector}:not(tr#${trId} input)`);
+            return inputs[0];
          },
          allChecked(checkboxes) {
             return checkboxes.every(_ =>  _.checked);

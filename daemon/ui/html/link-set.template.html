@@ -1,11 +1,18 @@
 <!--suppress CssUnusedSymbol -->
 {{- /*gotype:savetabs/ui.linkset*/ -}}
 
-<nav id="content-nav" class="bg-gray-300 p-2 flex gap-4 items-center">
-	<div class="flex flex-none gap-2">
+<nav id="content-nav" class="bg-gray-300 flex items-center">
+	<form id="link-actions" x-ref="checkboxCheckerForm"
+	    hx-post="{{.HTMLLinksURL}}{{.URLQuery}}"
+	    hx-target="#links-section"
+	    hx-include="input[type=checkbox].link-checkbox"
+	    data-check-all="input[type=checkbox].link-check-all"
+	    class="p-2 flex gap-4 items-center flex-none">
+	  <input type="hidden" name="action" value="to be set by 'htmx:trigger' event listener">
+	  <input type="hidden" name="filter_query" value="{{.FilterQuery}}">
     <input class="btn min-h-0 h-4" type="submit" value="Archive" data-action="archive">
     <input class="btn min-h-0 h-4" type="submit" value="Delete" data-action="delete">
-	</div>
+	</form>
   <div class="flex-1">
     <div class="pl-4 text-base font-semibold">{{.Label}}</div>
   </div>
@@ -70,14 +77,6 @@
 			</table>
    </div>
 </div>
-
-<form id="link-actions" x-ref="checkboxCheckerForm"
-    hx-post="{{.HTMLLinksURL}}{{.URLQuery}}"
-    hx-target="#links-section"
-    hx-include=".link-checkbox">
-  <input type="hidden" name="action" value="to be set by 'htmx:trigger' event listener">
-  <input type="hidden" name="filter_query" value="{{.FilterQuery}}">
-</form>
 
  {{/* class="modal modal-open" <== this will be set by confirmChecker object */}}
  <div x-show="showConfirmDialog" x-ref="confirmDialog" class="hidden">
