@@ -40,7 +40,10 @@ func (ll htmlLink) HTMLId() safehtml.Identifier {
 }
 
 func (ll htmlLink) DragDropId() safehtml.Identifier {
-	return shared.MakeSafeIdf("%s-%d", ll.dragDrop, ll.Link.Id)
+	return shared.MakeSafeIdf("%s:%d",
+		ll.dragDrop.DragSource(),
+		ll.Link.Id,
+	)
 }
 
 func (ll htmlLink) RowHTMLId() safehtml.Identifier {

@@ -18,15 +18,19 @@ var (
 
 type dragDrop struct {
 	Name      safehtml.Identifier
-	draggable *dragDropTarget
-	droppable *dragDropTarget
+	draggable *dragDropParticipant
+	droppable *dragDropParticipant
 }
 
 func (d *dragDrop) String() string {
 	return d.Name.String()
 }
 
-func newDragDrop(name string, draggable, droppable *dragDropTarget) *dragDrop {
+func (d *dragDrop) DragSource() string {
+	return d.draggable.Name
+}
+
+func newDragDrop(name string, draggable, droppable *dragDropParticipant) *dragDrop {
 	return &dragDrop{
 		Name:      shared.MakeSafeId(name),
 		draggable: draggable,
@@ -34,7 +38,7 @@ func newDragDrop(name string, draggable, droppable *dragDropTarget) *dragDrop {
 	}
 }
 
-type dragDropTarget struct {
+type dragDropParticipant struct {
 	Name  string
 	Table string
 }
@@ -46,13 +50,13 @@ type dragDropItem struct {
 }
 
 var (
-	dragDropTargets     = make([]*dragDropTarget, 0)
-	dragDropTargetMap   = make(map[string]*dragDropTarget)
+	dragDropTargets     = make([]*dragDropParticipant, 0)
+	dragDropTargetMap   = make(map[string]*dragDropParticipant)
 	dragDropTargetMutex sync.Mutex
 )
 
-func newDragDropTarget(name string) *dragDropTarget {
-	ddt := &dragDropTarget{
+func newDragDropTarget(name string) *dragDropParticipant {
+	ddt := &dragDropParticipant{
 		Name:  name,
 		Table: name,
 	}
@@ -63,7 +67,7 @@ func newDragDropTarget(name string) *dragDropTarget {
 	return ddt
 }
 
-func dragDropTargetByName(name string) (_ *dragDropTarget, err error) {
+func dragDropTargetByName(name string) (_ *dragDropParticipant, err error) {
 	mt, ok := dragDropTargetMap[strings.ToLower(name)]
 	if !ok {
 		err = errors.Join(ErrDragDropTargetNotFound, fmt.Errorf("target=%s", name))
