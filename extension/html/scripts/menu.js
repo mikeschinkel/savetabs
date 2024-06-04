@@ -53,14 +53,14 @@ document.addEventListener('alpine:init', () => {
          style.marginTop = `${event.pageY}px`;
 
          const classList = event.currentTarget.classList
-         classList.add('bg-gray-400')
+         classList.add('bg-gray-600')
          classList.add('text-white')
          this.contextMenu.showModal();
       },
       onClose(event) {
          if (this.targetItem !== null) {
             const classList = this.targetItem.classList
-            classList.remove('bg-gray-400')
+            classList.remove('bg-gray-600')
             classList.remove('text-white')
          }
       },

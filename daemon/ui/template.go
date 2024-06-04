@@ -17,7 +17,7 @@ func GetTemplate(name string) *template.Template {
 }
 
 func init() {
-	elements := template.MakeTrustedStringSlice("a", "li", "section", "img", "div", "expand-icon", "span", "form", "input")
+	elements := template.MakeTrustedStringSlice("a", "li", "section", "img", "div", "expand-icon", "span", "form", "input", "summary")
 
 	template.AddTrustedElementsAndAttributesForContext("url", elements,
 		template.MakeTrustedStringSlice("hx-target", "hx-get", "hx-put", "hx-delete", "hx-post", "hx-patch"),

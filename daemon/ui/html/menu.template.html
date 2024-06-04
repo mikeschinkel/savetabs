@@ -1,18 +1,27 @@
 {{- /*gotype:savetabs/ui.menuItem*/ -}}
 <ul class="menu p-0 mb-4{{if .IsTopLevelMenu}} flex-1 overflow-auto{{else}} overflow-visible{{end}} bg-gray-200 text-base-content" x-data="contextMenuer">
 {{range .MenuItems}}
-  <li id="{{.HTMLId}}" class="{{if .IsLeaf }}h-7 {{end}}m-0 p-0 flex" {{if .HasContextMenu }}hx-trigger="contextmenu consume" @contextmenu="show" hx-get="{{.HTMLContextMenuURL}}/{{.ContextMenuType}}/{{.ContextMenuDBId}}" hx-target="#context-menu"{{end}}>
+  <li id="{{.HTMLId}}" class="{{if .IsLeaf }}h-7 {{end}}m-0 p-0 flex w-full"
+    >
     <details x-data="preventable" class="grow{{if .NotTopLevelMenuItem}} p-0 m-0{{end}}" @click="preventExpandOnIconClick">
-      <summary class="{{if .IsLeaf}}p-0 m-0{{else}}py-3 my-0{{end}} rounded-sm list-none flex items-center w-full gap-2">
+      <summary {{if .HasContextMenu }}
+		      hx-get="{{.HTMLContextMenuURL}}/{{.ContextMenuType}}/{{.ContextMenuDBId}}"
+		      hx-target="#context-menu"
+          hx-trigger="contextmenu consume"
+          @contextmenu="show"
+		    {{end}}
+		    class="{{if .IsLeaf}}p-0 py-2 m-0{{else}}py-3 my-0{{end}} rounded-sm list-none flex items-center w-full gap-2">
         {{if .IsLeaf }}
-          <span class="py-2">
-            <blank-icon></blank-icon>
-          </span>
+	        {{/*
+	          <span class="py-2">
+	            <blank-icon></blank-icon>
+	          </span>
+	        */}}
         {{else}}
-          <span x-data="collapsible" class="grow-0 py-2 cursor-pointer">
+          <div x-data="collapsible" class="grow-0 py-2 cursor-pointer">
             <expand-icon x-show="collapsed" @click="toggle" class="clickable" hx-get="{{$.HTMLMenuURL}}/{{.ChildMenuURL}}" hx-target="#{{.HTMLId}}-kids"></expand-icon>
             <collapse-icon x-show="expanded" @click="toggle" class="clickable"></collapse-icon>
-          </span>
+          </div>
         {{end}}
         <span class="w-full pl-2 cursor-pointer" hx-get="{{$.HTMLLinksURL}}{{.ContentQuery}}" hx-target="#links-section">
 					<label {{if .HasContextMenu }}id="{{.ContextMenuId}}"{{end}}>{{.Label}}</label>
