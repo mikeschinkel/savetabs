@@ -23,6 +23,8 @@ type LinkWithGroup struct {
 type LinkToAdd struct {
 	OriginalURL string `json:"original_url"`
 	Title       string `json:"title"`
+	Deleted     int    `json:"deleted"`
+	Archived    int    `json:"archived"`
 }
 
 type UpsertLinksWithGroupsParams struct {

@@ -15,8 +15,10 @@ const archiveLinks = `-- name: ArchiveLinks :exec
 ;
 
 UPDATE link
-SET archived=1
-WHERE id IN (/*SLICE:link_ids*/?)
+SET
+   archived=1
+WHERE
+   id IN (/*SLICE:link_ids*/?)
 `
 
 func (q *Queries) ArchiveLinks(ctx context.Context, linkIds []int64) error {
@@ -35,6 +37,8 @@ func (q *Queries) ArchiveLinks(ctx context.Context, linkIds []int64) error {
 }
 
 const deleteVar = `-- name: DeleteVar :exec
+;
+
 DELETE FROM var WHERE id = ?
 `
 
@@ -44,9 +48,14 @@ func (q *Queries) DeleteVar(ctx context.Context, id int64) error {
 }
 
 const getLinkURLs = `-- name: GetLinkURLs :many
-SELECT CAST(ifnull(url,'<invalid>') AS TEXT) AS url
-FROM link
-WHERE id IN (/*SLICE:link_ids*/?)
+;
+
+SELECT
+   CAST(IFNULL(url, '<invalid>') AS TEXT) AS url
+FROM
+   link
+WHERE
+   id IN (/*SLICE:link_ids*/?)
 `
 
 func (q *Queries) GetLinkURLs(ctx context.Context, linkIds []int64) ([]string, error) {
@@ -83,10 +92,12 @@ func (q *Queries) GetLinkURLs(ctx context.Context, linkIds []int64) ([]string, e
 }
 
 const insertContent = `-- name: InsertContent :exec
+;
+
 INSERT INTO content
-   (link_id,head,body)
+   (link_id, head, body)
 VALUES
-   (?,?,?)
+   (?, ?, ?)
 `
 
 type InsertContentParams struct {
@@ -121,7 +132,8 @@ SELECT
    deleted
 FROM
    link
-WHERE true
+WHERE
+   TRUE
    AND id IN (/*SLICE:ids*/?)
    AND archived IN (/*SLICE:links_archived*/?)
    AND deleted IN (/*SLICE:links_deleted*/?)
@@ -219,16 +231,22 @@ func (q *Queries) ListFilteredLinks(ctx context.Context, arg ListFilteredLinksPa
 }
 
 const listGroupsByType = `-- name: ListGroupsByType :many
+;
+
 SELECT
    g.id, g.name, g.type, g.slug, g.created_time, g.latest_time, g.created, g.latest, g.archived, g.deleted,
    CAST(gt.name AS TEXT) AS type_name
-FROM ` + "`" + `group` + "`" + ` g
-   JOIN group_type gt ON gt.type = g.type
-WHERE true
+FROM
+   ` + "`" + `group` + "`" + ` g
+      JOIN group_type gt
+         ON gt.type = g.type
+WHERE
+   TRUE
    AND g.type = ?
    AND g.archived IN (/*SLICE:groups_archived*/?)
    AND g.deleted IN (/*SLICE:groups_deleted*/?)
-ORDER BY g.name
+ORDER BY
+   g.name
 `
 
 type ListGroupsByTypeParams struct {
@@ -306,6 +324,8 @@ func (q *Queries) ListGroupsByType(ctx context.Context, arg ListGroupsByTypePara
 }
 
 const listGroupsType = `-- name: ListGroupsType :many
+;
+
 SELECT type, name, plural, group_count, groups_archived, groups_deleted, link_count, links_archived, links_deleted, sort FROM groups_type
 `
 
@@ -348,8 +368,10 @@ const listLatestUnparsedLinkURLs = `-- name: ListLatestUnparsedLinkURLs :many
 SELECT
    id,
    original_url
-FROM link
-WHERE true
+FROM
+   link
+WHERE
+   TRUE
    AND parsed = 0
    AND archived IN (/*SLICE:links_archived*/?)
    AND deleted IN (/*SLICE:links_deleted*/?)
@@ -410,12 +432,18 @@ func (q *Queries) ListLatestUnparsedLinkURLs(ctx context.Context, arg ListLatest
 }
 
 const listLinkIdsByGroup = `-- name: ListLinkIdsByGroup :many
-SELECT CAST(l.id AS INTEGER) AS link_id
+;
+
+SELECT
+   CAST(l.id AS INTEGER) AS link_id
 FROM
    link l
-   JOIN link_group rg ON l.id=rg.link_id
-   JOIN ` + "`" + `group` + "`" + ` g ON g.id=rg.group_id
-WHERE true
+      JOIN link_group rg
+         ON l.id = rg.link_id
+      JOIN ` + "`" + `group` + "`" + ` g
+         ON g.id = rg.group_id
+WHERE
+   TRUE
    AND g.slug IN (/*SLICE:slugs*/?)
    AND l.archived IN (/*SLICE:links_archived*/?)
    AND l.deleted IN (/*SLICE:links_deleted*/?)
@@ -477,11 +505,18 @@ func (q *Queries) ListLinkIdsByGroup(ctx context.Context, arg ListLinkIdsByGroup
 }
 
 const listLinkIdsByGroupType = `-- name: ListLinkIdsByGroupType :many
-SELECT CAST(link_id AS INTEGER) AS link_id
-FROM link_group lg
-        JOIN ` + "`" + `group` + "`" + ` g ON lg.group_id = g.id
-        JOIN link l ON l.id=lg.link_id
-WHERE true
+;
+
+SELECT
+   CAST(link_id AS INTEGER) AS link_id
+FROM
+   link_group lg
+      JOIN ` + "`" + `group` + "`" + ` g
+         ON lg.group_id = g.id
+      JOIN link l
+         ON l.id = lg.link_id
+WHERE
+   TRUE
    AND g.type IN (/*SLICE:groupTypes*/?)
    AND l.archived IN (/*SLICE:links_archived*/?)
    AND l.deleted IN (/*SLICE:links_deleted*/?)
@@ -545,10 +580,14 @@ func (q *Queries) ListLinkIdsByGroupType(ctx context.Context, arg ListLinkIdsByG
 const listLinkIdsByMeta = `-- name: ListLinkIdsByMeta :many
 ;
 
-SELECT CAST(m.link_id AS INTEGER) AS link_id
-FROM meta m
-   JOIN link l ON l.id=m.link_id
-WHERE true
+SELECT
+   CAST(m.link_id AS INTEGER) AS link_id
+FROM
+   meta m
+      JOIN link l
+         ON l.id = m.link_id
+WHERE
+   TRUE
    AND m.kv_pair IN (/*SLICE:kv_pairs*/?)
    AND m.key IN (/*SLICE:keys*/?)
    AND archived IN (/*SLICE:links_archived*/?)
@@ -620,17 +659,26 @@ func (q *Queries) ListLinkIdsByMeta(ctx context.Context, arg ListLinkIdsByMetaPa
 }
 
 const listLinkIdsNotInGroupType = `-- name: ListLinkIdsNotInGroupType :many
-SELECT CAST(l.id AS INTEGER) AS link_id
-FROM link l
-WHERE TRUE
+;
+
+SELECT
+   CAST(l.id AS INTEGER) AS link_id
+FROM
+   link l
+WHERE
+   TRUE
    AND l.archived IN (/*SLICE:links_archived*/?)
    AND l.deleted IN (/*SLICE:links_deleted*/?)
    AND l.id NOT IN (
-      SELECT lg.link_id
-      FROM link_group lg
-        JOIN ` + "`" + `group` + "`" + ` g ON lg.group_id = g.id
-      WHERE g.type IN (/*SLICE:groupTypes*/?)
-   )
+      SELECT
+         lg.link_id
+      FROM
+         link_group lg
+            JOIN ` + "`" + `group` + "`" + ` g
+               ON lg.group_id = g.id
+      WHERE
+         g.type IN (/*SLICE:groupTypes*/?)
+      )
 `
 
 type ListLinkIdsNotInGroupTypeParams struct {
@@ -689,13 +737,21 @@ func (q *Queries) ListLinkIdsNotInGroupType(ctx context.Context, arg ListLinkIds
 }
 
 const listLinkMeta = `-- name: ListLinkMeta :many
-SELECT m.id, m.link_id, m."key", m.value, m.kv_pair, m.created_time, m.modified_time, m.created, m.modified
-FROM meta m
-   JOIN link l ON m.link_id = l.id
-WHERE true
+;
+
+SELECT
+   m.id, m.link_id, m."key", m.value, m.kv_pair, m.created_time, m.modified_time, m.created, m.modified
+FROM
+   meta m
+      JOIN link l
+         ON m.link_id = l.id
+WHERE
+   TRUE
    AND archived IN (/*SLICE:links_archived*/?)
    AND deleted IN (/*SLICE:links_deleted*/?)
-ORDER BY link_id,key DESC
+ORDER BY
+   link_id,
+   key DESC
 `
 
 type ListLinkMetaParams struct {
@@ -757,10 +813,15 @@ func (q *Queries) ListLinkMeta(ctx context.Context, arg ListLinkMetaParams) ([]M
 const listLinkMetaForLinkId = `-- name: ListLinkMetaForLinkId :many
 ;
 
-SELECT m.key,m.value
-FROM meta m
-   JOIN link l ON m.link_id = l.id
-WHERE link_id = ?
+SELECT
+   m.key,
+   m.value
+FROM
+   meta m
+      JOIN link l
+         ON m.link_id = l.id
+WHERE
+   link_id = ?
 `
 
 type ListLinkMetaForLinkIdRow struct {
@@ -794,12 +855,16 @@ func (q *Queries) ListLinkMetaForLinkId(ctx context.Context, linkID int64) ([]Li
 const listLinks = `-- name: ListLinks :many
 ;
 
-SELECT id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, host, url, created_time, visited_time, created, visited, archived, deleted, parsed
-FROM link
-WHERE true
+SELECT
+   id, title, scheme, subdomain, sld, tld, port, path, "query", fragment, original_url, host, url, created_time, visited_time, created, visited, archived, deleted, parsed
+FROM
+   link
+WHERE
+   TRUE
    AND archived IN (/*SLICE:links_archived*/?)
    AND deleted IN (/*SLICE:links_deleted*/?)
-ORDER BY original_url
+ORDER BY
+   original_url
 LIMIT 100
 `
 
@@ -871,6 +936,8 @@ func (q *Queries) ListLinks(ctx context.Context, arg ListLinksParams) ([]Link, e
 }
 
 const loadAltGroupIdsByName = `-- name: LoadAltGroupIdsByName :many
+;
+
 SELECT id FROM ` + "`" + `group` + "`" + ` WHERE id <> ? AND name = ?
 `
 
@@ -903,8 +970,12 @@ func (q *Queries) LoadAltGroupIdsByName(ctx context.Context, arg LoadAltGroupIds
 }
 
 const loadGroup = `-- name: LoadGroup :one
-SELECT id, name, type, slug, created_time, latest_time, created, latest, archived, deleted FROM ` + "`" + `group` + "`" + `
-WHERE true
+SELECT
+   id, name, type, slug, created_time, latest_time, created, latest, archived, deleted
+FROM
+   ` + "`" + `group` + "`" + `
+WHERE
+   TRUE
    AND id = ?
    AND archived IN (/*SLICE:groups_archived*/?)
    AND deleted IN (/*SLICE:groups_deleted*/?)
@@ -955,6 +1026,8 @@ func (q *Queries) LoadGroup(ctx context.Context, arg LoadGroupParams) (Group, er
 }
 
 const loadGroupName = `-- name: LoadGroupName :one
+;
+
 SELECT name FROM ` + "`" + `group` + "`" + ` WHERE id = ?
 `
 
@@ -966,6 +1039,8 @@ func (q *Queries) LoadGroupName(ctx context.Context, id int64) (string, error) {
 }
 
 const loadGroupType = `-- name: LoadGroupType :one
+;
+
 SELECT type, sort, name, plural, description FROM group_type WHERE type = ? LIMIT 1
 `
 
@@ -983,7 +1058,9 @@ func (q *Queries) LoadGroupType(ctx context.Context, type_ string) (GroupType, e
 }
 
 const loadGroupTypeAndName = `-- name: LoadGroupTypeAndName :one
-SELECT type,name FROM ` + "`" + `group` + "`" + ` WHERE id = ?
+;
+
+SELECT type, name FROM ` + "`" + `group` + "`" + ` WHERE id = ?
 `
 
 type LoadGroupTypeAndNameRow struct {
@@ -999,6 +1076,8 @@ func (q *Queries) LoadGroupTypeAndName(ctx context.Context, id int64) (LoadGroup
 }
 
 const loadGroupTypeWithStats = `-- name: LoadGroupTypeWithStats :one
+;
+
 SELECT type, name, plural, group_count, groups_archived, groups_deleted, link_count, links_archived, links_deleted, sort FROM groups_type WHERE type = ? LIMIT 1
 `
 
@@ -1021,8 +1100,14 @@ func (q *Queries) LoadGroupTypeWithStats(ctx context.Context, type_ string) (Gro
 }
 
 const loadGroupsBySlug = `-- name: LoadGroupsBySlug :one
-SELECT id, name, type, slug, created_time, latest_time, created, latest, archived, deleted FROM ` + "`" + `group` + "`" + `
-WHERE true
+;
+
+SELECT
+   id, name, type, slug, created_time, latest_time, created, latest, archived, deleted
+FROM
+   ` + "`" + `group` + "`" + `
+WHERE
+   TRUE
    AND slug = ?
    AND archived IN (/*SLICE:groups_archived*/?)
    AND deleted IN (/*SLICE:groups_deleted*/?)
@@ -1073,6 +1158,8 @@ func (q *Queries) LoadGroupsBySlug(ctx context.Context, arg LoadGroupsBySlugPara
 }
 
 const loadLatestContent = `-- name: LoadLatestContent :one
+;
+
 SELECT
    id, link_id, title, body, head, created_time, created
 FROM
@@ -1083,7 +1170,7 @@ GROUP BY
    link_id,
    created
 HAVING
-   created=max(created)
+   created = MAX(created)
 `
 
 // TODO: Untested, ensure query works
@@ -1103,6 +1190,8 @@ func (q *Queries) LoadLatestContent(ctx context.Context, linkID int64) (Content,
 }
 
 const loadLink = `-- name: LoadLink :one
+;
+
 SELECT
    id,
    original_url,
@@ -1118,8 +1207,10 @@ SELECT
    port,
    url,
    title
-FROM link
-WHERE true
+FROM
+   link
+WHERE
+   TRUE
    AND id = ?
 LIMIT 1
 `
@@ -1164,6 +1255,8 @@ func (q *Queries) LoadLink(ctx context.Context, id int64) (LoadLinkRow, error) {
 }
 
 const loadLinkIdByUrl = `-- name: LoadLinkIdByUrl :one
+;
+
 SELECT id FROM link WHERE original_url = ? LIMIT 1
 `
 
@@ -1175,6 +1268,8 @@ func (q *Queries) LoadLinkIdByUrl(ctx context.Context, originalUrl string) (int6
 }
 
 const markGroupsDeleted = `-- name: MarkGroupsDeleted :exec
+;
+
 UPDATE ` + "`" + `group` + "`" + ` SET deleted = 1 WHERE id IN (/*SLICE:group_ids*/?)
 `
 
@@ -1197,8 +1292,10 @@ const markLinksDeleted = `-- name: MarkLinksDeleted :exec
 ;
 
 UPDATE link
-SET deleted=1
-WHERE id IN (/*SLICE:link_ids*/?)
+SET
+   deleted=1
+WHERE
+   id IN (/*SLICE:link_ids*/?)
 `
 
 func (q *Queries) MarkLinksDeleted(ctx context.Context, linkIds []int64) error {
@@ -1220,10 +1317,18 @@ const markLinksDeletedByGroupIds = `-- name: MarkLinksDeletedByGroupIds :exec
 ;
 
 UPDATE link
-SET deleted=1
-WHERE true
-   AND id NOT IN (SELECT lg.link_id FROM link_group lg WHERE lg.group_id=?)
-   AND id IN (SELECT lg.link_id FROM link_group lg WHERE lg.group_id IN (/*SLICE:group_ids*/?))
+SET
+   deleted=1
+WHERE
+   TRUE
+   AND id NOT IN (
+      SELECT lg.link_id
+      FROM link_group lg
+      WHERE lg.group_id = ?
+      )
+   AND id IN (
+      SELECT lg.link_id FROM link_group lg WHERE lg.group_id IN (/*SLICE:group_ids*/?)
+      )
 `
 
 type MarkLinksDeletedByGroupIdsParams struct {
@@ -1248,9 +1353,13 @@ func (q *Queries) MarkLinksDeletedByGroupIds(ctx context.Context, arg MarkLinksD
 }
 
 const mergeLinksGroups = `-- name: MergeLinksGroups :exec
+;
+
 UPDATE OR IGNORE link_group
-SET group_id = ?
-WHERE group_id IN (/*SLICE:group_ids*/?)
+SET
+   group_id = ?
+WHERE
+   group_id IN (/*SLICE:group_ids*/?)
 `
 
 type MergeLinksGroupsParams struct {
@@ -1275,8 +1384,14 @@ func (q *Queries) MergeLinksGroups(ctx context.Context, arg MergeLinksGroupsPara
 }
 
 const updateGroupName = `-- name: UpdateGroupName :exec
-UPDATE ` + "`" + `group` + "`" + ` SET name = ?, slug = ?
-WHERE id = ?
+;
+
+UPDATE ` + "`" + `group` + "`" + `
+SET
+   name = ?,
+   slug = ?
+WHERE
+   id = ?
 `
 
 type UpdateGroupNameParams struct {
@@ -1291,19 +1406,21 @@ func (q *Queries) UpdateGroupName(ctx context.Context, arg UpdateGroupNameParams
 }
 
 const updateParsedLink = `-- name: UpdateParsedLink :exec
+;
+
 
 UPDATE link
 SET
-   title = ?,
-   scheme = ?,
+   title     = ?,
+   scheme    = ?,
    subdomain = ?,
-   sld = ?,
-   tld = ?,
-   port = ?,
-   path = ?,
-   query = ?,
-   fragment = ?,
-   parsed = 1
+   sld       = ?,
+   tld       = ?,
+   port      = ?,
+   path      = ?,
+   query     = ?,
+   fragment  = ?,
+   parsed    = 1
 WHERE
    original_url = ?
 `
@@ -1339,20 +1456,27 @@ func (q *Queries) UpdateParsedLink(ctx context.Context, arg UpdateParsedLinkPara
 }
 
 const upsertGroupsFromVarJSON = `-- name: UpsertGroupsFromVarJSON :exec
-INSERT INTO ` + "`" + `group` + "`" + ` (name,type,slug)
+;
+
+INSERT INTO ` + "`" + `group` + "`" + ` (name, type, slug, archived, deleted)
 SELECT
-   json_extract(r.value,'$.name') AS name,
-   json_extract(r.value,'$.type') AS type,
-   json_extract(r.value,'$.slug') AS slug
-FROM var
-   JOIN json_each( var.value ) r ON var.key='json'
-WHERE var.id = ?
-    ON CONFLICT (slug)
-        DO UPDATE
-            SET
-            archived = 0,
-            deleted = 0,
-            latest = strftime('%s','now')
+   JSON_EXTRACT(r.value, '$.name')     AS name,
+   JSON_EXTRACT(r.value, '$.type')     AS type,
+   JSON_EXTRACT(r.value, '$.slug')     AS slug,
+   JSON_EXTRACT(r.value, '$.archived') AS archived,
+   JSON_EXTRACT(r.value, '$.deleted')  AS deleted
+FROM
+   var
+      JOIN JSON_EACH(var.value) r
+         ON var.key = 'json'
+WHERE
+   var.id = ?
+ON CONFLICT (slug)
+   DO UPDATE
+   SET
+      archived = excluded.archived,
+      deleted  = excluded.deleted,
+      latest   = STRFTIME('%s', 'now')
 `
 
 func (q *Queries) UpsertGroupsFromVarJSON(ctx context.Context, id int64) error {
@@ -1364,14 +1488,14 @@ const upsertLink = `-- name: UpsertLink :one
 ;
 
 INSERT INTO link
-   (original_url,title,visited)
+   (original_url, title, visited)
 VALUES
-   (?,?,strftime('%s','now'))
+   (?, ?, STRFTIME('%s', 'now'))
 ON CONFLICT (original_url)
    DO UPDATE
-      SET
-         title = excluded.title,
-         visited = strftime('%s','now')
+   SET
+      title   = excluded.title,
+      visited = STRFTIME('%s', 'now')
 RETURNING id
 `
 
@@ -1391,17 +1515,24 @@ const upsertLinkGroupsFromVarJSON = `-- name: UpsertLinkGroupsFromVarJSON :exec
 ;
 
 INSERT INTO link_group (group_id, link_id)
-SELECT g.id, r.id
-FROM var
-   JOIN json_each( var.value ) j ON var.key='json'
-   JOIN link r ON r.original_url=json_extract(j.value,'$.link_url')
-   JOIN ` + "`" + `group` + "`" + ` g ON true
-      AND g.name=json_extract(j.value,'$.group_name')
-      AND g.type=json_extract(j.value,'$.group_type')
-WHERE var.id = ?
+SELECT
+   g.id,
+   r.id
+FROM
+   var
+      JOIN JSON_EACH(var.value) j
+         ON var.key = 'json'
+      JOIN link r
+         ON r.original_url = JSON_EXTRACT(j.value, '$.link_url')
+      JOIN ` + "`" + `group` + "`" + ` g
+         ON TRUE
+      AND g.name = JSON_EXTRACT(j.value, '$.group_name')
+      AND g.type = JSON_EXTRACT(j.value, '$.group_type')
+WHERE
+   var.id = ?
 ON CONFLICT (group_id, link_id)
    DO UPDATE
-      SET latest = strftime('%s','now')
+   SET latest = STRFTIME('%s', 'now')
 `
 
 func (q *Queries) UpsertLinkGroupsFromVarJSON(ctx context.Context, id int64) error {
@@ -1412,17 +1543,20 @@ func (q *Queries) UpsertLinkGroupsFromVarJSON(ctx context.Context, id int64) err
 const upsertLinkMetaFromVarJSON = `-- name: UpsertLinkMetaFromVarJSON :exec
 ;
 
-INSERT INTO meta (link_id,key,value)
+INSERT INTO meta (link_id, key, value)
 SELECT
-   CAST(json_extract(r.value,'$.link_id') AS INTEGER),
-   CAST(json_extract(r.value,'$.key') AS TEXT),
-   CAST(json_extract(r.value,'$.value') AS TEXT)
-FROM var
-   JOIN json_each( var.value ) r ON var.key='json'
-WHERE var.id = ?
+   CAST(JSON_EXTRACT(r.value, '$.link_id') AS INTEGER),
+   CAST(JSON_EXTRACT(r.value, '$.key') AS TEXT),
+   CAST(JSON_EXTRACT(r.value, '$.value') AS TEXT)
+FROM
+   var
+      JOIN JSON_EACH(var.value) r
+         ON var.key = 'json'
+WHERE
+   var.id = ?
 ON CONFLICT (link_id,key)
    DO UPDATE
-   SET modified = strftime('%s','now')
+   SET modified = STRFTIME('%s', 'now')
 `
 
 func (q *Queries) UpsertLinkMetaFromVarJSON(ctx context.Context, id int64) error {
@@ -1433,19 +1567,26 @@ func (q *Queries) UpsertLinkMetaFromVarJSON(ctx context.Context, id int64) error
 const upsertLinksFromVarJSON = `-- name: UpsertLinksFromVarJSON :exec
 ;
 
-INSERT INTO link (original_url,title,visited)
+INSERT INTO link (original_url, title, archived, deleted, visited)
 SELECT
-   json_extract(r.value,'$.original_url'),
-   json_extract(r.value,'$.title'),
-   strftime('%s','now')
-FROM var
-   JOIN json_each( var.value ) r ON var.key='json'
-WHERE var.id = ?
+   JSON_EXTRACT(r.value, '$.original_url'),
+   JSON_EXTRACT(r.value, '$.title'),
+   JSON_EXTRACT(r.value, '$.archived'),
+   JSON_EXTRACT(r.value, '$.deleted'),
+   STRFTIME('%s', 'now')
+FROM
+   var
+      JOIN JSON_EACH(var.value) r
+         ON var.key = 'json'
+WHERE
+   var.id = ?
 ON CONFLICT (original_url)
    DO UPDATE
    SET
-      title = excluded.title,
-      visited = strftime('%s','now')
+      title    = excluded.title,
+      archived = excluded.archived,
+      deleted  = excluded.deleted,
+      visited  = STRFTIME('%s', 'now')
 `
 
 func (q *Queries) UpsertLinksFromVarJSON(ctx context.Context, id int64) error {
@@ -1459,15 +1600,19 @@ const upsertMetaFromVarJSON = `-- name: UpsertMetaFromVarJSON :exec
 INSERT INTO meta (link_id, key, value)
 SELECT
    l.id,
-   json_extract(kv.value,'$.key'),
-   json_extract(kv.value,'$.value')
-FROM var
-   JOIN json_each( var.value ) kv ON var.key='json'
-   JOIN link l ON l.original_url=json_extract(kv.value,'$.url')
-WHERE var.id = ?
-   ON CONFLICT (link_id,key)
+   JSON_EXTRACT(kv.value, '$.key'),
+   JSON_EXTRACT(kv.value, '$.value')
+FROM
+   var
+      JOIN JSON_EACH(var.value) kv
+         ON var.key = 'json'
+      JOIN link l
+         ON l.original_url = JSON_EXTRACT(kv.value, '$.url')
+WHERE
+   var.id = ?
+ON CONFLICT (link_id,key)
    DO UPDATE
-      SET value = excluded.value
+   SET value = excluded.value
 `
 
 func (q *Queries) UpsertMetaFromVarJSON(ctx context.Context, id int64) error {
@@ -1476,7 +1621,10 @@ func (q *Queries) UpsertMetaFromVarJSON(ctx context.Context, id int64) error {
 }
 
 const upsertVar = `-- name: UpsertVar :one
-INSERT INTO var (key,value) VALUES (?,?)
+;
+
+INSERT INTO var (key, value)
+VALUES (?, ?)
 ON CONFLICT (key) DO UPDATE SET value = excluded.value
 RETURNING id
 `

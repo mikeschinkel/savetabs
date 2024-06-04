@@ -35,15 +35,19 @@ func AddLinksWithGroupsIfNotExists(ctx Context, p AddLinksWithGroupsParams) (err
 		return storage.LinkToAdd{
 			OriginalURL: link.OriginalURL,
 			Title:       link.Title,
+			Archived:    0,
+			Deleted:     0,
 		}
 	})
 
 	groups := shared.ConvertSlice(lswgs.Groups(), func(grp Group) storage.Group {
 		return storage.Group{
-			Id:   grp.Id,
-			Name: grp.Name,
-			Type: grp.Type.String(),
-			Slug: grp.Slug(),
+			Id:       grp.Id,
+			Name:     grp.Name,
+			Type:     grp.Type.String(),
+			Slug:     grp.Slug(),
+			Archived: 0,
+			Deleted:  0,
 		}
 	})
 

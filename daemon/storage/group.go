@@ -20,10 +20,12 @@ type GroupsArgs struct {
 }
 
 type Group struct {
-	Id   int64  `json:"id"`
-	Name string `json:"name"`
-	Type string `json:"type"`
-	Slug string `json:"slug"`
+	Id       int64  `json:"id"`
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Slug     string `json:"slug"`
+	Archived int    `json:"archived"`
+	Deleted  int    `json:"deleted"`
 }
 
 type Groups struct {
