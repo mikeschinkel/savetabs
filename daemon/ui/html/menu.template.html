@@ -1,9 +1,8 @@
 {{- /*gotype:savetabs/ui.menuItem*/ -}}
 <ul class="menu p-0 mb-4{{if .IsTopLevelMenu}} flex-1 overflow-auto{{else}} overflow-visible{{end}} bg-gray-200 text-base-content" x-data="contextMenuer">
 {{range .MenuItems}}
-  <li id="{{.HTMLId}}" class="{{if .IsLeaf }}h-7 {{end}}m-0 p-0 flex w-full"
-    >
-    <details x-data="preventable" class="grow{{if .NotTopLevelMenuItem}} p-0 m-0{{end}}" @click="preventExpandOnIconClick">
+  <li id="{{.HTMLId}}" class="{{if .IsLeaf }}h-7 {{end}}m-0 p-0 flex w-full">
+    <details x-data="preventable" class="grow{{if .NotTopLevelMenuItem}} p-0 m-0{{end}}" @click="preventExpandOnIconClick"{{if .IsLeaf}} droppable="true"{{end}}>
       <summary {{if .HasContextMenu }}
 		      hx-get="{{.HTMLContextMenuURL}}/{{.ContextMenuType}}/{{.ContextMenuDBId}}"
 		      hx-target="#context-menu"

@@ -7,17 +7,25 @@ import (
 
 	"github.com/google/safehtml"
 	"savetabs/model"
+	"savetabs/shared"
 )
 
+type htmlLinkArgs struct {
+	Link     model.Link
+	RowId    int
+	DragDrop *dragDrop
+}
 type htmlLink struct {
 	model.Link
 	RowId int
+	*dragDrop
 }
 
-func newHTMLLink(ll model.Link, rowId int) htmlLink {
+func newHTMLLink(args htmlLinkArgs) htmlLink {
 	return htmlLink{
-		Link:  ll,
-		RowId: rowId,
+		Link:     args.Link,
+		RowId:    args.RowId,
+		dragDrop: args.DragDrop,
 	}
 }
 
@@ -29,6 +37,10 @@ func (ll htmlLink) HTMLId() safehtml.Identifier {
 	return safehtml.IdentifierFromConstantPrefix(`htmlLink`,
 		strconv.FormatInt(ll.Link.Id, 10),
 	)
+}
+
+func (ll htmlLink) DragDropId() safehtml.Identifier {
+	return shared.MakeSafeIdf("%s-%d", ll.dragDrop, ll.Link.Id)
 }
 
 func (ll htmlLink) RowHTMLId() safehtml.Identifier {

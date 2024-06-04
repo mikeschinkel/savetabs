@@ -117,7 +117,11 @@ func GetLinksetHTML(ctx Context, args LinksetArgs) (hr HTMLResponse, err error) 
 	}
 	htmlLS.Links = shared.ConvertSlice(ls.Links, func(link model.Link) htmlLink {
 		rowNum++
-		return newHTMLLink(link, rowNum)
+		return newHTMLLink(htmlLinkArgs{
+			Link:     link,
+			RowId:    rowNum,
+			DragDrop: linkToMenuItemDragDrop,
+		})
 	})
 
 	hr.HTML, err = linksetTemplate.ExecuteToHTML(htmlLS)
