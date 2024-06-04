@@ -3,6 +3,7 @@ package ui
 import (
 	"html"
 	"strconv"
+	"strings"
 
 	"github.com/google/safehtml"
 	"savetabs/model"
@@ -45,8 +46,12 @@ func (ll htmlLink) Domain() string {
 }
 
 func (ll htmlLink) Title() (title string) {
-	if ll.Link.Title == "" {
-		title = ll.EscapedURL()
+	return ll.Link.Title
+}
+
+func (ll htmlLink) LocalTitle() (title string) {
+	if strings.Contains(ll.Link.Title, "|") {
+		title = strings.TrimSpace(ll.Link.Title[:strings.IndexByte(ll.Link.Title, '|')])
 		goto end
 	}
 	title = ll.Link.Title
