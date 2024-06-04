@@ -1347,7 +1347,7 @@ SELECT
 FROM var
    JOIN json_each( var.value ) r ON var.key='json'
 WHERE var.id = ?
-    ON CONFLICT (name,type)
+    ON CONFLICT (slug)
         DO UPDATE
             SET latest = strftime('%s','now')
 `

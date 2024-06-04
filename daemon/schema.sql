@@ -146,7 +146,6 @@ CREATE TABLE IF NOT EXISTS `group`
    latest       INTEGER DEFAULT (STRFTIME('%s', 'now')),
    archived     INTEGER NOT NULL DEFAULT 0,
    deleted      INTEGER NOT NULL DEFAULT 0,
-   UNIQUE (name, type),
    UNIQUE (slug)
 )
 ;
