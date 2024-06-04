@@ -61,7 +61,10 @@ FROM var
 WHERE var.id = ?
     ON CONFLICT (slug)
         DO UPDATE
-            SET latest = strftime('%s','now');
+            SET
+            archived = 0,
+            deleted = 0,
+            latest = strftime('%s','now');
 
 -- name: ListGroupsType :many
 SELECT * FROM groups_type;
