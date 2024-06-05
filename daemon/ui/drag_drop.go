@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	draggableLink          = newDragDropTarget("link")
-	droppableMenuItem      = newDragDropTarget("menu-item")
-	linkToMenuItemDragDrop = newDragDrop("link-to-menu-item", draggableLink, droppableMenuItem)
+	draggableLink       = newDragDropTarget("link")
+	droppableGroup      = newDragDropTarget("group")
+	linkToGroupDragDrop = newDragDrop("link-to-group", draggableLink, droppableGroup)
 )
 
 type dragDrop struct {
@@ -24,10 +24,6 @@ type dragDrop struct {
 
 func (d *dragDrop) String() string {
 	return d.Name.String()
-}
-
-func (d *dragDrop) DragSource() string {
-	return d.draggable.Name
 }
 
 func newDragDrop(name string, draggable, droppable *dragDropParticipant) *dragDrop {
@@ -45,8 +41,33 @@ type dragDropParticipant struct {
 
 type dragDropItem struct {
 	*dragDrop
-	FromDBIds []int64
-	ToDBId    int64
+	DragIds []int64
+	DropId  int64
+}
+
+func newDropItem(dd *dragDrop, dropId int64) dragDropItem {
+	return dragDropItem{
+		dragDrop: dd,
+		DragIds:  make([]int64, 0),
+		DropId:   dropId,
+	}
+}
+
+func newDragItem(dd *dragDrop, ids []int64) dragDropItem {
+	return dragDropItem{
+		dragDrop: dd,
+		DragIds:  ids,
+	}
+}
+
+func (d *dragDropItem) DragSources() string {
+	return strings.Join(shared.ConvertSlice(d.DragIds, func(id int64) string {
+		return fmt.Sprintf("%s:%d", d.draggable.Name, id)
+	}), " ")
+}
+
+func (d *dragDropItem) DropTarget() string {
+	return fmt.Sprintf("%s:%d", d.droppable.Name, d.DropId)
 }
 
 var (

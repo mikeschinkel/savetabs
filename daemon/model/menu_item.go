@@ -10,6 +10,7 @@ type MenuItem struct {
 	Label       string
 	FilterType  *shared.FilterType
 	ContextMenu *shared.ContextMenu
+	DBId        int64
 }
 
 type MenuItemArgs struct {
@@ -18,6 +19,7 @@ type MenuItemArgs struct {
 	MenuType    *shared.MenuType
 	Menu        *Menu
 	ContextMenu *shared.ContextMenu
+	DBId        int64
 }
 
 func newMenuItem(p MenuItemArgs) MenuItem {
@@ -31,6 +33,7 @@ func (mi MenuItem) Renew(args MenuItemArgs) MenuItem {
 	if args.LocalId == "" {
 		args.LocalId = shared.Slugify(args.Label)
 	}
+	mi.DBId = args.DBId
 	mi.LocalId = args.LocalId
 	mi.Menu = args.Menu
 	mi.Label = args.Label
@@ -81,6 +84,7 @@ func LoadMenuItems(ctx Context, p LoadMenuItemParams) (items MenuItems, err erro
 			Menu:        menu,
 			MenuType:    shared.GroupTypeMenuType,
 			ContextMenu: shared.NewContextMenu(shared.GroupContextMenuType, grp.Id),
+			DBId:        grp.Id,
 		})
 	})
 end:

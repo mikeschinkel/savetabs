@@ -28,7 +28,7 @@ func (a *API) GetHtmlContextMenuContextMenuTypeIdRenameForm(w http.ResponseWrite
 
 func (a *API) GetHtmlMenuMenuItem(w http.ResponseWriter, r *http.Request, menuItem MenuItem) {
 	a.sendView(context.Background(), w, r, func(ctx Context) (guard.HTMLResponse, error) {
-		return guard.GetMenuItemHTML(ctx, r.Host, menuItem)
+		return guard.GetSubmenuHTML(ctx, r.Host, menuItem)
 	})
 }
 

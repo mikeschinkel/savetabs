@@ -13,19 +13,20 @@ import (
 type htmlLinkArgs struct {
 	Link     model.Link
 	RowId    int
-	DragDrop *dragDrop
+	DragItem dragDropItem
 }
+
 type htmlLink struct {
 	model.Link
-	RowId int
-	*dragDrop
+	RowId    int
+	dragItem dragDropItem
 }
 
 func newHTMLLink(args htmlLinkArgs) htmlLink {
 	return htmlLink{
 		Link:     args.Link,
 		RowId:    args.RowId,
-		dragDrop: args.DragDrop,
+		dragItem: args.DragItem,
 	}
 }
 
@@ -39,11 +40,8 @@ func (ll htmlLink) HTMLId() safehtml.Identifier {
 	)
 }
 
-func (ll htmlLink) DragDropId() safehtml.Identifier {
-	return shared.MakeSafeIdf("%s:%d",
-		ll.dragDrop.DragSource(),
-		ll.Link.Id,
-	)
+func (ll htmlLink) DragSources() safehtml.Identifier {
+	return shared.MakeSafeId(ll.dragItem.DragSources())
 }
 
 func (ll htmlLink) RowHTMLId() safehtml.Identifier {

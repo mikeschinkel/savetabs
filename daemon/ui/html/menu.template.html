@@ -12,7 +12,7 @@
           hx-trigger="contextmenu consume"
           @contextmenu="show"
 		    {{end}}
-		    {{if .IsLeaf}} data-droppable="link"{{end}}
+		    {{if .IsLeaf}} data-droptarget="{{.DropTarget}}"  data-droptypes="link"{{end}}
 		    class="{{if .IsLeaf}}p-0 py-2 m-0{{else}}py-3 my-0{{end}} rounded-sm list-none flex items-center w-full gap-2">
         {{if .IsLeaf }}
 	        {{/*

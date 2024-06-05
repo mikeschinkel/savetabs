@@ -22,8 +22,8 @@ type MenuItem struct {
 //	result[1] => localId, e.g, `tabgroup` & `category`; `golang` and `htmx`, etc.
 var matchMenuItemIds = regexp.MustCompile(fmt.Sprintf(`^(%s)-(.+)$`, shared.MenuTypesForRegexp()))
 
-// GetMenuItemHTML return HTMX-flavored HTML for a single menu item
-func GetMenuItemHTML(ctx Context, host string, menuItem string) (_ HTMLResponse, err error) {
+// GetSubmenuHTML return HTMX-flavored HTML for a single menu item
+func GetSubmenuHTML(ctx Context, host string, menuItem string) (_ HTMLResponse, err error) {
 	var apiURL safehtml.URL
 	var mt *shared.MenuType
 

@@ -120,7 +120,7 @@ func GetLinksetHTML(ctx Context, args LinksetArgs) (hr HTMLResponse, err error) 
 		return newHTMLLink(htmlLinkArgs{
 			Link:     link,
 			RowId:    rowNum,
-			DragDrop: linkToMenuItemDragDrop,
+			DragItem: newDragItem(linkToGroupDragDrop, []int64{link.Id}),
 		})
 	})
 

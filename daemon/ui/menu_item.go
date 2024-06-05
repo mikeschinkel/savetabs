@@ -19,6 +19,7 @@ type HTMLMenuItem struct {
 	Label       safehtml.HTML
 	menuType    *shared.MenuType
 	contextMenu *shared.ContextMenu
+	dropItem    dragDropItem
 }
 
 func (hmi HTMLMenuItem) ContextMenuType() (id safehtml.Identifier) {
@@ -50,6 +51,7 @@ func (hmi HTMLMenuItem) Level() int {
 type HTMLMenuItemArgs struct {
 	Parent   shared.MenuItemParent
 	MenuType *shared.MenuType
+	DropItem dragDropItem
 }
 
 var zeroStateHTMLMenuItem HTMLMenuItem
@@ -68,6 +70,10 @@ func (hmi HTMLMenuItem) HTMLContextMenuURL() safehtml.URL {
 
 func (hmi HTMLMenuItem) HasContextMenu() bool {
 	return hmi.contextMenu != nil
+}
+
+func (hmi HTMLMenuItem) DropTarget() safehtml.Identifier {
+	return shared.MakeSafeId(hmi.dropItem.DropTarget())
 }
 
 func (hmi HTMLMenuItem) HTMLId() safehtml.Identifier {
@@ -119,6 +125,7 @@ func (hmi HTMLMenuItem) Renew(mi model.MenuItem, args *HTMLMenuItemArgs) HTMLMen
 	hmi.localId = strings.ToLower(mi.LocalId)
 	hmi.parent = args.Parent
 	hmi.contextMenu = mi.ContextMenu
+	hmi.dropItem = args.DropItem
 	//pmt := hmi.parent.MenuType()
 	//hmi.filterType = pmt.FilterType
 	hmi.menuType = args.MenuType
@@ -128,6 +135,7 @@ func (hmi HTMLMenuItem) Renew(mi model.MenuItem, args *HTMLMenuItemArgs) HTMLMen
 func (hmi HTMLMenuItem) IsLeaf() bool {
 	return hmi.MenuType().IsLeaf()
 }
+
 func (hmi HTMLMenuItem) HasChildren() bool {
 	return hmi.MenuType().HasChildren()
 }
@@ -145,7 +153,7 @@ type SubmenuHTMLArgs struct {
 	MenuType *shared.MenuType
 }
 
-// GetMenuItemHTML responds to HTTP GET request with an text/html response
+// GetSubmenuHTML responds to HTTP GET request with an text/html response
 // containing the HTMX=flavored HTML for a menu item, which also includes its
 // children.
 func GetSubmenuHTML(ctx Context, args SubmenuHTMLArgs) (hr HTMLResponse, err error) {
@@ -168,6 +176,7 @@ func GetSubmenuHTML(ctx Context, args SubmenuHTMLArgs) (hr HTMLResponse, err err
 		return newHTMLMenuItem(item, &HTMLMenuItemArgs{
 			Parent:   args.Menu,
 			MenuType: mt,
+			DropItem: newDropItem(linkToGroupDragDrop, item.DBId), //TODO: Fix the 0 to a real ID
 		})
 	})
 	hr.HTML, err = menuTemplate.ExecuteToHTML(args.Menu)
