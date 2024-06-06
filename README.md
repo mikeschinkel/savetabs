@@ -11,7 +11,8 @@ SaveTabs is a Chrome extension and local daemon used for keeping track of your t
 4. Disable triggering of events while editing label names
 5. Update ContentURL when edited label is returned by HTML API
 6. Fix "Invalid group filter foramt" for slashes ('/') in group name
-7. Capture browser
+7. Smooth drop outline so it doesn't flash on and off
+
 ### Features To Add
 1. API
    1. ~~Implement Group Type list API~~
@@ -39,6 +40,12 @@ SaveTabs is a Chrome extension and local daemon used for keeping track of your t
          2. Copy links to different groups
          3. Merge group to other groups
          4. Add visual feedback to illustrate successful drop
+         5. ~~Delete moved links from DOM~~
+         6. Disallow dropping on same group
+      8. Make more Like a web app
+         1. Push back status
+         2. Change URL on navigation 
+         3. Restore state from URL to allow bookmarking
       8. Make Content Nav more generic
          1. Use Go types
       9. Menu Items for Links

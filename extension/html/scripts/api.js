@@ -71,11 +71,11 @@ export function newDragDrop(dragType,dragIds,dropType,dropId) {
    }
 }
 
-export function apiPostOnDrop(dragDrop) {
+export function apiPostOnDrop(dragDrop,callback) {
    const endpoint = apiDragDropEndpoint();
    const drag = dragDrop.drag.ids.join(',');
    const drop = dragDrop.drop;
-   httpPost(endpoint,dragDrop);
+   httpPost(endpoint,dragDrop, callback);
    console.log("Drag and Drop:", `${drag.type}:${drag.ids} ==> ${drop.type}:${drop.id}`);
 }
 
@@ -100,23 +100,25 @@ export function apiPutLabel(label) {
    httpPut(endpoint, label)
 }
 
-function httpPost(endpoint,item) {
-   httpRequest('POST',endpoint, item);
+function httpPost(endpoint,item,callback) {
+   httpRequest('POST',endpoint, item,callback);
 }
 
-function httpPut(endpoint,item) {
-   httpRequest('PUT',endpoint, item);
+function httpPut(endpoint,item,callback) {
+   httpRequest('PUT',endpoint, item,callback);
 }
 
-function httpRequest(method,endpoint,item) {
+function httpRequest(method,endpoint,item,callback) {
+   if (!callback) {
+      callback= function (status,data) {}
+   }
    fetch(endpoint, getHttpOptions(method, item))
          .then(response => {
-            response.json()
-         })
-         .then(data => {
-            console.log('Success:', data)
+            callback(true,response)
+            console.log('Success:', response)
          })
          .catch((error) => {
+            callback(false,error)
             console.log('Error:', error)
          });
 }

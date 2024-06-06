@@ -5,9 +5,12 @@ const dropTargetWrapper = 'details';
 const img = new Image();
 img.src = "./assets/savetabs-32.png";
 
+let dragElements = [];
+
 // Capture the item(s) being dragged
 document.addEventListener('dragstart', function (event) {
    const target=event.target;
+   dragElements.push(target);
    if (target.dataset === undefined) { // TODO: Verify that checking null is correct here
       console.log(`Attributes data-dragsources missing from ${event.target.id}`)
       return
@@ -117,9 +120,48 @@ document.addEventListener('drop', function (event) {
    let [dragType,dragId] = source.split(':');
    dragType = stripPrefix(dragType,`${mimeTypePrefix}-`);
    const [dropType,dropId] = target.split(':');
-   apiPostOnDrop(newDragDrop(dragType,[dragId],dropType,dropId))
+   let elements = captureElements(dragElements);
+   apiPostOnDrop(newDragDrop(dragType,[dragId],dropType,dropId),function(status,data){
+      if (!status) {
+         alert(data); // TODO: Create a better UX for this
+         return;
+      }
+      removeCapturedElements(elements);
+      elements = [];
+   })
    unHighlightDroppable(event.target)
 });
+
+// Clear out dragElements
+document.addEventListener('dragend', function (event) {
+   clearDragElements();
+});
+
+// Capture DOM elements to allow us to delete them after
+// `dragend` even removes them from `dragElements` array.
+function captureElements(elements) {
+   const capture = [];
+   for (let e of elements){
+      capture.push({
+         parent: e.parentNode,
+         child: e
+      })
+   }
+   return capture;
+}
+
+function removeCapturedElements(capture) {
+   for (let e of capture){
+      if (!e){
+         alert(`Problem with capture: ${JSON.stringify(capture)}`)
+      }
+      e.parent.removeChild(e.child);
+   }
+}
+
+function clearDragElements() {
+   dragElements = [];
+}
 
 function stripPrefix(str, prefix) {
    if (str.startsWith(prefix)) {
@@ -221,12 +263,6 @@ function dragDropMimeType(dragType) {
    return `${mimeTypePrefix}-${dragType}`
 }
 
-// ???
-// document.addEventListener('dragend', function (event) {
-//    console.log(event.type, event);
-// });
-//
-//
 
 // const dragEvents = [
 //    'drag',
