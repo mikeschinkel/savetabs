@@ -41,7 +41,3 @@ func GetErrorHTML(p ErrorParams) (hr HTMLResponse, err error) {
 end:
 	return hr, err
 }
-
-var (
-	ErrDragDropTargetNotFound = errors.New("drag drop target not found")
-)
