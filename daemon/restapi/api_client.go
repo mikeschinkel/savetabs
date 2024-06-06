@@ -94,6 +94,11 @@ type ClientInterface interface {
 
 	PutContextMenuContextMenuTypeIdNameWithFormdataBody(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostDragDropWithBody request with any body
+	PostDragDropWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostDragDrop(ctx context.Context, body PostDragDropJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetHealthz request
 	GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -152,6 +157,30 @@ func (c *Client) PutContextMenuContextMenuTypeIdNameWithBody(ctx context.Context
 
 func (c *Client) PutContextMenuContextMenuTypeIdNameWithFormdataBody(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutContextMenuContextMenuTypeIdNameRequestWithFormdataBody(c.Server, contextMenuType, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostDragDropWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostDragDropRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostDragDrop(ctx context.Context, body PostDragDropJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostDragDropRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -387,6 +416,46 @@ func NewPutContextMenuContextMenuTypeIdNameRequestWithBody(server string, contex
 	}
 
 	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewPostDragDropRequest calls the generic PostDragDrop builder with application/json body
+func NewPostDragDropRequest(server string, body PostDragDropJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostDragDropRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPostDragDropRequestWithBody generates requests for PostDragDrop with any type of body
+func NewPostDragDropRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/drag-drop")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -984,6 +1053,11 @@ type ClientWithResponsesInterface interface {
 
 	PutContextMenuContextMenuTypeIdNameWithFormdataBodyWithResponse(ctx context.Context, contextMenuType ContextMenuType, id IdParameter, body PutContextMenuContextMenuTypeIdNameFormdataRequestBody, reqEditors ...RequestEditorFn) (*PutContextMenuContextMenuTypeIdNameResponse, error)
 
+	// PostDragDropWithBodyWithResponse request with any body
+	PostDragDropWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostDragDropResponse, error)
+
+	PostDragDropWithResponse(ctx context.Context, body PostDragDropJSONRequestBody, reqEditors ...RequestEditorFn) (*PostDragDropResponse, error)
+
 	// GetHealthzWithResponse request
 	GetHealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthzResponse, error)
 
@@ -1031,7 +1105,7 @@ type ClientWithResponsesInterface interface {
 type PutContextMenuContextMenuTypeIdNameResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1050,10 +1124,33 @@ func (r PutContextMenuContextMenuTypeIdNameResponse) StatusCode() int {
 	return 0
 }
 
+type PostDragDropResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *BasicJsonResponse
+	JSONDefault  *UnexpectedJSONError
+}
+
+// Status returns HTTPResponse.Status
+func (r PostDragDropResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostDragDropResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetHealthzResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1075,7 +1172,7 @@ func (r GetHealthzResponse) StatusCode() int {
 type GetHtmlAlertResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1097,7 +1194,7 @@ func (r GetHtmlAlertResponse) StatusCode() int {
 type GetHtmlContextMenuContextMenuTypeIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1119,7 +1216,7 @@ func (r GetHtmlContextMenuContextMenuTypeIdResponse) StatusCode() int {
 type GetHtmlContextMenuContextMenuTypeIdRenameFormResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1141,7 +1238,7 @@ func (r GetHtmlContextMenuContextMenuTypeIdRenameFormResponse) StatusCode() int 
 type GetHtmlErrorResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1163,7 +1260,7 @@ func (r GetHtmlErrorResponse) StatusCode() int {
 type GetHtmlLinksetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1185,7 +1282,7 @@ func (r GetHtmlLinksetResponse) StatusCode() int {
 type PostHtmlLinksetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1207,7 +1304,7 @@ func (r PostHtmlLinksetResponse) StatusCode() int {
 type GetHtmlMenuResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1229,7 +1326,7 @@ func (r GetHtmlMenuResponse) StatusCode() int {
 type GetHtmlMenuMenuItemResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1253,7 +1350,7 @@ type PutLinksByUrlLinkUrlResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *IdObject
 	JSON201      *IdObject
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1276,7 +1373,7 @@ type PostLinksWithGroupsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON201      *[]IdObjects
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1299,7 +1396,7 @@ type GetLinksLinkIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *Link
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1321,7 +1418,7 @@ func (r GetLinksLinkIdResponse) StatusCode() int {
 type GetReadyzResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *UnexpectedError
+	JSONDefault  *UnexpectedJSONError
 }
 
 // Status returns HTTPResponse.Status
@@ -1355,6 +1452,23 @@ func (c *ClientWithResponses) PutContextMenuContextMenuTypeIdNameWithFormdataBod
 		return nil, err
 	}
 	return ParsePutContextMenuContextMenuTypeIdNameResponse(rsp)
+}
+
+// PostDragDropWithBodyWithResponse request with arbitrary body returning *PostDragDropResponse
+func (c *ClientWithResponses) PostDragDropWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostDragDropResponse, error) {
+	rsp, err := c.PostDragDropWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostDragDropResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostDragDropWithResponse(ctx context.Context, body PostDragDropJSONRequestBody, reqEditors ...RequestEditorFn) (*PostDragDropResponse, error) {
+	rsp, err := c.PostDragDrop(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostDragDropResponse(rsp)
 }
 
 // GetHealthzWithResponse request returning *GetHealthzResponse
@@ -1505,7 +1619,40 @@ func ParsePutContextMenuContextMenuTypeIdNameResponse(rsp *http.Response) (*PutC
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostDragDropResponse parses an HTTP response from a PostDragDropWithResponse call
+func ParsePostDragDropResponse(rsp *http.Response) (*PostDragDropResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostDragDropResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest BasicJsonResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1531,7 +1678,7 @@ func ParseGetHealthzResponse(rsp *http.Response) (*GetHealthzResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1557,7 +1704,7 @@ func ParseGetHtmlAlertResponse(rsp *http.Response) (*GetHtmlAlertResponse, error
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1583,7 +1730,7 @@ func ParseGetHtmlContextMenuContextMenuTypeIdResponse(rsp *http.Response) (*GetH
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1609,7 +1756,7 @@ func ParseGetHtmlContextMenuContextMenuTypeIdRenameFormResponse(rsp *http.Respon
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1635,7 +1782,7 @@ func ParseGetHtmlErrorResponse(rsp *http.Response) (*GetHtmlErrorResponse, error
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1661,7 +1808,7 @@ func ParseGetHtmlLinksetResponse(rsp *http.Response) (*GetHtmlLinksetResponse, e
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1687,7 +1834,7 @@ func ParsePostHtmlLinksetResponse(rsp *http.Response) (*PostHtmlLinksetResponse,
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1713,7 +1860,7 @@ func ParseGetHtmlMenuResponse(rsp *http.Response) (*GetHtmlMenuResponse, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1739,7 +1886,7 @@ func ParseGetHtmlMenuMenuItemResponse(rsp *http.Response) (*GetHtmlMenuMenuItemR
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1779,7 +1926,7 @@ func ParsePutLinksByUrlLinkUrlResponse(rsp *http.Response) (*PutLinksByUrlLinkUr
 		response.JSON201 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1812,7 +1959,7 @@ func ParsePostLinksWithGroupsResponse(rsp *http.Response) (*PostLinksWithGroupsR
 		response.JSON201 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1845,7 +1992,7 @@ func ParseGetLinksLinkIdResponse(rsp *http.Response) (*GetLinksLinkIdResponse, e
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1871,7 +2018,7 @@ func ParseGetReadyzResponse(rsp *http.Response) (*GetReadyzResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest UnexpectedError
+		var dest UnexpectedJSONError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

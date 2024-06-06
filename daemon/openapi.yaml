@@ -14,7 +14,7 @@ paths:
         '200':
           $ref: '#/components/responses/HtmlResponse'
         default:
-          $ref: '#/components/responses/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedJSONError'
 
   /html/context-menu/{contextMenuType}/{id}/rename-form:
     get:
@@ -26,25 +26,7 @@ paths:
         '200':
           $ref: '#/components/responses/HtmlResponse'
         default:
-          $ref: '#/components/responses/UnexpectedError'
-
-  /context-menu/{contextMenuType}/{id}/name:
-    put:
-      summary: Update name text by context menu type and DB ID
-      parameters:
-      - $ref: '#/components/parameters/ContextMenuType'
-      - $ref: '#/components/parameters/IdParameter'
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            $ref: '#/components/schemas/NameToRename'
-      responses:
-        '200':
-          description: The name was updated
-          $ref: '#/components/responses/HtmlResponse'
-        default:
-          $ref: '#/components/responses/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedJSONError'
 
   /html/linkset:
     post:
@@ -74,7 +56,7 @@ paths:
         '200':
           $ref: '#/components/responses/HtmlResponse'
         default:
-          $ref: '#/components/responses/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedJSONError'
 
     get:
       summary: Return the HTML for a paginated table of links with optional filtering criteria in query parameters
@@ -86,7 +68,7 @@ paths:
         '200':
           $ref: '#/components/responses/HtmlResponse'
         default:
-          $ref: '#/components/responses/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedJSONError'
 
   /html/menu:
     get:
@@ -95,7 +77,7 @@ paths:
         '200':
           $ref: '#/components/responses/HtmlResponse'
         default:
-          $ref: '#/components/responses/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedJSONError'
 
   /html/menu/{menuItem}:
     get:
@@ -106,7 +88,7 @@ paths:
         '200':
           $ref: '#/components/responses/HtmlResponse'
         default:
-          $ref: '#/components/responses/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedJSONError'
 
   /html/error:
     get:
@@ -118,7 +100,7 @@ paths:
         '200':
           $ref: '#/components/responses/HtmlResponse'
         default:
-          $ref: '#/components/responses/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedJSONError'
 
   /html/alert:
     get:
@@ -131,7 +113,40 @@ paths:
         '200':
           $ref: '#/components/responses/HtmlResponse'
         default:
-          $ref: '#/components/responses/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedJSONError'
+
+  /drag-drop:
+    post:
+      summary: Update the database for the drag & drop types specified
+      requestBody:
+        required: true
+        content:
+          application/json:
+            $ref: '#/components/schemas/DragAndDrop'
+      responses:
+        '200':
+          description: Drop applied successfully
+          $ref: '#/components/responses/BasicJsonResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedJSONError'
+
+  /context-menu/{contextMenuType}/{id}/name:
+    put:
+      summary: Update name text by context menu type and DB ID
+      parameters:
+      - $ref: '#/components/parameters/ContextMenuType'
+      - $ref: '#/components/parameters/IdParameter'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            $ref: '#/components/schemas/NameToRename'
+      responses:
+        '200':
+          description: The name was updated
+          $ref: '#/components/responses/HtmlResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedJSONError'
 
   /links/with-groups:
     post:
@@ -152,7 +167,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/IdObjects'
         default:
-          $ref: '#/components/responses/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedJSONError'
 
   /links/by-url/{linkUrl}:
     put:
@@ -189,7 +204,7 @@ paths:
         '422':
           description: Unprocessable Entity (WebDAV)
         default:
-          $ref: '#/components/responses/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedJSONError'
 
   /links/{linkId}:
     get:
@@ -208,7 +223,7 @@ paths:
         '404':
           description: Not Found
         default:
-          $ref: '#/components/responses/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedJSONError'
 
   /healthz:
     get:
@@ -220,7 +235,7 @@ paths:
         '503':
           description: Service Unavailable
         default:
-          $ref: '#/components/responses/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedJSONError'
   /readyz:
     get:
       summary: Readiness Check
@@ -231,7 +246,7 @@ paths:
         '503':
           description: Service Unavailable
         default:
-          $ref: '#/components/responses/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedJSONError'
 
 components:
   parameters:
@@ -371,6 +386,24 @@ components:
             type: string
             example: ""
 
+    BasicJsonResponse:
+      description: Basic JSON response reporting success or failure
+      nullable: false
+      content:
+        application/json:
+          schema:
+            type: object
+            example: {"success":true,"message":"S'all good!"}
+            description: Basic JSON response with success indicator and message
+            properties:
+              success:
+                description: Boolean indicating success (when true) or failure (when false)
+                type: boolean
+                nullable: false
+              message:
+                description: Human readable message to inform caller about specifis of success, or reason for failure
+                type: string
+                nullable: true
     HtmlResponse:
       description: HTML or HTML snippet returned successfully
       content:
@@ -391,13 +424,34 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/IdObjects'
-    UnexpectedError:
+    UnexpectedJSONError:
       description: unexpected error
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/JSONError'
   schemas:
+    DragAndDrop:
+      type: object
+      description: Data for drag & drop operation
+      nullable: false
+      properties:
+        drag:
+          type: object
+          description: Item dragged in the drag & drop operation
+          properties:
+            type:
+              $ref: '#/components/schemas/TypeString'
+            id:
+              $ref: '#/components/schemas/Ids'
+        drop:
+          type: object
+          description: Item dropped in the drag & drop operation
+          properties:
+            type:
+              $ref: '#/components/schemas/TypeString'
+            ids:
+              $ref: '#/components/schemas/Id'
     TypeString:
       type: string
       description: Type of item
@@ -411,13 +465,21 @@ components:
       format: int64
       description: Primary key identifier
       nullable: false
+    Ids:
+      type: array
+      items:
+        type: integer
+        format: int64
+        description: Primary key identifiers
     IdObject:
       type: object
+      nullable: false
       properties:
         id:
           $ref: '#/components/schemas/Id'
     IdObjects:
       type: array
+      nullable: false
       items:
         $ref: '#/components/schemas/IdObject'
     Link:

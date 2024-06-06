@@ -17,6 +17,9 @@ type ServerInterface interface {
 	// Update name text by context menu type and DB ID
 	// (PUT /context-menu/{contextMenuType}/{id}/name)
 	PutContextMenuContextMenuTypeIdName(w http.ResponseWriter, r *http.Request, contextMenuType ContextMenuType, id IdParameter)
+	// Update the database for the drag & drop types specified
+	// (POST /drag-drop)
+	PostDragDrop(w http.ResponseWriter, r *http.Request)
 	// Health Check
 	// (GET /healthz)
 	GetHealthz(w http.ResponseWriter, r *http.Request)
@@ -93,6 +96,21 @@ func (siw *ServerInterfaceWrapper) PutContextMenuContextMenuTypeIdName(w http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PutContextMenuContextMenuTypeIdName(w, r, contextMenuType, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// PostDragDrop operation middleware
+func (siw *ServerInterfaceWrapper) PostDragDrop(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostDragDrop(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -548,6 +566,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("PUT "+options.BaseURL+"/context-menu/{contextMenuType}/{id}/name", wrapper.PutContextMenuContextMenuTypeIdName)
+	m.HandleFunc("POST "+options.BaseURL+"/drag-drop", wrapper.PostDragDrop)
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
 	m.HandleFunc("GET "+options.BaseURL+"/html/alert", wrapper.GetHtmlAlert)
 	m.HandleFunc("GET "+options.BaseURL+"/html/context-menu/{contextMenuType}/{id}", wrapper.GetHtmlContextMenuContextMenuTypeId)

@@ -11,7 +11,7 @@ SaveTabs is a Chrome extension and local daemon used for keeping track of your t
 4. Disable triggering of events while editing label names
 5. Update ContentURL when edited label is returned by HTML API
 6. Fix "Invalid group filter foramt" for slashes ('/') in group name
-
+7. Capture browser
 ### Features To Add
 1. API
    1. ~~Implement Group Type list API~~
@@ -36,33 +36,42 @@ SaveTabs is a Chrome extension and local daemon used for keeping track of your t
          1. ~~Make `<nav>`, `<thead>`, `<tbody>` sticky~~ 
       7. Drag & Drop 
          1. Move links to different groups
-         2. Merge group to other groups
-      8. Menu Items for Links
+         2. Copy links to different groups
+         3. Merge group to other groups
+         4. Add visual feedback to illustrate successful drop
+      8. Make Content Nav more generic
+         1. Use Go types
+      9. Menu Items for Links
          1. ~~Rename~~
          2. Delete
          3. Archive
          4. Merge To
-      9. Capture/handle in Caretaker
-         1. Screenshot
-         2. Meta
-         3. Content
-         4. Other?
-      10. Expand/Collapse Item for links
+      10. Capture/handle in Caretaker
+          1. Screenshot
+          2. Meta
+          3. Content
+          4. Other?
+      11. Capture from browser
+          1. Browser Type
+          2. Other?
+      12. Expand/Collapse Item for links
           1. Tabbed panel
              1. Title, Screenshot, Content
              2. URL exploded into component parts
-      12. Column resizing
-      13. Table Row Sorting
+      13. Column resizing
+      14. Table Row Sorting
           1. By clicking table Headers
           2. Toolbar control to add a sort
           3. Allow multiple sort levels
-      14. Table Row Filters
+      15. Table Row Filters
           1. Use Flex to allow many filters
           2. Filters
              1. Archived — Default=0
              2. Deleted — Default=0
              3. Group/Value
              4. URL parts/Values
+      16. Capture from more browser events
+          1. TBD
    3. Settings
 3. Configuration
    1. Add daemon config file, 

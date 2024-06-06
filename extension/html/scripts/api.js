@@ -12,6 +12,9 @@ function apiLinkByURLEndpoint(url) {
    url = encodeURIComponent(url)
    return `${getApiServerUrl()}/links/by-url/${url}`
 }
+function apiDragDropEndpoint() {
+   return `${getApiServerUrl()}/drag-drop`
+}
 function apiLinkEndpoint(id) {
    return `${getApiServerUrl()}/links/${id}`
 }
@@ -23,6 +26,7 @@ export function getHttpOptions(method,data) {
    let body,headers
    switch (method) {
       case 'POST':
+         // fallthrough
       case 'PUT':
          body = JSON.stringify(data)
          headers = {
@@ -51,6 +55,30 @@ export function apiPutLinkByTab(tab) {
    apiPutLink(link)
 }
 
+export function newDragDrop(dragType,dragIds,dropType,dropId) {
+   for(let index = 0; index < dragIds.length; index++) {
+      dragIds[index] = parseInt(dragIds[index],10)
+   }
+   return {
+      drag:{
+         type: dragType,
+         ids: dragIds
+      },
+      drop:{
+         type: dropType,
+         id: Number(dropId)
+      }
+   }
+}
+
+export function apiPostOnDrop(dragDrop) {
+   const endpoint = apiDragDropEndpoint();
+   const drag = dragDrop.drag.ids.join(',');
+   const drop = dragDrop.drop;
+   httpPost(endpoint,dragDrop);
+   console.log("Drag and Drop:", `${drag.type}:${drag.ids} ==> ${drop.type}:${drop.id}`);
+}
+
 function apiPutLink(link) {
    let endpoint;
    if (link.hasOwnProperty('id') && link.id) {
@@ -72,8 +100,16 @@ export function apiPutLabel(label) {
    httpPut(endpoint, label)
 }
 
+function httpPost(endpoint,item) {
+   httpRequest('POST',endpoint, item);
+}
+
 function httpPut(endpoint,item) {
-   fetch(endpoint, getHttpOptions('PUT', item))
+   httpRequest('PUT',endpoint, item);
+}
+
+function httpRequest(method,endpoint,item) {
+   fetch(endpoint, getHttpOptions(method, item))
          .then(response => {
             response.json()
          })

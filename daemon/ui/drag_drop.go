@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -13,7 +12,7 @@ import (
 var (
 	draggableLink       = newDragDropTarget("link")
 	droppableGroup      = newDragDropTarget("group")
-	linkToGroupDragDrop = newDragDrop("link-to-group", draggableLink, droppableGroup)
+	linkToGroupDragDrop = newDragDrop(draggableLink, droppableGroup)
 )
 
 type dragDrop struct {
@@ -26,9 +25,8 @@ func (d *dragDrop) String() string {
 	return d.Name.String()
 }
 
-func newDragDrop(name string, draggable, droppable *dragDropParticipant) *dragDrop {
+func newDragDrop(draggable, droppable *dragDropParticipant) *dragDrop {
 	return &dragDrop{
-		Name:      shared.MakeSafeId(name),
 		draggable: draggable,
 		droppable: droppable,
 	}
@@ -88,10 +86,10 @@ func newDragDropTarget(name string) *dragDropParticipant {
 	return ddt
 }
 
-func dragDropTargetByName(name string) (_ *dragDropParticipant, err error) {
-	mt, ok := dragDropTargetMap[strings.ToLower(name)]
-	if !ok {
-		err = errors.Join(ErrDragDropTargetNotFound, fmt.Errorf("target=%s", name))
-	}
-	return mt, err
-}
+//func dragDropTargetByName(name string) (_ *dragDropParticipant, err error) {
+//	mt, ok := dragDropTargetMap[strings.ToLower(name)]
+//	if !ok {
+//		err = errors.Join(ErrDragDropTargetNotFound, fmt.Errorf("target=%s", name))
+//	}
+//	return mt, err
+//}

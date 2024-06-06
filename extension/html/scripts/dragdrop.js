@@ -1,3 +1,5 @@
+import {apiPostOnDrop,newDragDrop} from "./api.js";
+
 const mimeTypePrefix = 'application/x-savetabs';
 const dropTargetWrapper = 'details';
 const img = new Image();
@@ -115,7 +117,7 @@ document.addEventListener('drop', function (event) {
    let [dragType,dragId] = source.split(':');
    dragType = stripPrefix(dragType,`${mimeTypePrefix}-`);
    const [dropType,dropId] = target.split(':');
-   console.log("Drag and Drop:", `${dragType}:${dragId} ==> ${dropType}:${dropId}`);
+   apiPostOnDrop(newDragDrop(dragType,[dragId],dropType,dropId))
    unHighlightDroppable(event.target)
 });
 

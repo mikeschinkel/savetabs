@@ -104,12 +104,24 @@ type MenuItem = string
 // MetaFilter defines model for MetaFilter.
 type MetaFilter map[string]string
 
-// UnexpectedError defines model for UnexpectedError.
-type UnexpectedError = JSONError
+// BasicJsonResponse Basic JSON response with success indicator and message
+type BasicJsonResponse struct {
+	// Message Human readable message to inform caller about specifis of success, or reason for failure
+	Message *string `json:"message"`
+
+	// Success Boolean indicating success (when true) or failure (when false)
+	Success *bool `json:"success,omitempty"`
+}
+
+// UnexpectedJSONError defines model for UnexpectedJSONError.
+type UnexpectedJSONError = JSONError
 
 // PutContextMenuContextMenuTypeIdNameFormdataBody defines parameters for PutContextMenuContextMenuTypeIdName.
 type PutContextMenuContextMenuTypeIdNameFormdataBody struct {
 }
+
+// PostDragDropJSONBody defines parameters for PostDragDrop.
+type PostDragDropJSONBody interface{}
 
 // GetHtmlAlertParams defines parameters for GetHtmlAlert.
 type GetHtmlAlertParams struct {
@@ -149,6 +161,9 @@ type PostHtmlLinksetFormdataBody struct {
 
 // PutContextMenuContextMenuTypeIdNameFormdataRequestBody defines body for PutContextMenuContextMenuTypeIdName for application/x-www-form-urlencoded ContentType.
 type PutContextMenuContextMenuTypeIdNameFormdataRequestBody PutContextMenuContextMenuTypeIdNameFormdataBody
+
+// PostDragDropJSONRequestBody defines body for PostDragDrop for application/json ContentType.
+type PostDragDropJSONRequestBody PostDragDropJSONBody
 
 // PostHtmlLinksetFormdataRequestBody defines body for PostHtmlLinkset for application/x-www-form-urlencoded ContentType.
 type PostHtmlLinksetFormdataRequestBody PostHtmlLinksetFormdataBody
