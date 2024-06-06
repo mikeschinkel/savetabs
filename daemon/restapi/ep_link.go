@@ -13,6 +13,13 @@ import (
 	"savetabs/shared"
 )
 
+type link struct {
+	TabId int64  `json:"tab_id"`
+	URL   string `json:"url"`
+	Title string `json:"title"`
+	HTML  string `json:"html"`
+}
+
 func (a *API) PutLinksByUrlLinkUrl(w http.ResponseWriter, r *http.Request, linkUrl LinkUrl) {
 	ctx := context.TODO()
 
@@ -22,12 +29,7 @@ func (a *API) PutLinksByUrlLinkUrl(w http.ResponseWriter, r *http.Request, linkU
 		a.sendHTMLError(w, r, http.StatusBadGateway, err.Error())
 		return
 	}
-	var link struct {
-		TabId int64  `json:"tab_id"`
-		URL   string `json:"url"`
-		Title string `json:"title"`
-		HTML  string `json:"html"`
-	}
+	var link link
 	err = json.Unmarshal(body, &link)
 	if err != nil {
 		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
