@@ -17,6 +17,6 @@ type MenuItemable interface {
 	Level() int
 	MenuType() *MenuType
 	Parent() MenuItemParent
-	LocalId() safehtml.Identifier
+	LocalId() string
 	IsLeaf() bool
 }

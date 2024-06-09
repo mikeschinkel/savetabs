@@ -32,8 +32,8 @@ func (hmi HTMLMenuItem) ContextMenuId() safehtml.Identifier {
 	return shared.MakeSafeId(hmi.contextMenu.String())
 }
 
-func (hmi HTMLMenuItem) LocalId() safehtml.Identifier {
-	return shared.MakeSafeId(hmi.localId)
+func (hmi HTMLMenuItem) LocalId() string {
+	return hmi.localId
 }
 
 func (hmi HTMLMenuItem) Parent() shared.MenuItemParent {
@@ -72,12 +72,12 @@ func (hmi HTMLMenuItem) HasContextMenu() bool {
 	return hmi.contextMenu != nil
 }
 
-func (hmi HTMLMenuItem) DropTarget() safehtml.Identifier {
-	return shared.MakeSafeId(hmi.dropItem.DropTarget())
+func (hmi HTMLMenuItem) DropTarget() string {
+	return hmi.dropItem.DropTarget()
 }
 
-func (hmi HTMLMenuItem) DropTypes() safehtml.Identifier {
-	return shared.MakeSafeId(hmi.dropItem.DropTypes())
+func (hmi HTMLMenuItem) DropTypes() string {
+	return hmi.dropItem.DropTypes()
 }
 
 func (hmi HTMLMenuItem) HTMLId() safehtml.Identifier {
