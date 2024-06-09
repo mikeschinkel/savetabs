@@ -42,7 +42,7 @@ func (gf GroupFilter) HTMLId(mi MenuItemable) string {
 		mt.Name(),
 		mi.LocalId(),
 	)
-	return id
+	return Slugify(id)
 }
 
 func (gf GroupFilter) ContentQuery(mi MenuItemable) (u string) {
