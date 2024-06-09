@@ -1,4 +1,4 @@
-{{- /*gotype:savetabs/ui.menuItem*/ -}}
+{{- /*gotype:savetabs/ui.HTMLMenuItem*/ -}}
 <ul class="menu p-0 mb-4{{if .IsTopLevelMenu}} flex-1 overflow-auto{{else}} overflow-visible{{end}} bg-gray-200 text-base-content" x-data="contextMenuer">
 {{range .MenuItems}}
   <li id="{{.HTMLId}}" class="{{if .IsLeaf }}h-7 {{end}}m-0 p-0 flex w-full">
@@ -12,7 +12,7 @@
           hx-trigger="contextmenu consume"
           @contextmenu="show"
 		    {{end}}
-		    {{if .IsLeaf}} data-droptarget="{{.DropTarget}}"  data-droptypes="link"{{end}}
+		    {{if .IsLeaf}} data-droptarget="{{.DropTarget}}"  data-droptypes="{{.DropTypes}}"{{end}}
 		    class="{{if .IsLeaf}}p-0 py-2 m-0{{else}}py-3 my-0{{end}} rounded-sm list-none flex items-center w-full gap-2">
         {{if .IsLeaf }}
 	        {{/*
@@ -21,13 +21,13 @@
 	          </span>
 	        */}}
         {{else}}
-          <div x-data="collapsible" class="grow-0 py-2 cursor-pointer">
+          <div x-data="collapsible" class="grow-0 py-2">
             <expand-icon x-show="collapsed" @click="toggle" class="clickable" hx-get="{{$.HTMLMenuURL}}/{{.ChildMenuURL}}" hx-target="#{{.HTMLId}}-kids"></expand-icon>
             <collapse-icon x-show="expanded" @click="toggle" class="clickable"></collapse-icon>
           </div>
         {{end}}
         <span class="w-full pl-2 cursor-pointer" hx-get="{{$.HTMLLinksURL}}{{.ContentQuery}}" hx-target="#links-section">
-					<label {{if .HasContextMenu }}id="{{.ContextMenuId}}"{{end}}>{{.Label}}</label>
+					<label {{if .HasContextMenu }}id="{{.ContextMenuId}}"{{end}} class="cursor-pointer">{{.Label}}</label>
         </span>
       </summary>
       {{if .HasChildren }}<div id="{{.HTMLId}}-kids" class="pl-4 m-0"></div>{{end}}

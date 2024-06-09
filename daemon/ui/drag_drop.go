@@ -22,7 +22,7 @@ type dragDrop struct {
 }
 
 func (d *dragDrop) String() string {
-	return d.Name.String()
+	return fmt.Sprintf("%s => %s", d.draggable, d.droppable)
 }
 
 func newDragDrop(draggable, droppable *dragDropParticipant) *dragDrop {
@@ -39,8 +39,9 @@ type dragDropParticipant struct {
 
 type dragDropItem struct {
 	*dragDrop
-	DragIds []int64
-	DropId  int64
+	DragParentId int64
+	DragIds      []int64
+	DropId       int64
 }
 
 func newDropItem(dd *dragDrop, dropId int64) dragDropItem {
@@ -51,10 +52,11 @@ func newDropItem(dd *dragDrop, dropId int64) dragDropItem {
 	}
 }
 
-func newDragItem(dd *dragDrop, ids []int64) dragDropItem {
+func newDragItem(dd *dragDrop, dragParentId int64, ids []int64) dragDropItem {
 	return dragDropItem{
-		dragDrop: dd,
-		DragIds:  ids,
+		dragDrop:     dd,
+		DragIds:      ids,
+		DragParentId: dragParentId,
 	}
 }
 
@@ -63,9 +65,17 @@ func (d *dragDropItem) DragSources() string {
 		return fmt.Sprintf("%s:%d", d.draggable.Name, id)
 	}), " ")
 }
+func (d *dragDropItem) DragParent() string {
+	return fmt.Sprintf("%s:%d", d.droppable.Name, d.DragParentId)
+}
 
 func (d *dragDropItem) DropTarget() string {
 	return fmt.Sprintf("%s:%d", d.droppable.Name, d.DropId)
+}
+
+func (d *dragDropItem) DropTypes() string {
+	// TODO: This is just one. Maybe in future we'll support many.
+	return fmt.Sprintf("%s+%s", d.droppable.Name, d.draggable.Name)
 }
 
 var (

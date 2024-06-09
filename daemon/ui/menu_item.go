@@ -76,8 +76,12 @@ func (hmi HTMLMenuItem) DropTarget() safehtml.Identifier {
 	return shared.MakeSafeId(hmi.dropItem.DropTarget())
 }
 
+func (hmi HTMLMenuItem) DropTypes() safehtml.Identifier {
+	return shared.MakeSafeId(hmi.dropItem.DropTypes())
+}
+
 func (hmi HTMLMenuItem) HTMLId() safehtml.Identifier {
-	ft := shared.NewFilterByFilterType(hmi.FilterType())
+	ft := shared.NewFilter(hmi.FilterType(), 0)
 	id := ft.HTMLId(hmi)
 	return shared.MakeSafeIdf("%s-%s", hmi.Parent().HTMLId(), id)
 }
@@ -104,7 +108,7 @@ func (hmi HTMLMenuItem) ContentQuery() safehtml.URL {
 	if ok {
 		pcq = pmi.ContentQuery().String() + "&"
 	}
-	ft := shared.NewFilterByFilterType(hmi.FilterType())
+	ft := shared.NewFilter(hmi.FilterType(), 0)
 	u := ft.ContentQuery(hmi)
 	return shared.MakeSafeURL("?" + pcq + u)
 }

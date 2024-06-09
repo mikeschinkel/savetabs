@@ -12,18 +12,19 @@ import (
 	"savetabs/shared"
 )
 
-type Drag struct {
+type dragDropItems struct {
 	Type string  `json:"type" validate:"required"`
 	Ids  []int64 `json:"ids" validate:"required"`
 }
-type Drop struct {
+type dragDropItem struct {
 	Type string `json:"type" validate:"required"`
 	Id   int64  `json:"id" validate:"required"`
 }
 
 type dragDrop struct {
-	Drag Drag `json:"drag" validate:"required"`
-	Drop Drop `json:"drop" validate:"required"`
+	Drag   dragDropItems `json:"drag" validate:"required"`
+	Drop   dragDropItem  `json:"drop" validate:"required"`
+	Parent dragDropItem  `json:"parent" validate:"required"`
 }
 
 func (d dragDrop) String() string {

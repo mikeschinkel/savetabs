@@ -2,6 +2,7 @@ package shared
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/google/safehtml"
 	"github.com/google/safehtml/template"
@@ -53,7 +54,16 @@ func MakeSafeURLf(format string, args ...any) safehtml.URL {
 }
 
 func MakeSafeId(id string) safehtml.Identifier {
-	return safehtml.IdentifierSanitized(id)
+	sid := safehtml.IdentifierSanitized(id)
+	_id := sid.String()
+	if _id[0] != 'i' {
+		goto end
+	}
+	if _id[:8] == "invalid:" {
+		slog.Error("HTML id found to be invalid", "html_id", id)
+	}
+end:
+	return sid
 }
 
 func MakeSafeIdf(format string, args ...any) safehtml.Identifier {

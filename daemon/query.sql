@@ -15,6 +15,10 @@ LIMIT 1
 SELECT name FROM `group` WHERE id = ?
 ;
 
+-- name: LoadGroupIdBySlug :one
+SELECT id FROM `group` WHERE slug = ?
+;
+
 -- name: LoadGroupTypeAndName :one
 SELECT type, name FROM `group` WHERE id = ?
 ;

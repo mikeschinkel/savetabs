@@ -117,10 +117,11 @@ func GetLinksetHTML(ctx Context, args LinksetArgs) (hr HTMLResponse, err error) 
 	}
 	htmlLS.Links = shared.ConvertSlice(ls.Links, func(link model.Link) htmlLink {
 		rowNum++
+		parentId := args.FilterQuery.ParentDBId
 		return newHTMLLink(htmlLinkArgs{
 			Link:     link,
 			RowId:    rowNum,
-			DragItem: newDragItem(linkToGroupDragDrop, []int64{link.Id}),
+			DragItem: newDragItem(linkToGroupDragDrop, parentId, []int64{link.Id}),
 		})
 	})
 

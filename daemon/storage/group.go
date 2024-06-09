@@ -42,6 +42,15 @@ func LoadGroupName(ctx Context, dbtx *NestedDBTX, groupId int64) (name string, e
 	return name, err
 }
 
+func LoadGroupIdBySlug(ctx Context, dbtx *NestedDBTX, slug string) (id int64, err error) {
+	err = execWithEnsuredNestedDBTX(dbtx, func(dbtx *NestedDBTX) (err error) {
+		q := dbtx.DataStore.Queries(dbtx)
+		id, err = q.LoadGroupIdBySlug(ctx, slug)
+		return err
+	})
+	return id, err
+}
+
 type GroupTypeAndName struct {
 	Type string
 	Name string

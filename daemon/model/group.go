@@ -49,6 +49,10 @@ func LoadGroupName(ctx Context, groupId int64) (name string, err error) {
 	return storage.LoadGroupName(ctx, nil, groupId)
 }
 
+func LoadGroupIdBySlug(ctx Context, slug string) (int64, error) {
+	return storage.LoadGroupIdBySlug(ctx, nil, slug)
+}
+
 func LoadGroups(ctx Context, params GroupsArgs) (groups Groups, err error) {
 	var gs storage.Groups
 	gs, err = storage.LoadGroups(ctx, storage.GroupsArgs(params))

@@ -9,7 +9,7 @@ type GroupTypeFilter struct {
 	GroupTypes []GroupType
 }
 
-func newGroupTypeFilter() GroupTypeFilter {
+func newGroupTypeFilter(args any) FilterItem {
 	return GroupTypeFilter{
 		GroupTypes: make([]GroupType, 0),
 	}

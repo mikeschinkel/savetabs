@@ -1025,6 +1025,19 @@ func (q *Queries) LoadGroup(ctx context.Context, arg LoadGroupParams) (Group, er
 	return i, err
 }
 
+const loadGroupIdBySlug = `-- name: LoadGroupIdBySlug :one
+;
+
+SELECT id FROM ` + "`" + `group` + "`" + ` WHERE slug = ?
+`
+
+func (q *Queries) LoadGroupIdBySlug(ctx context.Context, slug string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, loadGroupIdBySlug, slug)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const loadGroupName = `-- name: LoadGroupName :one
 ;
 

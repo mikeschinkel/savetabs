@@ -16,9 +16,10 @@ type Filter struct {
 var filterTypeMap = make(map[string]*FilterType)
 
 type FilterType struct {
-	id     string
-	Label  string
-	Plural string
+	id      string
+	Label   string
+	Plural  string
+	NewItem func(any) FilterItem
 }
 
 // FilterTypes is a convenience array to allow processing filter types.
@@ -27,11 +28,12 @@ var FilterTypes = make([]*FilterType, 0, 10)
 
 var filterMutex sync.Mutex
 
-func newFilterType(value, label, plural string) *FilterType {
+func newFilterType(value, label, plural string, new func(any) FilterItem) *FilterType {
 	ft := &FilterType{
-		id:     strings.ToLower(value),
-		Label:  label,
-		Plural: plural,
+		id:      strings.ToLower(value),
+		Label:   label,
+		Plural:  plural,
+		NewItem: new,
 	}
 	filterMutex.Lock()
 	defer filterMutex.Unlock()
@@ -69,7 +71,7 @@ func (f FilterType) String() string {
 }
 
 var (
-	GroupTypeFilterType = newFilterType("gt", "Group Type", "Group Types")
-	GroupFilterType     = newFilterType("grp", "Group", "Groups")
-	MetaFilterType      = newFilterType("m", "Meta Pair", "Meta Pairs")
+	GroupTypeFilterType = newFilterType("gt", "Group Type", "Group Types", newGroupTypeFilter)
+	GroupFilterType     = newFilterType("grp", "Group", "Groups", newGroupFilter)
+	MetaFilterType      = newFilterType("m", "Meta Pair", "Meta Pairs", newMetaFilter)
 )

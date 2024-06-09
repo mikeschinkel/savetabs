@@ -7,22 +7,23 @@ import (
 )
 
 type FilterQuery struct {
+	ParentDBId  int64
 	FilterItems []FilterItem
 }
 
-func (items FilterQuery) String() (q string) {
+func (fq FilterQuery) String() (q string) {
 	sb := strings.Builder{}
 	sb.WriteByte('?')
-	for _, item := range items.FilterItems {
+	for _, item := range fq.FilterItems {
 		sb.WriteString(item.String())
 		sb.WriteByte('&')
 	}
 	return sb.String()[:sb.Len()-1]
 }
 
-func (items FilterQuery) Label() string {
+func (fq FilterQuery) Label() string {
 	sb := strings.Builder{}
-	for _, ft := range items.FilterItems {
+	for _, ft := range fq.FilterItems {
 		sb.WriteString(fmt.Sprintf("%s: %s && ",
 			ft.FilterType().Plural,
 			ft.Label(),
@@ -36,16 +37,18 @@ func (items FilterQuery) Label() string {
 	return labels[:len(labels)-4]
 }
 
-func NewFilterByFilterType(ft *FilterType) (fi FilterItem) {
-	switch ft {
-	case GroupTypeFilterType:
-		fi = newGroupTypeFilter()
-	case GroupFilterType:
-		fi = newGroupFilter()
-	case MetaFilterType:
-		fi = newMetaFilter()
+func (fq FilterQuery) FilterItemByType(ft *FilterType) (fi FilterItem, index int) {
+	for index, fi = range fq.FilterItems {
+		if fi.FilterType() != ft {
+			continue
+		}
+		break
 	}
-	return fi
+	return fi, index
+}
+
+func NewFilter(ft *FilterType, args any) (fi FilterItem) {
+	return ft.NewItem(args)
 }
 
 func ParseFilterQuery(u string) (items FilterQuery, err error) {

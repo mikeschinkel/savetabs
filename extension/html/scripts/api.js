@@ -1,5 +1,6 @@
 import {addRecentlySubmittedLinks} from "./chromeUtils.js";
 
+
 const apiServerUrl = "http://localhost:8642"
 
 export function getApiServerUrl(){
@@ -55,28 +56,20 @@ export function apiPutLinkByTab(tab) {
    apiPutLink(link)
 }
 
-export function newDragDrop(dragType,dragIds,dropType,dropId) {
-   for(let index = 0; index < dragIds.length; index++) {
-      dragIds[index] = parseInt(dragIds[index],10)
-   }
-   return {
-      drag:{
-         type: dragType,
-         ids: dragIds
-      },
-      drop:{
-         type: dropType,
-         id: Number(dropId)
-      }
-   }
-}
 
 export function apiPostOnDrop(dragDrop,callback) {
    const endpoint = apiDragDropEndpoint();
-   const drag = dragDrop.drag.ids.join(',');
-   const drop = dragDrop.drop;
-   httpPost(endpoint,dragDrop, callback);
-   console.log("Drag and Drop:", `${drag.type}:${drag.ids} ==> ${drop.type}:${drop.id}`);
+   const postData = dragDrop.getPostData()
+   httpPost(endpoint,postData, function(status,response){
+      const result = callback(status,response) ? "SUCCESS" : "FAILED";
+      const drag = postData.drag;
+      const drop = postData.drop;
+      drag.ids = drag.ids.join(',');
+      console.log(`Drag and Drop:`,
+         `${drag.type}:${drag.ids} ==> ${drop.type}:${drop.id}`,
+         result
+      );
+   });
 }
 
 function apiPutLink(link) {

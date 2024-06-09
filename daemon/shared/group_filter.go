@@ -10,7 +10,29 @@ import (
 var _ FilterItem = (*GroupFilter)(nil)
 
 type GroupFilter struct {
+	dbId         int64
 	FilterGroups []FilterGroup
+}
+
+func (gf GroupFilter) DBId() int64 {
+	return gf.dbId
+}
+
+func (gf GroupFilter) WithDBId(id int64) GroupFilter {
+	// Damn that needless "ineffective assignment" warning by GoLand
+	gf.dbId = id
+	return gf
+}
+
+func (gf GroupFilter) FilterGroupByType(groupType GroupType) (fg *FilterGroup) {
+	for _, g := range gf.FilterGroups {
+		if g.GroupType != groupType {
+			continue
+		}
+		fg = &g
+		break
+	}
+	return fg
 }
 
 func (gf GroupFilter) HTMLId(mi MenuItemable) string {
@@ -33,8 +55,24 @@ func (gf GroupFilter) ContentQuery(mi MenuItemable) (u string) {
 	return u
 }
 
-func newGroupFilter() GroupFilter {
+func newGroupFilter(args any) FilterItem {
+	if args == nil {
+		panic("No GroupId not provided for GroupFilterType")
+	}
+	var groupId int64
+	var _groupId int
+	var ok bool
+	groupId, ok = args.(int64)
+	if !ok {
+		// If a literal 0 is passed it will be `int`, not `int64` so we need to capa
+		_groupId, ok = args.(int)
+		groupId = int64(_groupId)
+	}
+	if !ok {
+		Panicf("Invalid type for GroupId provided for GroupFilterType; %#v provided instead", args)
+	}
 	return GroupFilter{
+		dbId:         groupId,
 		FilterGroups: make([]FilterGroup, 0),
 	}
 }

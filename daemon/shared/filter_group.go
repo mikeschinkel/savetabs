@@ -31,6 +31,10 @@ end:
 }
 
 func (fg FilterGroup) String() string {
+	return fg.Slug()
+}
+
+func (fg FilterGroup) Slug() string {
 	return fmt.Sprintf("%s:%s",
 		fg.GroupType.Lower(),
 		fg.GroupName,

@@ -1,13 +1,39 @@
 import {getApiServerUrl} from './api.js';
+import {newDragDropEvents} from "./dragdrop.js";
 import {} from './shared.js'
 import {} from './menu.js'
 import {} from './icons.js'
 import {} from './alpine-loader.js'
 
+
 console.log("SaveTabs daemon:", getApiServerUrl())
 const requestFormEvent ='get-checkbox-checker-form';
 const receiveFormEvent ='checkbox-checker-form';
-
+const ddEvents = newDragDropEvents();
+// Capture the item(s) being dragged
+document.addEventListener('dragstart', function (event) {
+   ddEvents.dragStart(event);
+});
+document.addEventListener('dragover', function (event) {
+   ddEvents.dragOver(event);
+});
+// Display droppable element as ready to accept drag
+document.addEventListener('dragenter', function (event) {
+   ddEvents.dragEnter(event);
+});
+// Unhighlight droppable element
+document.addEventListener('dragleave', function (event) {
+   ddEvents.dragLeave(event);
+});
+// Call API to update DB on drop
+// Also update the current links view showing those items no longer visible
+document.addEventListener('drop', function (event) {
+   ddEvents.drop(event);
+});
+// Clear out dragElements
+document.addEventListener('dragend', function (event) {
+   ddEvents.dragEnd(event);
+});
 document.addEventListener('alpine:init', () => {
    Alpine.data('checkedHighlighter', () => ({
       highlight(event) {

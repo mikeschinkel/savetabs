@@ -23,7 +23,7 @@ func (mf MetaFilter) ContentQuery(itemable MenuItemable) string {
 	panic("implement me")
 }
 
-func newMetaFilter() MetaFilter {
+func newMetaFilter(args any) FilterItem {
 	return MetaFilter{
 		Metas: make([]Meta, 0),
 	}
