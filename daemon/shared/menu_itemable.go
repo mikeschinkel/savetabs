@@ -17,6 +17,6 @@ type MenuItemable interface {
 	Level() int
 	MenuType() *MenuType
 	Parent() MenuItemParent
-	LocalId() string
+	LocalId() string // TODO: Change to type that constrains to only valid charaters, to include / and +.
 	IsLeaf() bool
 }
