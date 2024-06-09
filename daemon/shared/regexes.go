@@ -14,4 +14,4 @@ var MatchDashes = regexp.MustCompile(`-+`)
 // - A-Za-z includes all uppercase and lowercase letters.
 // - 0-9 includes all digits.
 // - - is a literal dash, included in the character set.
-var MatchNonSlugCharacters = regexp.MustCompile("[^A-Za-z0-9-/]+")
+var MatchNonSlugCharacters = regexp.MustCompile("[^A-Za-z0-9-]+")
