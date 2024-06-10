@@ -62,3 +62,9 @@ func LoadGroups(ctx Context, params GroupsArgs) (groups Groups, err error) {
 end:
 	return NewGroups(gs), err
 }
+
+type MoveLinkToGroupArgs storage.MoveLinkToGroupArgs
+
+func MoveLinkToGroup(ctx Context, args MoveLinkToGroupArgs) error {
+	return storage.MoveLinkToGroup(ctx, nil, storage.MoveLinkToGroupArgs(args))
+}

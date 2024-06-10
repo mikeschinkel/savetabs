@@ -105,3 +105,21 @@ func NewLoadLink(row sqlc.LoadLinkRow) Link {
 		Fragment:  row.Fragment,
 	}
 }
+
+func ValidateLinks(ctx Context, dbtx *NestedDBTX, linkIds []int64) (missing []int64, err error) {
+	err = execWithEnsuredNestedDBTX(dbtx, func(dbtx *NestedDBTX) (err error) {
+		var rows []sqlc.ValidateLinksRow
+
+		q := dbtx.DataStore.Queries(dbtx)
+		rows, err = q.ValidateLinks(ctx, linkIds)
+		missing = make([]int64, 0, len(rows))
+		for _, row := range rows {
+			if row.LinksExist == 1 {
+				continue
+			}
+			missing = append(missing, row.ID)
+		}
+		return err
+	})
+	return missing, err
+}

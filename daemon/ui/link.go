@@ -13,13 +13,13 @@ import (
 type htmlLinkArgs struct {
 	Link     model.Link
 	RowId    int
-	DragItem dragDropItem
+	DragItem shared.DragDropItem
 }
 
 type htmlLink struct {
 	model.Link
 	RowId    int
-	dragItem dragDropItem
+	dragItem shared.DragDropItem
 }
 
 func newHTMLLink(args htmlLinkArgs) htmlLink {

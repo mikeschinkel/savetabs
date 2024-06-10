@@ -19,7 +19,7 @@ type HTMLMenuItem struct {
 	Label       safehtml.HTML
 	menuType    *shared.MenuType
 	contextMenu *shared.ContextMenu
-	dropItem    dragDropItem
+	dropItem    shared.DragDropItem
 }
 
 func (hmi HTMLMenuItem) ContextMenuType() (id safehtml.Identifier) {
@@ -51,7 +51,7 @@ func (hmi HTMLMenuItem) Level() int {
 type HTMLMenuItemArgs struct {
 	Parent   shared.MenuItemParent
 	MenuType *shared.MenuType
-	DropItem dragDropItem
+	DropItem shared.DragDropItem
 }
 
 var zeroStateHTMLMenuItem HTMLMenuItem
@@ -180,7 +180,7 @@ func GetSubmenuHTML(ctx Context, args SubmenuHTMLArgs) (hr HTMLResponse, err err
 		return newHTMLMenuItem(item, &HTMLMenuItemArgs{
 			Parent:   args.Menu,
 			MenuType: mt,
-			DropItem: newDropItem(linkToGroupDragDrop, item.DBId), //TODO: Fix the 0 to a real ID
+			DropItem: shared.NewDropItem(shared.LinkToGroupDragDrop, item.DBId), //TODO: Fix the 0 to a real ID
 		})
 	})
 	hr.HTML, err = menuTemplate.ExecuteToHTML(args.Menu)

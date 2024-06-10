@@ -17,6 +17,8 @@ var (
 	ErrFailedToArchiveLinks     = errors.New("failed to archive links")
 	ErrFailedToMarkLinksDeleted = errors.New("failed to delete links")
 	ErrFoundInLink              = errors.New("error found in link")
+	ErrInvalidGroupId           = errors.New("invalid group Id")
+	ErrInvalidLinkIds           = errors.New("invalid Link Ids")
 	ErrFailedConvertToAbsPath   = errors.New("failed to convert to absolute path")
 	ErrFailedToInitDataStore    = errors.New("failed to initialize data store")
 )

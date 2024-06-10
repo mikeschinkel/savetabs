@@ -121,7 +121,7 @@ func GetLinksetHTML(ctx Context, args LinksetArgs) (hr HTMLResponse, err error) 
 		return newHTMLLink(htmlLinkArgs{
 			Link:     link,
 			RowId:    rowNum,
-			DragItem: newDragItem(linkToGroupDragDrop, parentId, []int64{link.Id}),
+			DragItem: shared.NewDragItem(shared.LinkToGroupDragDrop, parentId, []int64{link.Id}),
 		})
 	})
 

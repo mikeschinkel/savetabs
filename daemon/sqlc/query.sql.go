@@ -1396,6 +1396,41 @@ func (q *Queries) MergeLinksGroups(ctx context.Context, arg MergeLinksGroupsPara
 	return err
 }
 
+const moveLinkToGroup = `-- name: MoveLinkToGroup :exec
+;
+
+UPDATE link_group
+SET
+   group_id = ?,
+   latest_time  = STRFTIME('%s', 'now')
+WHERE true
+  AND group_id = ?
+  AND link_id IN (/*SLICE:link_ids*/?)
+`
+
+type MoveLinkToGroupParams struct {
+	GroupID   int64   `json:"group_id"`
+	GroupID_2 int64   `json:"group_id_2"`
+	LinkIds   []int64 `json:"link_ids"`
+}
+
+func (q *Queries) MoveLinkToGroup(ctx context.Context, arg MoveLinkToGroupParams) error {
+	query := moveLinkToGroup
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.GroupID)
+	queryParams = append(queryParams, arg.GroupID_2)
+	if len(arg.LinkIds) > 0 {
+		for _, v := range arg.LinkIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_ids*/?", strings.Repeat(",?", len(arg.LinkIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_ids*/?", "NULL", 1)
+	}
+	_, err := q.db.ExecContext(ctx, query, queryParams...)
+	return err
+}
+
 const updateGroupName = `-- name: UpdateGroupName :exec
 ;
 
@@ -1652,4 +1687,70 @@ func (q *Queries) UpsertVar(ctx context.Context, arg UpsertVarParams) (int64, er
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const validateGroup = `-- name: ValidateGroup :one
+;
+
+SELECT
+   CASE WHEN COUNT(id)=0 THEN 0 ELSE 1 END AS group_exists
+FROM
+   ` + "`" + `group` + "`" + `
+WHERE id = ?
+`
+
+func (q *Queries) ValidateGroup(ctx context.Context, id int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, validateGroup, id)
+	var group_exists int64
+	err := row.Scan(&group_exists)
+	return group_exists, err
+}
+
+const validateLinks = `-- name: ValidateLinks :many
+;
+
+SELECT
+   id,
+   CASE WHEN COUNT(id)=0 THEN 0 ELSE 1 END AS links_exist
+FROM
+   link
+WHERE id IN (/*SLICE:link_ids*/?)
+`
+
+type ValidateLinksRow struct {
+	ID         int64 `json:"id"`
+	LinksExist int64 `json:"links_exist"`
+}
+
+func (q *Queries) ValidateLinks(ctx context.Context, linkIds []int64) ([]ValidateLinksRow, error) {
+	query := validateLinks
+	var queryParams []interface{}
+	if len(linkIds) > 0 {
+		for _, v := range linkIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_ids*/?", strings.Repeat(",?", len(linkIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ValidateLinksRow
+	for rows.Next() {
+		var i ValidateLinksRow
+		if err := rows.Scan(&i.ID, &i.LinksExist); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

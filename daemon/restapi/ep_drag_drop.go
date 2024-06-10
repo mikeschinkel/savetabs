@@ -1,6 +1,7 @@
 package restapi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"savetabs/guard"
 	"savetabs/shared"
 )
 
@@ -22,13 +24,15 @@ type dragDropItem struct {
 }
 
 type dragDrop struct {
+	Parent dragDropItem  `json:"parent" validate:"required"`
 	Drag   dragDropItems `json:"drag" validate:"required"`
 	Drop   dragDropItem  `json:"drop" validate:"required"`
-	Parent dragDropItem  `json:"parent" validate:"required"`
 }
 
 func (d dragDrop) String() string {
-	return fmt.Sprintf("%s:%s => %s:%d",
+	return fmt.Sprintf("%s:%d/%s:%s => %s:%d",
+		d.Parent.Type,
+		d.Parent.Id,
 		d.Drag.Type,
 		strings.Join(shared.ConvertSlice(d.Drag.Ids, func(id int64) string {
 			return strconv.FormatInt(id, 10)
@@ -40,7 +44,7 @@ func (d dragDrop) String() string {
 
 func (a *API) PostDragDrop(w http.ResponseWriter, r *http.Request) {
 
-	//ctx := context.Background()
+	ctx := context.Background()
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -63,15 +67,14 @@ func (a *API) PostDragDrop(w http.ResponseWriter, r *http.Request) {
 
 	slog.Debug("POST name:", "drag_drop", msg)
 
-	if msg == "" {
-		err = ErrFailedToFixThisTODO
-	}
-
-	// TODO: Implement the following:
-	//err = guard.ApplyDrop(ctx, guard.ApplyDropArgs{
-	//	DragDrop: dd,
-	//})
-
+	err = guard.ApplyDragDrop(ctx, guard.ApplyDragDropArgs{
+		ParentType: dd.Parent.Type,
+		ParentId:   dd.Parent.Id,
+		DragType:   dd.Drag.Type,
+		DragIds:    dd.Drag.Ids,
+		DropType:   dd.Drop.Type,
+		DropId:     dd.Drop.Id,
+	})
 	if err != nil {
 		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
 		return

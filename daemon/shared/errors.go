@@ -16,4 +16,5 @@ var (
 	ErrInvalidMetaFilterFormat    = errors.New("invalid meta filter format")
 	ErrParamIsNotKindOfStruct     = errors.New("input is not a kind of struct")
 	ErrNonZeroFieldValueRequired  = errors.New("non-zero field value required")
+	ErrInvalidDragDropType        = errors.New("invalid drag-drop type")
 )

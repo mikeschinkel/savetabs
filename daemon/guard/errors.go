@@ -9,4 +9,5 @@ var (
 	ErrHTMLNotParsed         = errors.New("html not parsed")
 	ErrUrlNotSpecified       = errors.New("url not specified")
 	ErrInvalidMenuItemFormat = errors.New("invalid menu item format (expected '<type>-<key>')")
+	ErrInvalidIdentifier     = errors.New("invalid identifier")
 )

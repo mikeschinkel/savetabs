@@ -15,6 +15,23 @@ LIMIT 1
 SELECT name FROM `group` WHERE id = ?
 ;
 
+-- name: ValidateGroup :one
+SELECT
+   CASE WHEN COUNT(id)=0 THEN 0 ELSE 1 END AS group_exists
+FROM
+   `group`
+WHERE id = ?
+;
+
+-- name: ValidateLinks :many
+SELECT
+   id,
+   CASE WHEN COUNT(id)=0 THEN 0 ELSE 1 END AS links_exist
+FROM
+   link
+WHERE id IN (sqlc.slice('link_ids'))
+;
+
 -- name: LoadGroupIdBySlug :one
 SELECT id FROM `group` WHERE slug = ?
 ;
@@ -29,6 +46,16 @@ SET
    group_id = ?
 WHERE
    group_id IN (sqlc.slice('group_ids'))
+;
+
+-- name: MoveLinkToGroup :exec
+UPDATE link_group
+SET
+   group_id = ?,
+   latest_time  = STRFTIME('%s', 'now')
+WHERE true
+  AND group_id = ?
+  AND link_id IN (sqlc.slice('link_ids'))
 ;
 
 -- name: MarkGroupsDeleted :exec

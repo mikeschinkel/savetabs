@@ -1,7 +1,9 @@
 package storage
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"savetabs/shared"
@@ -31,6 +33,16 @@ type Group struct {
 type Groups struct {
 	Groups []Group
 	Args   GroupsArgs
+}
+
+func ValidateGroup(ctx Context, dbtx *NestedDBTX, groupId int64) (_ bool, err error) {
+	var exists int64
+	err = execWithEnsuredNestedDBTX(dbtx, func(dbtx *NestedDBTX) (err error) {
+		q := dbtx.DataStore.Queries(dbtx)
+		exists, err = q.ValidateGroup(ctx, groupId)
+		return err
+	})
+	return exists != 0, err
 }
 
 func LoadGroupName(ctx Context, dbtx *NestedDBTX, groupId int64) (name string, err error) {
@@ -93,6 +105,55 @@ func LoadAltGroupIdsByName(ctx Context, dbtx *NestedDBTX, args GroupNameArgs) (i
 		return err
 	})
 	return ids, err
+}
+
+type MoveLinkToGroupArgs struct {
+	LinkIds     []int64
+	FromGroupId int64
+	ToGroupId   int64
+}
+
+func MoveLinkToGroup(ctx Context, dbtx *NestedDBTX, args MoveLinkToGroupArgs) (err error) {
+	return execWithEnsuredNestedDBTX(dbtx, func(dbtx *NestedDBTX) (err error) {
+		var ok bool
+		var missing []int64
+
+		me := shared.NewMultiErr()
+		q := dbtx.DataStore.Queries(dbtx)
+		for _, gid := range []int64{args.FromGroupId, args.ToGroupId} {
+			ok, err = ValidateGroup(ctx, dbtx, gid)
+			if err != nil {
+				me.Add(err)
+				continue
+			}
+			if !ok {
+				err = errors.Join(ErrInvalidGroupId, fmt.Errorf("group_id=%d", gid))
+				me.Add(err)
+				continue
+			}
+		}
+		missing, err = ValidateLinks(ctx, dbtx, args.LinkIds)
+		if err != nil {
+			me.Add(err)
+			goto end
+		}
+		if len(missing) != 0 {
+			ids := shared.ConvertSlice(missing, func(id int64) string {
+				return strconv.FormatInt(id, 10)
+			})
+			err = errors.Join(ErrInvalidLinkIds,
+				fmt.Errorf("link_ids=%s", strings.Join(ids, ",")),
+			)
+			goto end
+		}
+		err = q.MoveLinkToGroup(ctx, sqlc.MoveLinkToGroupParams{
+			GroupID:   args.ToGroupId,
+			GroupID_2: args.FromGroupId,
+			LinkIds:   args.LinkIds,
+		})
+	end:
+		return
+	})
 }
 
 func UpdateGroupName(ctx Context, args GroupNameArgs) (merged bool, err error) {
