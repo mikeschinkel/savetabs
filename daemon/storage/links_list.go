@@ -31,3 +31,22 @@ func ListLinks(ctx Context, p ListLinksArgs) ([]Link, error) {
 		}
 	}), err
 }
+
+type ListLinksLiteArgs sqlc.ListLinksLiteParams
+
+func ListLinksLite(ctx Context, p ListLinksLiteArgs) ([]LinkLite, error) {
+	sqlcLinks := make([]sqlc.ListLinksLiteRow, 0)
+	err := ExecWithNestedTx(func(dbtx *NestedDBTX) (err error) {
+		q := dbtx.DataStore.Queries(dbtx)
+		sqlcLinks, err = q.ListLinksLite(ctx, sqlc.ListLinksLiteParams(p))
+		return err
+	})
+	return shared.ConvertSlice(sqlcLinks, func(link sqlc.ListLinksLiteRow) LinkLite {
+		return LinkLite{
+			Id:      link.ID,
+			URL:     link.Url,
+			Created: link.Created,
+			Visited: link.Visited,
+		}
+	}), err
+}

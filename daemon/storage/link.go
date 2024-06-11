@@ -76,7 +76,14 @@ type Link struct {
 	MetaMap   map[string]string `json:"meta"`
 }
 
-func LinkLoad(ctx Context, linkId int64) (link Link, err error) {
+type LinkLite struct {
+	Id      int64  `json:"id"`
+	URL     string `json:"url"`
+	Created int64  `json:"created"`
+	Visited int64  `json:"visited"`
+}
+
+func LoadLink(ctx Context, linkId int64) (link Link, err error) {
 	db := GetNestedDBTX(GetDatastore())
 	err = db.Exec(func(dbtx *NestedDBTX) error {
 		var q = db.DataStore.Queries(dbtx)
