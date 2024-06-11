@@ -90,10 +90,10 @@ func ParseLinkIds(linkIds []string) (ids []int64, _ error) {
 	return ids, me.Err()
 }
 
-type LoadLinksParams = model.LoadLinksParams
+type ListLinksParams = model.ListLinksParams
 
-func LoadLinks(ctx Context, p LoadLinksParams) ([]LinkToLoad, error) {
-	links, err := model.LoadLinks(ctx, model.LoadLinksParams(p))
+func ListLinks(ctx Context, p ListLinksParams) ([]LinkToLoad, error) {
+	links, err := model.ListLinks(ctx, model.ListLinksParams(p))
 	return shared.ConvertSlice(links, func(link model.Link) LinkToLoad {
 		return LinkToLoad(link)
 	}), err

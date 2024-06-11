@@ -65,6 +65,6 @@ end:
 
 type MoveLinkToGroupArgs storage.MoveLinkToGroupArgs
 
-func MoveLinkToGroup(ctx Context, args MoveLinkToGroupArgs) error {
-	return storage.MoveLinkToGroup(ctx, nil, storage.MoveLinkToGroupArgs(args))
+func MoveLinkToGroup(ctx Context, args MoveLinkToGroupArgs) ([]int64, error) {
+	return storage.MoveLinksToGroup(ctx, nil, storage.MoveLinkToGroupArgs(args))
 }

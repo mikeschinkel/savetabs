@@ -861,6 +861,7 @@ FROM
    link
 WHERE
    TRUE
+   AND id > ?
    AND archived IN (/*SLICE:links_archived*/?)
    AND deleted IN (/*SLICE:links_deleted*/?)
 ORDER BY
@@ -869,6 +870,7 @@ LIMIT 100
 `
 
 type ListLinksParams struct {
+	ID            int64   `json:"id"`
 	LinksArchived []int64 `json:"links_archived"`
 	LinksDeleted  []int64 `json:"links_deleted"`
 }
@@ -876,6 +878,7 @@ type ListLinksParams struct {
 func (q *Queries) ListLinks(ctx context.Context, arg ListLinksParams) ([]Link, error) {
 	query := listLinks
 	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ID)
 	if len(arg.LinksArchived) > 0 {
 		for _, v := range arg.LinksArchived {
 			queryParams = append(queryParams, v)
@@ -921,6 +924,86 @@ func (q *Queries) ListLinks(ctx context.Context, arg ListLinksParams) ([]Link, e
 			&i.Archived,
 			&i.Deleted,
 			&i.Parsed,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLinksLite = `-- name: ListLinksLite :many
+;
+
+SELECT
+   id,
+   original_url AS url,
+   CAST(ifnull(created,0) AS INTEGER) AS created,
+   CAST(ifnull(visited,0) AS INTEGER) AS visited
+FROM
+   link
+WHERE
+   TRUE
+   AND id > ?
+   AND archived IN (/*SLICE:links_archived*/?)
+   AND deleted IN (/*SLICE:links_deleted*/?)
+ORDER BY
+   id
+LIMIT 100
+`
+
+type ListLinksLiteParams struct {
+	ID            int64   `json:"id"`
+	LinksArchived []int64 `json:"links_archived"`
+	LinksDeleted  []int64 `json:"links_deleted"`
+}
+
+type ListLinksLiteRow struct {
+	ID      int64  `json:"id"`
+	Url     string `json:"url"`
+	Created int64  `json:"created"`
+	Visited int64  `json:"visited"`
+}
+
+func (q *Queries) ListLinksLite(ctx context.Context, arg ListLinksLiteParams) ([]ListLinksLiteRow, error) {
+	query := listLinksLite
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.ID)
+	if len(arg.LinksArchived) > 0 {
+		for _, v := range arg.LinksArchived {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:links_archived*/?", strings.Repeat(",?", len(arg.LinksArchived))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:links_archived*/?", "NULL", 1)
+	}
+	if len(arg.LinksDeleted) > 0 {
+		for _, v := range arg.LinksDeleted {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:links_deleted*/?", strings.Repeat(",?", len(arg.LinksDeleted))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:links_deleted*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLinksLiteRow
+	for rows.Next() {
+		var i ListLinksLiteRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Url,
+			&i.Created,
+			&i.Visited,
 		); err != nil {
 			return nil, err
 		}
@@ -1396,26 +1479,27 @@ func (q *Queries) MergeLinksGroups(ctx context.Context, arg MergeLinksGroupsPara
 	return err
 }
 
-const moveLinkToGroup = `-- name: MoveLinkToGroup :exec
+const moveLinksToGroup = `-- name: MoveLinksToGroup :many
 ;
 
 UPDATE link_group
 SET
    group_id = ?,
-   latest_time  = STRFTIME('%s', 'now')
+   latest = STRFTIME('%s', 'now')
 WHERE true
   AND group_id = ?
   AND link_id IN (/*SLICE:link_ids*/?)
+RETURNING id
 `
 
-type MoveLinkToGroupParams struct {
+type MoveLinksToGroupParams struct {
 	GroupID   int64   `json:"group_id"`
 	GroupID_2 int64   `json:"group_id_2"`
 	LinkIds   []int64 `json:"link_ids"`
 }
 
-func (q *Queries) MoveLinkToGroup(ctx context.Context, arg MoveLinkToGroupParams) error {
-	query := moveLinkToGroup
+func (q *Queries) MoveLinksToGroup(ctx context.Context, arg MoveLinksToGroupParams) ([]int64, error) {
+	query := moveLinksToGroup
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.GroupID)
 	queryParams = append(queryParams, arg.GroupID_2)
@@ -1427,8 +1511,26 @@ func (q *Queries) MoveLinkToGroup(ctx context.Context, arg MoveLinkToGroupParams
 	} else {
 		query = strings.Replace(query, "/*SLICE:link_ids*/?", "NULL", 1)
 	}
-	_, err := q.db.ExecContext(ctx, query, queryParams...)
-	return err
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateGroupName = `-- name: UpdateGroupName :exec
@@ -1710,19 +1812,16 @@ const validateLinks = `-- name: ValidateLinks :many
 ;
 
 SELECT
-   id,
-   CASE WHEN COUNT(id)=0 THEN 0 ELSE 1 END AS links_exist
+   id
 FROM
    link
-WHERE id IN (/*SLICE:link_ids*/?)
+WHERE
+   id IN (/*SLICE:link_ids*/?)
+GROUP BY
+   id
 `
 
-type ValidateLinksRow struct {
-	ID         int64 `json:"id"`
-	LinksExist int64 `json:"links_exist"`
-}
-
-func (q *Queries) ValidateLinks(ctx context.Context, linkIds []int64) ([]ValidateLinksRow, error) {
+func (q *Queries) ValidateLinks(ctx context.Context, linkIds []int64) ([]int64, error) {
 	query := validateLinks
 	var queryParams []interface{}
 	if len(linkIds) > 0 {
@@ -1738,13 +1837,13 @@ func (q *Queries) ValidateLinks(ctx context.Context, linkIds []int64) ([]Validat
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ValidateLinksRow
+	var items []int64
 	for rows.Next() {
-		var i ValidateLinksRow
-		if err := rows.Scan(&i.ID, &i.LinksExist); err != nil {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

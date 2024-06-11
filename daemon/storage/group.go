@@ -3,7 +3,7 @@ package storage
 import (
 	"errors"
 	"fmt"
-	"strconv"
+	"slices"
 	"strings"
 
 	"savetabs/shared"
@@ -113,10 +113,12 @@ type MoveLinkToGroupArgs struct {
 	ToGroupId   int64
 }
 
-func MoveLinkToGroup(ctx Context, dbtx *NestedDBTX, args MoveLinkToGroupArgs) (err error) {
-	return execWithEnsuredNestedDBTX(dbtx, func(dbtx *NestedDBTX) (err error) {
+func MoveLinksToGroup(ctx Context, dbtx *NestedDBTX, args MoveLinkToGroupArgs) (skipped []int64, err error) {
+	err = execWithEnsuredNestedDBTX(dbtx, func(dbtx *NestedDBTX) (err error) {
 		var ok bool
+		var found []int64
 		var missing []int64
+		skipped = make([]int64, 0, len(args.LinkIds))
 
 		me := shared.NewMultiErr()
 		q := dbtx.DataStore.Queries(dbtx)
@@ -132,28 +134,41 @@ func MoveLinkToGroup(ctx Context, dbtx *NestedDBTX, args MoveLinkToGroupArgs) (e
 				continue
 			}
 		}
+		if me.IsError() {
+			goto end
+		}
+
+		missing = make([]int64, 0, len(args.LinkIds))
 		missing, err = ValidateLinks(ctx, dbtx, args.LinkIds)
 		if err != nil {
 			me.Add(err)
 			goto end
 		}
 		if len(missing) != 0 {
-			ids := shared.ConvertSlice(missing, func(id int64) string {
-				return strconv.FormatInt(id, 10)
-			})
-			err = errors.Join(ErrInvalidLinkIds,
-				fmt.Errorf("link_ids=%s", strings.Join(ids, ",")),
-			)
+			me.Add(errors.Join(ErrInvalidLinkIds,
+				fmt.Errorf("link_ids=%s", shared.Int64Slice(missing).Join(",")),
+			))
 			goto end
 		}
-		err = q.MoveLinkToGroup(ctx, sqlc.MoveLinkToGroupParams{
+		found, err = q.MoveLinksToGroup(ctx, sqlc.MoveLinksToGroupParams{
 			GroupID:   args.ToGroupId,
 			GroupID_2: args.FromGroupId,
 			LinkIds:   args.LinkIds,
 		})
+		if err != nil {
+			me.Add(err)
+			goto end
+		}
+		for _, id := range args.LinkIds {
+			if slices.Contains(found, id) {
+				continue
+			}
+			skipped = append(skipped, id)
+		}
 	end:
-		return
+		return me.Err()
 	})
+	return skipped, err
 }
 
 func UpdateGroupName(ctx Context, args GroupNameArgs) (merged bool, err error) {

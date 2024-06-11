@@ -5,9 +5,9 @@ import (
 	"savetabs/sqlc"
 )
 
-type LoadLinksParams sqlc.ListLinksParams
+type ListLinksArgs sqlc.ListLinksParams
 
-func LoadLinks(ctx Context, p LoadLinksParams) ([]Link, error) {
+func ListLinks(ctx Context, p ListLinksArgs) ([]Link, error) {
 	sqlcLinks := make([]sqlc.Link, 0)
 	err := ExecWithNestedTx(func(dbtx *NestedDBTX) (err error) {
 		q := dbtx.DataStore.Queries(dbtx)

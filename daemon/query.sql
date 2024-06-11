@@ -25,11 +25,13 @@ WHERE id = ?
 
 -- name: ValidateLinks :many
 SELECT
-   id,
-   CASE WHEN COUNT(id)=0 THEN 0 ELSE 1 END AS links_exist
+   id
 FROM
    link
-WHERE id IN (sqlc.slice('link_ids'))
+WHERE
+   id IN (sqlc.slice('link_ids'))
+GROUP BY
+   id
 ;
 
 -- name: LoadGroupIdBySlug :one
@@ -48,14 +50,15 @@ WHERE
    group_id IN (sqlc.slice('group_ids'))
 ;
 
--- name: MoveLinkToGroup :exec
+-- name: MoveLinksToGroup :many
 UPDATE link_group
 SET
    group_id = ?,
-   latest_time  = STRFTIME('%s', 'now')
+   latest = STRFTIME('%s', 'now')
 WHERE true
   AND group_id = ?
   AND link_id IN (sqlc.slice('link_ids'))
+RETURNING id
 ;
 
 -- name: MarkGroupsDeleted :exec
@@ -242,6 +245,24 @@ ON CONFLICT (link_id,key)
    SET modified = STRFTIME('%s', 'now')
 ;
 
+-- name: ListLinksLite :many
+SELECT
+   id,
+   original_url AS url,
+   CAST(ifnull(created,0) AS INTEGER) AS created,
+   CAST(ifnull(visited,0) AS INTEGER) AS visited
+FROM
+   link
+WHERE
+   TRUE
+   AND id > ?
+   AND archived IN (sqlc.slice('links_archived'))
+   AND deleted IN (sqlc.slice('links_deleted'))
+ORDER BY
+   id
+LIMIT 100
+;
+
 -- name: ListLinks :many
 SELECT
    *
@@ -249,6 +270,7 @@ FROM
    link
 WHERE
    TRUE
+   AND id > ?
    AND archived IN (sqlc.slice('links_archived'))
    AND deleted IN (sqlc.slice('links_deleted'))
 ORDER BY

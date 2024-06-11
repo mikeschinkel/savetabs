@@ -26,8 +26,8 @@ func NewIdentifier(id string) Identifier {
 	identifier := Identifier{
 		id: matchIdentifier.FindString(id),
 	}
-	if id != identifier.id {
-		identifier.Valid = false
+	if id == identifier.id {
+		identifier.Valid = true
 	}
 	return identifier
 }

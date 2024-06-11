@@ -67,7 +67,8 @@ func (a *API) PostDragDrop(w http.ResponseWriter, r *http.Request) {
 
 	slog.Debug("POST name:", "drag_drop", msg)
 
-	err = guard.ApplyDragDrop(ctx, guard.ApplyDragDropArgs{
+	var skipped []int64
+	skipped, err = guard.ApplyDragDrop(ctx, guard.ApplyDragDropArgs{
 		ParentType: dd.Parent.Type,
 		ParentId:   dd.Parent.Id,
 		DragType:   dd.Drag.Type,
@@ -81,6 +82,23 @@ func (a *API) PostDragDrop(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jr := newJSONResponse(true)
-	jr.Message = msg
+	switch {
+	case len(skipped) == len(dd.Drag.Ids):
+		jr.Message = fmt.Sprintf("Drop %s NOT applied; no %s IDs were associated with %s:%d",
+			msg,
+			dd.Drag.Type,
+			dd.Parent.Type,
+			dd.Parent.Id,
+		)
+	case len(skipped) > 0:
+		jr.Message = fmt.Sprintf("Drop %s applied; Some IDs [%s] were not associated with %s:%d",
+			msg,
+			shared.Int64Slice(dd.Drag.Ids),
+			dd.Parent.Type,
+			dd.Parent.Id,
+		)
+	default:
+		jr.Message = fmt.Sprintf("Drop Applied: %s", msg)
+	}
 	sendJSON(w, http.StatusOK, jr)
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 
 	"savetabs/sqlc"
 )
@@ -107,17 +108,16 @@ func NewLoadLink(row sqlc.LoadLinkRow) Link {
 }
 
 func ValidateLinks(ctx Context, dbtx *NestedDBTX, linkIds []int64) (missing []int64, err error) {
-	err = execWithEnsuredNestedDBTX(dbtx, func(dbtx *NestedDBTX) (err error) {
-		var rows []sqlc.ValidateLinksRow
+	err = execWithEnsuredNestedDBTX(dbtx, func(dbtx *NestedDBTX) error {
 
 		q := dbtx.DataStore.Queries(dbtx)
-		rows, err = q.ValidateLinks(ctx, linkIds)
-		missing = make([]int64, 0, len(rows))
-		for _, row := range rows {
-			if row.LinksExist == 1 {
+		ids, err := q.ValidateLinks(ctx, linkIds)
+		missing = make([]int64, 0, len(ids))
+		for _, id := range linkIds {
+			if slices.Contains(ids, id) {
 				continue
 			}
-			missing = append(missing, row.ID)
+			missing = append(missing, id)
 		}
 		return err
 	})

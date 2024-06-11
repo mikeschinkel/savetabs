@@ -42,7 +42,7 @@ type Link storage.Link
 func LoadLink(ctx Context, linkId int64) (link Link, err error) {
 	err = storage.ExecWithNestedTx(func(dbtx *storage.NestedDBTX) error {
 		var ll storage.Link
-		ll, err = storage.LinkLoad(ctx, linkId)
+		ll, err = storage.LoadLink(ctx, linkId)
 		if err != nil {
 			goto end
 		}
