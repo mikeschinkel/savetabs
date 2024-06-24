@@ -1,0 +1,16 @@
+---
+files:
+    - ./shared/link_group.go
+    - ./query.sql
+
+comments:
+    .go: //
+    .js: //
+    .sql: --
+
+constants:
+    from_group_missing:      "from_group_missing"
+    from_link_group_missing: "from_link_group_missing"
+    link_missing:            "link_missing"
+    to_group_found:          "to_group_found"
+    to_link_group_found:     "to_link_group_found"
