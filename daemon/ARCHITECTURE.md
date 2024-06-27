@@ -22,7 +22,7 @@ flowchart TD
     GD --> UI 
     UI --> ML 
     ML --> ST 
-    ST --  Calls<br>generated<br>SQL queries --> SC
+    ST --  Generated<br>SQL queries --> SC
     RA --> SH 
     UI --> SH 
     ST --> SH 
