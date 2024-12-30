@@ -14,8 +14,8 @@ function main {
   local srcFile
   local dstFile
   local logFile
+  srcFile="${HOME}/.config/savetabs/savetabs.db"
   dstFile="${DIR}/${PREFIX}-$(date "+%Y-%m-%d_%H_%M").db"
-  srcFile="${HOME}/Projects/savetabs/daemon/data/savetabs.db"
   logFile="${DIR}log.txt"
   latestFile="$(latestFile)"
 
