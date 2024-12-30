@@ -29,3 +29,6 @@ Note that you need to specify a profile for smooth operation, otherwise Chromium
 ![Chrome Settings dialog in WebStorm](assets/chrome-settings.png)
 
 
+## See Also:
+
+- https://youtrack.jetbrains.com/issue/WEB-9708
