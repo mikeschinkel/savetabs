@@ -118,7 +118,7 @@ func ValidateLinks(ctx Context, dbtx *NestedDBTX, linkIds []int64) (missing []in
 	err = execWithEnsuredNestedDBTX(dbtx, func(dbtx *NestedDBTX) error {
 
 		q := dbtx.DataStore.Queries(dbtx)
-		ids, err := q.ValidateLinks(ctx, linkIds)
+		ids, err := q.ListLinkIds(ctx, linkIds)
 		missing = make([]int64, 0, len(ids))
 		for _, id := range linkIds {
 			if slices.Contains(ids, id) {

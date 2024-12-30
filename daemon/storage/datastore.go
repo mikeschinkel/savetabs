@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	_ "embed"
 	"log/slog"
+	"os"
 	"path/filepath"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 	"savetabs"
@@ -14,26 +16,44 @@ import (
 
 var _ DataStore = (*SqliteDataStore)(nil)
 
+const macOSConfigSubdir = "/Library/Application Support"
+const desiredConfigSubdir = ".config"
+
 type SqliteDataStore struct {
-	Filepath string
-	db       *sql.DB
+	path    string
+	AppName string
+	db      *sql.DB
 }
 
-func NewSqliteDataStore(dbFile string) DataStore {
+func (ds *SqliteDataStore) Filepath() string {
+	return filepath.Join(ds.path, ds.AppName+".db")
+}
+
+func NewSqliteDataStore(args Args) DataStore {
 	return &SqliteDataStore{
-		Filepath: dbFile,
+		AppName: args.AppName,
 	}
 }
 
 func (ds *SqliteDataStore) Initialize(ctx context.Context) (err error) {
-	slog.Info("Initializing data store", "data_file", ds.Filepath)
+	var configDir string
 
-	absFP, err := filepath.Abs(ds.Filepath)
+	slog.Info("Initializing data store", "data_store", ds.Filepath())
+
+	configDir, err = os.UserConfigDir()
 	if err != nil {
-		err = Error(ErrFailedConvertToAbsPath, err, "filepath", ds.Filepath)
+		err = ErrFailedToGetConfigPath
 		goto end
 	}
-	ds.Filepath = absFP
+	// Move macOS config dir to be ~/.config vs. ~/Library/Application Support
+	if strings.HasSuffix(configDir, macOSConfigSubdir) {
+		configDir = filepath.Join(
+			configDir[:len(configDir)-len(macOSConfigSubdir)],
+			desiredConfigSubdir,
+			ds.AppName,
+		)
+	}
+	ds.path = configDir
 
 	err = ds.Open()
 	if err != nil {
@@ -48,7 +68,7 @@ end:
 }
 
 func (ds *SqliteDataStore) Open() (err error) {
-	ds.db, err = sql.Open("sqlite3", ds.Filepath)
+	ds.db, err = sql.Open("sqlite3", ds.Filepath())
 	return err
 }
 

@@ -70,7 +70,7 @@ func GetContextMenuHTML(ctx Context, args ContextMenuArgs) (_ HTMLResponse, err 
 	cm.Items = args.Items
 	hr.HTML, err = contextMenuTemplate.ExecuteToHTML(cm)
 	if err != nil {
-		hr.SetCode(http.StatusInternalServerError)
+		hr.StatusCode = http.StatusInternalServerError
 	}
 	return hr, err
 }
@@ -86,7 +86,7 @@ func GetContextMenuRenameFormHTML(ctx Context, args ContextMenuArgs) (_ HTMLResp
 
 	hr.HTML, err = contextMenuItemRenameFormTemplate.ExecuteToHTML(cm)
 	if err != nil {
-		hr.SetCode(http.StatusInternalServerError)
+		hr.StatusCode = http.StatusInternalServerError
 	}
 end:
 	return hr, err

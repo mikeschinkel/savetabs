@@ -29,10 +29,10 @@ type ErrorParams struct {
 func GetErrorHTML(p ErrorParams) (hr HTMLResponse, err error) {
 	var httpErr HttpError
 	hr = NewHTMLResponse()
-	hr.SetCode(http.StatusInternalServerError)
+	hr.StatusCode = http.StatusInternalServerError
 
 	if errors.As(err, &httpErr) {
-		hr.SetCode(httpErr.StatusCode)
+		hr.StatusCode = httpErr.StatusCode
 	}
 	hr.HTML, err = errorTemplate.ExecuteToHTML(p.Err)
 	if err != nil {

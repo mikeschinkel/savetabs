@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	ErrFailedToUnmarshal        = errors.New("failed to unmarshal JSON")
+	ErrFailedToUnmarshalJSON    = errors.New("failed to unmarshal JSON")
 	ErrFailedUpsertLinks        = errors.New("failed to upsert links")
 	ErrFailedUpsertLink         = errors.New("failed to upsert link")
 	ErrFailedInsertLinkContent  = errors.New("failed to insert link content")
@@ -15,10 +15,8 @@ var (
 	ErrFailedUpsertGroups       = errors.New("failed to upsert groups")
 	ErrFailedToArchiveLinks     = errors.New("failed to archive links")
 	ErrFailedToMarkLinksDeleted = errors.New("failed to delete links")
-	ErrInvalidGroupId           = errors.New("invalid group Id")
-	ErrInvalidLinkIds           = errors.New("invalid Link Ids")
-	ErrFailedConvertToAbsPath   = errors.New("failed to convert to absolute path")
-	ErrFailedToInitDataStore    = errors.New("failed to initialize data store")
+	ErrAppNameMustNotBeEmpty    = errors.New("app name must not be empty")
+	ErrFailedToGetConfigPath    = errors.New("failed to get config path")
 )
 
 func Error(namedErr, actualErr error, args ...string) error {

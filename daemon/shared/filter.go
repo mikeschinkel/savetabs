@@ -37,7 +37,7 @@ func newFilterType(value, label, plural string, new func(any) FilterItem) *Filte
 	}
 	filterMutex.Lock()
 	defer filterMutex.Unlock()
-	dupFilterTypeCheck(ft)
+	//dupFilterTypeCheck(ft)  // TODO: Search in git history for this func
 	filterTypeMap[ft.id] = ft
 	FilterTypes = append(FilterTypes, ft)
 	return ft

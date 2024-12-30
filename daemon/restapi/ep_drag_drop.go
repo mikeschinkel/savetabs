@@ -3,6 +3,7 @@ package restapi
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/safehtml"
 	"savetabs/guard"
 	"savetabs/shared"
 )
@@ -42,33 +44,67 @@ func (d dragDrop) String() string {
 	)
 }
 
-func (a *API) PostDragDrop(w http.ResponseWriter, r *http.Request) {
-
+func (a *API) PostHtmlDragDrop(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
+	result, dd, err := a.dragDrop(ctx, w, r)
+	switch {
+	case err != nil:
+		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
+	case result.HasExceptions():
+		var hr guard.HTMLResponse
+		hr, err = result.GetExceptionsHTML(ctx)
+		if err != nil {
+			hr.StatusCode = http.StatusInternalServerError
+			//goland:noinspection GoDfaErrorMayBeNotNil
+			hr.HTML = safehtml.HTMLConcat(hr.HTML, shared.MakeSafeHTML(err.Error()))
+		}
+		//goland:noinspection GoDfaErrorMayBeNotNil
+		a.sendHTMLStatus(w, hr.StatusCode, hr.HTML)
+	default:
+		a.sendHTMLStatus(w, http.StatusNoContent, shared.MakeSafeHTML(dd.String()))
+	}
+}
+
+func (a *API) PostDragDrop(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	result, dd, err := a.dragDrop(ctx, w, r)
+	jr := newJSONResponse(true)
+	switch {
+	case err != nil:
+		jr.Message = err.Error()
+		jr.HTTPStatus = http.StatusBadRequest //TODO: Fix to acknowedge 5xx errors
+	case result.HasExceptions():
+		jr.Message = result.Exceptions.String()
+		jr.HTTPStatus = http.StatusAccepted
+	default:
+		jr.Message = fmt.Sprintf("Drop Applied: %s", dd.String())
+	}
+	sendJSON(w, jr.HTTPStatus, jr)
+}
+
+func (a *API) dragDrop(ctx Context, w http.ResponseWriter, r *http.Request) (result guard.MoveLinksToGroupResult, dd dragDrop, err error) {
+	var msg string
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		// TODO: Find a better status result than "Bad Gateway"
-		a.sendHTMLError(w, r, http.StatusBadGateway, err.Error())
-		return
+		err = errors.Join(ErrReadingHTTPBody, err)
+		goto end
 	}
-	var dd dragDrop
 	err = json.Unmarshal(body, &dd)
 	if err != nil {
-		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
-		return
+		err = errors.Join(ErrUnmarshallingJSON, err)
+		goto end
 	}
 	err = shared.ValidateStruct(dd)
 	if err != nil {
-		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
-		return
+		err = errors.Join(ErrValidatingHTTPRequest, err)
+		goto end
 	}
-	msg := dd.String()
+	msg = dd.String()
 
 	slog.Debug("POST name:", "drag_drop", msg)
 
-	var skipped []int64
-	skipped, err = guard.ApplyDragDrop(ctx, guard.ApplyDragDropArgs{
+	result, err = guard.ApplyDragDrop(ctx, guard.ApplyDragDropArgs{
 		ParentType: dd.Parent.Type,
 		ParentId:   dd.Parent.Id,
 		DragType:   dd.Drag.Type,
@@ -76,29 +112,6 @@ func (a *API) PostDragDrop(w http.ResponseWriter, r *http.Request) {
 		DropType:   dd.Drop.Type,
 		DropId:     dd.Drop.Id,
 	})
-	if err != nil {
-		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	jr := newJSONResponse(true)
-	switch {
-	case len(skipped) == len(dd.Drag.Ids):
-		jr.Message = fmt.Sprintf("Drop %s NOT applied; no %s IDs were associated with %s:%d",
-			msg,
-			dd.Drag.Type,
-			dd.Parent.Type,
-			dd.Parent.Id,
-		)
-	case len(skipped) > 0:
-		jr.Message = fmt.Sprintf("Drop %s applied; Some IDs [%s] were not associated with %s:%d",
-			msg,
-			shared.Int64Slice(dd.Drag.Ids),
-			dd.Parent.Type,
-			dd.Parent.Id,
-		)
-	default:
-		jr.Message = fmt.Sprintf("Drop Applied: %s", msg)
-	}
-	sendJSON(w, http.StatusOK, jr)
+end:
+	return result, dd, err
 }

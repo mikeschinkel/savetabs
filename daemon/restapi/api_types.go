@@ -21,6 +21,9 @@ const (
 	GetHtmlAlertParamsTypWarning GetHtmlAlertParamsTyp = "warning"
 )
 
+// HtmlError defines model for HtmlError.
+type HtmlError = string
+
 // Id Primary key identifier
 type Id = int64
 
@@ -113,6 +116,18 @@ type BasicJsonResponse struct {
 	Success *bool `json:"success,omitempty"`
 }
 
+// PartialDragDropResponse Basic JSON response with success indicator and message
+type PartialDragDropResponse struct {
+	// Message Human readable message to inform caller about specifis of success, or reason for failure
+	Message *string `json:"message"`
+
+	// Success Boolean indicating success (when true) or failure (when false)
+	Success *bool `json:"success,omitempty"`
+}
+
+// UnexpectedHtmlError defines model for UnexpectedHtmlError.
+type UnexpectedHtmlError = HtmlError
+
 // UnexpectedJSONError defines model for UnexpectedJSONError.
 type UnexpectedJSONError = JSONError
 
@@ -134,6 +149,9 @@ type GetHtmlAlertParams struct {
 
 // GetHtmlAlertParamsTyp defines parameters for GetHtmlAlert.
 type GetHtmlAlertParamsTyp string
+
+// PostHtmlDragDropJSONBody defines parameters for PostHtmlDragDrop.
+type PostHtmlDragDropJSONBody interface{}
 
 // GetHtmlErrorParams defines parameters for GetHtmlError.
 type GetHtmlErrorParams struct {
@@ -164,6 +182,9 @@ type PutContextMenuContextMenuTypeIdNameFormdataRequestBody PutContextMenuContex
 
 // PostDragDropJSONRequestBody defines body for PostDragDrop for application/json ContentType.
 type PostDragDropJSONRequestBody PostDragDropJSONBody
+
+// PostHtmlDragDropJSONRequestBody defines body for PostHtmlDragDrop for application/json ContentType.
+type PostHtmlDragDropJSONRequestBody PostHtmlDragDropJSONBody
 
 // PostHtmlLinksetFormdataRequestBody defines body for PostHtmlLinkset for application/x-www-form-urlencoded ContentType.
 type PostHtmlLinksetFormdataRequestBody PostHtmlLinksetFormdataBody

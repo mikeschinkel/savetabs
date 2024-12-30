@@ -3,7 +3,6 @@ package restapi
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -58,14 +57,7 @@ func (a *API) PutLinksByUrlLinkUrl(w http.ResponseWriter, r *http.Request, linkU
 	switch {
 	case err == nil:
 		w.Header().Set("Location", shared.LinkEndpointURL(linkId))
-		sendJSON(w, http.StatusOK, struct {
-			Id int64 `json:"id"`
-		}{Id: linkId})
-	case errors.Is(err, ErrFailedToUnmarshal):
-		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
-	case errors.Is(err, ErrFailedUpsertLinks):
-		// TODO: Break out errors into different status for different reasons
-		fallthrough
+		a.sendHTMLStatus(w, http.StatusNoContent)
 	default:
 		a.sendHTMLError(w, r, http.StatusInternalServerError, err.Error())
 	}

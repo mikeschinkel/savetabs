@@ -45,17 +45,17 @@ func UpsertLinksWithGroups(ctx context.Context, p UpsertLinksWithGroupsParams) e
 
 	linkBytes, err := json.Marshal(p.Links)
 	if err != nil {
-		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "link"))
+		me.Add(err, ErrFailedToUnmarshalJSON, fmt.Errorf("table=%s", "link"))
 	}
 
 	groupBytes, err = json.Marshal(p.Groups)
 	if err != nil {
-		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "group"))
+		me.Add(err, ErrFailedToUnmarshalJSON, fmt.Errorf("table=%s", "group"))
 	}
 
 	groupedLinkBytes, err = json.Marshal(p.GroupedLinks)
 	if err != nil {
-		me.Add(err, ErrFailedToUnmarshal, fmt.Errorf("table=%s", "link_group"))
+		me.Add(err, ErrFailedToUnmarshalJSON, fmt.Errorf("table=%s", "link_group"))
 	}
 
 	err = execWithEnsuredNestedDBTX(p.dbtx, func(dbtx *NestedDBTX) error {

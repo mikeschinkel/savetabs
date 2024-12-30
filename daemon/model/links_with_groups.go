@@ -118,7 +118,7 @@ func (lswgs LinksWithGroups) Groups() []Group {
 			Name: g.Group,
 		})
 		keywords = ParseKeywords(g.OriginalURL)
-		groups = append(groups, shared.MapSliceFunc(keywords, func(kw string) Group {
+		groups = append(groups, shared.ConvertSlice(keywords, func(kw string) Group {
 			return Group{
 				Type: shared.GroupTypeKeyword,
 				Name: kw,

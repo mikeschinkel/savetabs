@@ -109,17 +109,18 @@ func GetAlertHTML(_ Context, p AlertParams) (hr HTMLResponse, err error) {
 	}
 	html, err = alertTemplate.ExecuteToHTML(alert)
 	if err != nil {
-		hr.SetCode(http.StatusInternalServerError)
+		hr.StatusCode = http.StatusInternalServerError
 		goto end
 	}
 	if !p.OOB {
+		hr.HTML = html
 		goto end
 	}
-	html, err = alertOOBTemplate.ExecuteToHTML(alertOOB{
+	hr.HTML, err = alertOOBTemplate.ExecuteToHTML(alertOOB{
 		AlertHTML: html,
 	})
 	if err != nil {
-		hr.SetCode(http.StatusInternalServerError)
+		hr.StatusCode = http.StatusInternalServerError
 		goto end
 	}
 end:

@@ -10,17 +10,18 @@ func GetDatastore() DataStore {
 	return ds
 }
 
-func Initialize(ctx context.Context, fp string) (err error) {
+type Args struct {
+	AppName string
+}
 
-	ds = NewSqliteDataStore(fp)
+func Initialize(ctx context.Context, args Args) (err error) {
 
-	err = ds.Initialize(ctx)
-	if err != nil {
+	if len(args.AppName) == 0 {
+		err = ErrAppNameMustNotBeEmpty
 		goto end
 	}
+	ds = NewSqliteDataStore(args)
+
 end:
-	if err != nil {
-		err = Error(ErrFailedToInitDataStore, err, "data_file", fp)
-	}
-	return err
+	return ds.Initialize(ctx)
 }

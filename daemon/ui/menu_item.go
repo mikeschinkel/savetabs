@@ -54,6 +54,14 @@ type HTMLMenuItemArgs struct {
 	DropItem shared.DragDropItem
 }
 
+func NewHTMLMenuItem(mi model.MenuItem, args *HTMLMenuItemArgs) HTMLMenuItem {
+	return HTMLMenuItem{
+		parent:   args.Parent,
+		menuType: args.MenuType,
+		dropItem: args.DropItem,
+	}
+}
+
 var zeroStateHTMLMenuItem HTMLMenuItem
 
 func (hmi HTMLMenuItem) APIURL() safehtml.URL {
@@ -186,7 +194,8 @@ func GetSubmenuHTML(ctx Context, args SubmenuHTMLArgs) (hr HTMLResponse, err err
 	hr.HTML, err = menuTemplate.ExecuteToHTML(args.Menu)
 end:
 	if err != nil {
-		hr.SetCode(http.StatusInternalServerError)
+		hr.StatusCode = http.StatusInternalServerError
+
 	}
 	return hr, err
 }

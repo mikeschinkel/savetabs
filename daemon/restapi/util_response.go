@@ -18,8 +18,9 @@ type Context = context.Context
 type Buffer = bytes.Buffer
 
 type jsonResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message,omitempty"`
+	HTTPStatus int    `json:"-"`
+	Success    bool   `json:"success"`
+	Message    string `json:"message,omitempty"`
 }
 
 func newJSONResponse(ok bool) jsonResponse {
@@ -51,6 +52,7 @@ func (a *API) sendHTMLError(w http.ResponseWriter, r *http.Request, code int, ms
 		slog.Warn("HTTP Status code not set", "error", msg)
 	}
 	w.WriteHeader(code)
+	//goland:noinspection GoDfaErrorMayBeNotNil
 	_, _ = fmt.Fprint(w, hr.HTML.String()) // TODO: Change this to use safehtml
 }
 
@@ -78,8 +80,11 @@ func sendJSON(w http.ResponseWriter, code int, content any) {
 
 // sendHTML sends a success code of 200 and the HTML content provided
 func (a *API) sendHTML(w http.ResponseWriter, html ...safehtml.HTML) {
+	a.sendHTMLStatus(w, http.StatusOK, html...)
+}
+func (a *API) sendHTMLStatus(w http.ResponseWriter, status int, html ...safehtml.HTML) {
 	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(status)
 	for _, h := range html {
 		_, _ = fmt.Fprint(w, h.String())
 	}
@@ -88,7 +93,8 @@ func (a *API) sendHTML(w http.ResponseWriter, html ...safehtml.HTML) {
 func (a *API) sendView(ctx Context, w http.ResponseWriter, r *http.Request, fn func(ctx Context) (guard.HTMLResponse, error)) {
 	hr, err := fn(ctx)
 	if err != nil {
-		a.sendHTMLError(w, r, hr.Code(), err.Error())
+		//goland:noinspection GoDfaErrorMayBeNotNil
+		a.sendHTMLError(w, r, hr.StatusCode, err.Error())
 		return
 	}
 	a.sendHTML(w, hr.HTML)

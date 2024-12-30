@@ -15,21 +15,104 @@ LIMIT 1
 SELECT name FROM `group` WHERE id = ?
 ;
 
--- name: ValidateGroup :one
+-- name: ValidateGroups :many
 SELECT
-   CASE WHEN COUNT(id)=0 THEN 0 ELSE 1 END AS group_exists
+   id
 FROM
    `group`
-WHERE id = ?
+WHERE
+   id IN (sqlc.slice('group_ids'))
+GROUP BY
+   id
 ;
 
--- name: ValidateLinks :many
+-- name: ListLinkGroupMoveExceptions :many
+SELECT
+   exception,
+   from_group_id,
+   from_group_name,
+   link_id,
+   link_url,
+   to_group_id,
+   to_group_name
+FROM
+   link_group_move_exceptions
+WHERE true
+   AND from_id IN (sqlc.slice('from_ids'))
+   AND to_id IN (sqlc.slice('to_ids'))
+;
+
+-- name: LoadLinkGroupMoveStatus :one
+SELECT
+   IFNULL(all_links_missing+no_to_groups_found,0)<>0 AS error_exception,
+   *
+FROM (
+   SELECT
+      IFNULL(COUNT(*) - SUM(link_found), 0) = 0                         AS all_links_missing,
+      IFNULL(SUM(to_group_found), 0) = 0                                AS no_to_groups_found,
+      IFNULL(COUNT(*), 0)                                               AS link_count,
+      IFNULL(COUNT(*) - SUM(link_found), 0)                             AS link_exceptions,
+      IFNULL(COUNT(*) - SUM(from_group_found), 0) <> 0                  AS from_group_exception,
+      IFNULL(COUNT(*) - SUM(to_group_found), 0) <> 0                    AS to_group_exception,
+      CAST(IFNULL(COUNT(*) - SUM(from_link_group_found), 0) AS INTEGER) AS from_link_group_exceptions,
+      CAST(IFNULL(SUM(to_link_group_found), 0) AS INTEGER)              AS to_link_group_exceptions
+   --SELECT *
+   FROM
+      link_group_move_from_to
+   WHERE
+      TRUE
+      AND from_id IN (sqlc.slice('from_ids'))
+      AND to_id IN (sqlc.slice('to_ids'))
+      -- AND from_id IN (461, 462, 463, 464, 465)
+      -- AND to_id IN (466, 467, 468, 469, 470)
+)x
+
+;
+
+-- SELECT * FROM link_group_move_from_to
+-- WHERE from_id IN (411,412,413,414,415,416,417,418,419,420) AND to_id IN (411,412,413,414,415,416,417,418,419,420);
+
+-- name: DeleteLinkGroupMove :exec
+DELETE
+FROM
+   link_group_move
+WHERE
+   id IN (sqlc.slice('link_group_ids'))
+;
+
+-- name: InsertLinkGroupMoveFromVarJSON :many
+INSERT INTO link_group_move (role, group_id, link_id)
+SELECT
+   CAST(IFNULL(JSON_EXTRACT(j.value, '$.group_role'), '') AS TEXT) AS role,
+   CAST(IFNULL(JSON_EXTRACT(j.value, '$.group_id'), 0) AS INTEGER) AS group_id,
+   CAST(IFNULL(JSON_EXTRACT(j.value, '$.link_id'), 0) AS INTEGER)  AS link_id
+FROM
+   var
+      JOIN JSON_EACH(var.value) j
+         ON var.key = 'json'
+WHERE
+   var.id = ?
+RETURNING role,id
+;
+
+-- name: ListLinkIds :many
 SELECT
    id
 FROM
    link
 WHERE
    id IN (sqlc.slice('link_ids'))
+GROUP BY
+   id
+;
+
+-- name: ListGroupIds :many
+SELECT
+   id
+FROM
+   `group`
+WHERE
+   id IN (sqlc.slice('group_ids'))
 GROUP BY
    id
 ;
@@ -54,10 +137,11 @@ WHERE
 UPDATE link_group
 SET
    group_id = ?,
-   latest = STRFTIME('%s', 'now')
-WHERE true
-  AND group_id = ?
-  AND link_id IN (sqlc.slice('link_ids'))
+   latest   = STRFTIME('%s', 'now')
+WHERE
+   TRUE
+   AND group_id = ?
+   AND link_id IN (sqlc.slice('link_ids'))
 RETURNING id
 ;
 
@@ -248,9 +332,9 @@ ON CONFLICT (link_id,key)
 -- name: ListLinksLite :many
 SELECT
    id,
-   original_url AS url,
-   CAST(ifnull(created,0) AS INTEGER) AS created,
-   CAST(ifnull(visited,0) AS INTEGER) AS visited
+   original_url                        AS url,
+   CAST(IFNULL(created, 0) AS INTEGER) AS created,
+   CAST(IFNULL(visited, 0) AS INTEGER) AS visited
 FROM
    link
 WHERE
@@ -310,9 +394,12 @@ SET
 WHERE
    TRUE
    AND id NOT IN (
-      SELECT lg.link_id
-      FROM link_group lg
-      WHERE lg.group_id = ?
+      SELECT
+         lg.link_id
+      FROM
+         link_group lg
+      WHERE
+         lg.group_id = ?
       )
    AND id IN (
       SELECT lg.link_id FROM link_group lg WHERE lg.group_id IN (sqlc.slice('group_ids'))

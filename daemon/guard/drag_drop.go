@@ -6,6 +6,7 @@ import (
 
 	"savetabs/model"
 	"savetabs/shared"
+	"savetabs/ui"
 )
 
 type ApplyDragDropArgs struct {
@@ -28,9 +29,12 @@ func (args ApplyDragDropArgs) String() string {
 	)
 }
 
-func ApplyDragDrop(ctx Context, args ApplyDragDropArgs) (skipped []int64, err error) {
+// ApplyDragDrop applies the drag and drop request.
+// TODO: Ensure errors are errors and exception messages are exceptions (rename warnings?)
+func ApplyDragDrop(ctx Context, args ApplyDragDropArgs) (result MoveLinksToGroupResult, err error) {
 	var parentType, dragType, dropType shared.Identifier
 	var dd *shared.DragDrop
+	var r model.MoveLinksToGroupResult
 
 	me := shared.NewMultiErr()
 	parentType = shared.NewIdentifier(args.ParentType)
@@ -52,7 +56,7 @@ func ApplyDragDrop(ctx Context, args ApplyDragDropArgs) (skipped []int64, err er
 	}
 	switch dd {
 	case shared.LinkToGroupDragDrop:
-		skipped, err = model.MoveLinkToGroup(ctx, model.MoveLinkToGroupArgs{
+		r, err = model.MoveLinkToGroup(ctx, model.MoveLinkToGroupArgs{
 			LinkIds:     args.DragIds,
 			FromGroupId: args.ParentId,
 			ToGroupId:   args.DropId,
@@ -60,11 +64,31 @@ func ApplyDragDrop(ctx Context, args ApplyDragDropArgs) (skipped []int64, err er
 		if err != nil {
 			me.Add(err)
 		}
+		if r.Status.ErrorException {
+			me.Add(errors.New(model.LinkGroupMoveExceptions(r.Exceptions).String()))
+			goto end
+		}
+
+		result = MoveLinksToGroupResult{r}
 	}
 end:
 	err = me.Err()
 	if err != nil {
-		err = errors.Join(err, fmt.Errorf("drag_drop=%s", args.String()))
+		err = errors.Join(fmt.Errorf("INFO: drag_drop=%s", args.String()), err)
 	}
-	return skipped, err
+	return result, err
+}
+
+type MoveLinksToGroupResult struct {
+	model.MoveLinksToGroupResult
+}
+
+func (r MoveLinksToGroupResult) GetExceptionsHTML(ctx Context) (HTMLResponse, error) {
+	exceptions := []model.LinkGroupMoveException(r.Exceptions)
+	hr, err := ui.GetExceptionsHTML(ctx, ui.ExceptionsParams{
+		Exceptions: shared.ConvertSlice(exceptions, func(e model.LinkGroupMoveException) string {
+			return e.Error()
+		}),
+	})
+	return HTMLResponse{hr}, err
 }

@@ -98,6 +98,59 @@ type LinkGroup struct {
 	Latest      sql.NullInt64  `json:"latest"`
 }
 
+type LinkGroupMove struct {
+	ID      int64  `json:"id"`
+	Role    string `json:"role"`
+	GroupID int64  `json:"group_id"`
+	LinkID  int64  `json:"link_id"`
+}
+
+type LinkGroupMoveException struct {
+	Exception     string `json:"exception"`
+	FromGroupID   int64  `json:"from_group_id"`
+	FromGroupName string `json:"from_group_name"`
+	LinkID        int64  `json:"link_id"`
+	LinkUrl       string `json:"link_url"`
+	ToGroupID     int64  `json:"to_group_id"`
+	ToGroupName   string `json:"to_group_name"`
+	FromID        int64  `json:"from_id"`
+	ToID          int64  `json:"to_id"`
+}
+
+type LinkGroupMoveFromTo struct {
+	TypeName           string `json:"type_name"`
+	FromID             int64  `json:"from_id"`
+	ToID               int64  `json:"to_id"`
+	FromLinkGroupID    int64  `json:"from_link_group_id"`
+	FromLinkGroupFound bool   `json:"from_link_group_found"`
+	FromGroupID        int64  `json:"from_group_id"`
+	LinkID             int64  `json:"link_id"`
+	ToGroupID          int64  `json:"to_group_id"`
+	FromGroupName      string `json:"from_group_name"`
+	LinkUrl            string `json:"link_url"`
+	ToLinkGroupID      int64  `json:"to_link_group_id"`
+	ToLinkGroupFound   bool   `json:"to_link_group_found"`
+	ToGroupName        string `json:"to_group_name"`
+	FromGroupFound     bool   `json:"from_group_found"`
+	LinkFound          bool   `json:"link_found"`
+	ToGroupFound       bool   `json:"to_group_found"`
+}
+
+type LinkGroupMoveHalf struct {
+	ID             int64  `json:"id"`
+	LinkGroupID    int64  `json:"link_group_id"`
+	Role           string `json:"role"`
+	GroupName      string `json:"group_name"`
+	GroupType      string `json:"group_type"`
+	TypeName       string `json:"type_name"`
+	LinkID         int64  `json:"link_id"`
+	GroupID        int64  `json:"group_id"`
+	GroupFound     bool   `json:"group_found"`
+	LinkFound      bool   `json:"link_found"`
+	LinkGroupFound bool   `json:"link_group_found"`
+	LinkUrl        string `json:"link_url"`
+}
+
 type Meta struct {
 	ID           int64          `json:"id"`
 	LinkID       int64          `json:"link_id"`

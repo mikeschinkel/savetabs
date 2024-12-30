@@ -31,7 +31,7 @@ func GetSubmenuHTML(ctx Context, host string, menuItem string) (_ HTMLResponse, 
 	// TODO: Review `id`, `key`, `menuItem` etc. semantics
 	if !matchMenuItemIds.MatchString(menuItem) {
 		err = errors.Join(ErrInvalidMenuItemFormat, fmt.Errorf(`menu_item=%s`, menuItem))
-		hr.SetCode(http.StatusBadRequest)
+		hr.StatusCode = http.StatusBadRequest
 		goto end
 	}
 	mt, err = shared.MenuTypeByName(menuItem)

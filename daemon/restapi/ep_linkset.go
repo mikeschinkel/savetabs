@@ -73,6 +73,7 @@ func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case err == nil:
 		var alert guard.HTMLResponse
+
 		fq, err := form.FilterQuery()
 		if err != nil {
 			a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
@@ -84,18 +85,19 @@ func (a *API) PostHtmlLinkset(w http.ResponseWriter, r *http.Request) {
 			Host:        r.Host,
 		})
 		if err != nil {
-			a.sendHTMLError(w, r, hr.Code(), err.Error())
+			//goland:noinspection GoDfaErrorMayBeNotNil
+			a.sendHTMLError(w, r, hr.StatusCode, err.Error())
 			return
 		}
 		alert, err = guard.GetLinksetSuccessAlertHTML(ctx, form.LinkIds)
 		if err != nil {
 			//goland:noinspection GoDfaErrorMayBeNotNil
-			a.sendHTMLError(w, r, alert.Code(), err.Error())
+			a.sendHTMLError(w, r, alert.StatusCode, err.Error())
 			return
 		}
 		a.sendHTML(w, hr.HTML, alert.HTML)
 		return
-	case errors.Is(err, ErrFailedToUnmarshal):
+	case errors.Is(err, ErrUnmarshallingJSON):
 		a.sendHTMLError(w, r, http.StatusBadRequest, err.Error())
 		return
 	case errors.Is(err, ErrFailedUpsertLinks):

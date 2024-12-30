@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -35,14 +34,21 @@ type Groups struct {
 	Args   GroupsArgs
 }
 
-func ValidateGroup(ctx Context, dbtx *NestedDBTX, groupId int64) (_ bool, err error) {
-	var exists int64
-	err = execWithEnsuredNestedDBTX(dbtx, func(dbtx *NestedDBTX) (err error) {
+func ValidateGroups(ctx Context, dbtx *NestedDBTX, groupIds []int64) (missing []int64, err error) {
+	err = execWithEnsuredNestedDBTX(dbtx, func(dbtx *NestedDBTX) error {
+		var ids []int64
 		q := dbtx.DataStore.Queries(dbtx)
-		exists, err = q.ValidateGroup(ctx, groupId)
+		ids, err = q.ListGroupIds(ctx, groupIds)
+		missing = make([]int64, 0, len(ids))
+		for _, id := range groupIds {
+			if slices.Contains(ids, id) {
+				continue
+			}
+			missing = append(missing, id)
+		}
 		return err
 	})
-	return exists != 0, err
+	return missing, err
 }
 
 func LoadGroupName(ctx Context, dbtx *NestedDBTX, groupId int64) (name string, err error) {
@@ -105,70 +111,6 @@ func LoadAltGroupIdsByName(ctx Context, dbtx *NestedDBTX, args GroupNameArgs) (i
 		return err
 	})
 	return ids, err
-}
-
-type MoveLinkToGroupArgs struct {
-	LinkIds     []int64
-	FromGroupId int64
-	ToGroupId   int64
-}
-
-func MoveLinksToGroup(ctx Context, dbtx *NestedDBTX, args MoveLinkToGroupArgs) (skipped []int64, err error) {
-	err = execWithEnsuredNestedDBTX(dbtx, func(dbtx *NestedDBTX) (err error) {
-		var ok bool
-		var found []int64
-		var missing []int64
-		skipped = make([]int64, 0, len(args.LinkIds))
-
-		me := shared.NewMultiErr()
-		q := dbtx.DataStore.Queries(dbtx)
-		for _, gid := range []int64{args.FromGroupId, args.ToGroupId} {
-			ok, err = ValidateGroup(ctx, dbtx, gid)
-			if err != nil {
-				me.Add(err)
-				continue
-			}
-			if !ok {
-				err = errors.Join(ErrInvalidGroupId, fmt.Errorf("group_id=%d", gid))
-				me.Add(err)
-				continue
-			}
-		}
-		if me.IsError() {
-			goto end
-		}
-
-		missing = make([]int64, 0, len(args.LinkIds))
-		missing, err = ValidateLinks(ctx, dbtx, args.LinkIds)
-		if err != nil {
-			me.Add(err)
-			goto end
-		}
-		if len(missing) != 0 {
-			me.Add(errors.Join(ErrInvalidLinkIds,
-				fmt.Errorf("link_ids=%s", shared.Int64Slice(missing).Join(",")),
-			))
-			goto end
-		}
-		found, err = q.MoveLinksToGroup(ctx, sqlc.MoveLinksToGroupParams{
-			GroupID:   args.ToGroupId,
-			GroupID_2: args.FromGroupId,
-			LinkIds:   args.LinkIds,
-		})
-		if err != nil {
-			me.Add(err)
-			goto end
-		}
-		for _, id := range args.LinkIds {
-			if slices.Contains(found, id) {
-				continue
-			}
-			skipped = append(skipped, id)
-		}
-	end:
-		return me.Err()
-	})
-	return skipped, err
 }
 
 func UpdateGroupName(ctx Context, args GroupNameArgs) (merged bool, err error) {

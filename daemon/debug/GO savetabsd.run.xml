@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="GO savetabsd" type="GoApplicationRunConfiguration" factoryName="Go Application">
-    <module name="daemon" />
+    <module name="savetabs" />
     <working_directory value="$PROJECT_DIR$/" />
     <go_parameters value="-o ../../bin/savetabsd" />
     <useCustomBuildTags value="true" />
@@ -16,11 +16,9 @@
     </EXTENSION>
     <kind value="PACKAGE" />
     <package value="savetabsd" />
-    <directory value="$PROJECT_DIR$" />
-    <filePath value="$PROJECT_DIR$/cmd/savetabsd/main.go" />
+    <directory value="$PROJECT_DIR$/daemon/cmd/savetabsd" />
+    <filePath value="$PROJECT_DIR$/cmd/savetabsd/main.go|$PROJECT_DIR$/daemon/cmd/savetabsd/main.go|$PROJECT_DIR$/daemon/cmd/savetabsd/main.go" />
     <output_directory value="$PROJECT_DIR$/../bin" />
-    <method v="2">
-      <option name="GoBeforeRunTask" command="generate ./..." />
-    </method>
+    <method v="2" />
   </configuration>
 </component>

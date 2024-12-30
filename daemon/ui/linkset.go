@@ -100,13 +100,13 @@ func GetLinksetHTML(ctx Context, args LinksetArgs) (hr HTMLResponse, err error) 
 		FilterQuery: args.FilterQuery,
 	}))
 	if err != nil {
-		hr.SetCode(http.StatusInternalServerError)
+		hr.StatusCode = http.StatusInternalServerError
 		goto end
 	}
 	if len(ls.Links) == 0 {
 		// TODO: Change to using a dismissible error
 		hr.HTML = safehtml.HTMLFromConstant("<div>No links for selection</div>")
-		hr.SetCode(http.StatusNoContent)
+		hr.StatusCode = http.StatusNoContent
 		goto end
 	}
 

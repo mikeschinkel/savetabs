@@ -32,6 +32,9 @@ type ServerInterface interface {
 	// Return a form for renaming an element targeted by a context menu item
 	// (GET /html/context-menu/{contextMenuType}/{id}/rename-form)
 	GetHtmlContextMenuContextMenuTypeIdRenameForm(w http.ResponseWriter, r *http.Request, contextMenuType ContextMenuType, id IdParameter)
+	// Update the database for the drag & drop types specified
+	// (POST /html/drag-drop)
+	PostHtmlDragDrop(w http.ResponseWriter, r *http.Request)
 	// HTML-formatted error
 	// (GET /html/error)
 	GetHtmlError(w http.ResponseWriter, r *http.Request, params GetHtmlErrorParams)
@@ -232,6 +235,21 @@ func (siw *ServerInterfaceWrapper) GetHtmlContextMenuContextMenuTypeIdRenameForm
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHtmlContextMenuContextMenuTypeIdRenameForm(w, r, contextMenuType, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// PostHtmlDragDrop operation middleware
+func (siw *ServerInterfaceWrapper) PostHtmlDragDrop(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostHtmlDragDrop(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -571,6 +589,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("GET "+options.BaseURL+"/html/alert", wrapper.GetHtmlAlert)
 	m.HandleFunc("GET "+options.BaseURL+"/html/context-menu/{contextMenuType}/{id}", wrapper.GetHtmlContextMenuContextMenuTypeId)
 	m.HandleFunc("GET "+options.BaseURL+"/html/context-menu/{contextMenuType}/{id}/rename-form", wrapper.GetHtmlContextMenuContextMenuTypeIdRenameForm)
+	m.HandleFunc("POST "+options.BaseURL+"/html/drag-drop", wrapper.PostHtmlDragDrop)
 	m.HandleFunc("GET "+options.BaseURL+"/html/error", wrapper.GetHtmlError)
 	m.HandleFunc("GET "+options.BaseURL+"/html/linkset", wrapper.GetHtmlLinkset)
 	m.HandleFunc("POST "+options.BaseURL+"/html/linkset", wrapper.PostHtmlLinkset)

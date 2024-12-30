@@ -27,7 +27,7 @@ import (
 
 const (
 	defaultPort = shared.DefaultPort
-	DBFile      = "./data/savetabs.db"
+	AppName     = "savetabs"
 )
 
 func main() {
@@ -47,7 +47,9 @@ func runServer(port *int) (err error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	err = storage.Initialize(ctx, DBFile)
+	err = storage.Initialize(ctx, storage.Args{
+		AppName: AppName,
+	})
 	if err != nil {
 		cancel()
 		goto end

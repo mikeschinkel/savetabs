@@ -41,7 +41,7 @@ func GetLinksetSuccessAlertHTML(ctx Context, linkIds []string) (HTMLResponse, er
 	hr := ui.NewHTMLResponse()
 	ids, err := ParseLinkIds(linkIds)
 	if err != nil {
-		hr.SetCode(http.StatusInternalServerError)
+		hr.StatusCode = http.StatusInternalServerError
 		goto end
 	}
 	hr = ui.GetLinksetSuccessAlertHTML(ctx, ids)

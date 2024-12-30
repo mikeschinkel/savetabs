@@ -50,7 +50,7 @@ func (a *API) PostLinksWithGroups(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case err == nil:
 		sendJSON(w, http.StatusOK, newJSONResponse(true))
-	case errors.Is(err, ErrFailedToUnmarshal):
+	case errors.Is(err, ErrUnmarshallingJSON):
 		sendJSON(w, http.StatusBadRequest, newJSONResponse(false))
 	case errors.Is(err, ErrFailedUpsertLinks):
 		// TODO: Break out errors for all different error types

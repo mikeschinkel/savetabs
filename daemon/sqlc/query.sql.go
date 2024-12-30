@@ -36,6 +36,34 @@ func (q *Queries) ArchiveLinks(ctx context.Context, linkIds []int64) error {
 	return err
 }
 
+const deleteLinkGroupMove = `-- name: DeleteLinkGroupMove :exec
+;
+
+
+DELETE
+FROM
+   link_group_move
+WHERE
+   id IN (/*SLICE:link_group_ids*/?)
+`
+
+// SELECT * FROM link_group_move_from_to
+// WHERE from_id IN (411,412,413,414,415,416,417,418,419,420) AND to_id IN (411,412,413,414,415,416,417,418,419,420);
+func (q *Queries) DeleteLinkGroupMove(ctx context.Context, linkGroupIds []int64) error {
+	query := deleteLinkGroupMove
+	var queryParams []interface{}
+	if len(linkGroupIds) > 0 {
+		for _, v := range linkGroupIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_group_ids*/?", strings.Repeat(",?", len(linkGroupIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_group_ids*/?", "NULL", 1)
+	}
+	_, err := q.db.ExecContext(ctx, query, queryParams...)
+	return err
+}
+
 const deleteVar = `-- name: DeleteVar :exec
 ;
 
@@ -109,6 +137,51 @@ type InsertContentParams struct {
 func (q *Queries) InsertContent(ctx context.Context, arg InsertContentParams) error {
 	_, err := q.db.ExecContext(ctx, insertContent, arg.LinkID, arg.Head, arg.Body)
 	return err
+}
+
+const insertLinkGroupMoveFromVarJSON = `-- name: InsertLinkGroupMoveFromVarJSON :many
+;
+
+INSERT INTO link_group_move (role, group_id, link_id)
+SELECT
+   CAST(IFNULL(JSON_EXTRACT(j.value, '$.group_role'), '') AS TEXT) AS role,
+   CAST(IFNULL(JSON_EXTRACT(j.value, '$.group_id'), 0) AS INTEGER) AS group_id,
+   CAST(IFNULL(JSON_EXTRACT(j.value, '$.link_id'), 0) AS INTEGER)  AS link_id
+FROM
+   var
+      JOIN JSON_EACH(var.value) j
+         ON var.key = 'json'
+WHERE
+   var.id = ?
+RETURNING role,id
+`
+
+type InsertLinkGroupMoveFromVarJSONRow struct {
+	Role string `json:"role"`
+	ID   int64  `json:"id"`
+}
+
+func (q *Queries) InsertLinkGroupMoveFromVarJSON(ctx context.Context, id int64) ([]InsertLinkGroupMoveFromVarJSONRow, error) {
+	rows, err := q.db.QueryContext(ctx, insertLinkGroupMoveFromVarJSON, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []InsertLinkGroupMoveFromVarJSONRow
+	for rows.Next() {
+		var i InsertLinkGroupMoveFromVarJSONRow
+		if err := rows.Scan(&i.Role, &i.ID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listFilteredLinks = `-- name: ListFilteredLinks :many
@@ -220,6 +293,52 @@ func (q *Queries) ListFilteredLinks(ctx context.Context, arg ListFilteredLinksPa
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGroupIds = `-- name: ListGroupIds :many
+;
+
+SELECT
+   id
+FROM
+   ` + "`" + `group` + "`" + `
+WHERE
+   id IN (/*SLICE:group_ids*/?)
+GROUP BY
+   id
+`
+
+func (q *Queries) ListGroupIds(ctx context.Context, groupIds []int64) ([]int64, error) {
+	query := listGroupIds
+	var queryParams []interface{}
+	if len(groupIds) > 0 {
+		for _, v := range groupIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:group_ids*/?", strings.Repeat(",?", len(groupIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:group_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -421,6 +540,134 @@ func (q *Queries) ListLatestUnparsedLinkURLs(ctx context.Context, arg ListLatest
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLinkGroupMoveExceptions = `-- name: ListLinkGroupMoveExceptions :many
+;
+
+SELECT
+   exception,
+   from_group_id,
+   from_group_name,
+   link_id,
+   link_url,
+   to_group_id,
+   to_group_name
+FROM
+   link_group_move_exceptions
+WHERE true
+   AND from_id IN (/*SLICE:from_ids*/?)
+   AND to_id IN (/*SLICE:to_ids*/?)
+`
+
+type ListLinkGroupMoveExceptionsParams struct {
+	FromIds []int64 `json:"from_ids"`
+	ToIds   []int64 `json:"to_ids"`
+}
+
+type ListLinkGroupMoveExceptionsRow struct {
+	Exception     string `json:"exception"`
+	FromGroupID   int64  `json:"from_group_id"`
+	FromGroupName string `json:"from_group_name"`
+	LinkID        int64  `json:"link_id"`
+	LinkUrl       string `json:"link_url"`
+	ToGroupID     int64  `json:"to_group_id"`
+	ToGroupName   string `json:"to_group_name"`
+}
+
+func (q *Queries) ListLinkGroupMoveExceptions(ctx context.Context, arg ListLinkGroupMoveExceptionsParams) ([]ListLinkGroupMoveExceptionsRow, error) {
+	query := listLinkGroupMoveExceptions
+	var queryParams []interface{}
+	if len(arg.FromIds) > 0 {
+		for _, v := range arg.FromIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:from_ids*/?", strings.Repeat(",?", len(arg.FromIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:from_ids*/?", "NULL", 1)
+	}
+	if len(arg.ToIds) > 0 {
+		for _, v := range arg.ToIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:to_ids*/?", strings.Repeat(",?", len(arg.ToIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:to_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLinkGroupMoveExceptionsRow
+	for rows.Next() {
+		var i ListLinkGroupMoveExceptionsRow
+		if err := rows.Scan(
+			&i.Exception,
+			&i.FromGroupID,
+			&i.FromGroupName,
+			&i.LinkID,
+			&i.LinkUrl,
+			&i.ToGroupID,
+			&i.ToGroupName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLinkIds = `-- name: ListLinkIds :many
+;
+
+SELECT
+   id
+FROM
+   link
+WHERE
+   id IN (/*SLICE:link_ids*/?)
+GROUP BY
+   id
+`
+
+func (q *Queries) ListLinkIds(ctx context.Context, linkIds []int64) ([]int64, error) {
+	query := listLinkIds
+	var queryParams []interface{}
+	if len(linkIds) > 0 {
+		for _, v := range linkIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:link_ids*/?", strings.Repeat(",?", len(linkIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:link_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -943,9 +1190,9 @@ const listLinksLite = `-- name: ListLinksLite :many
 
 SELECT
    id,
-   original_url AS url,
-   CAST(ifnull(created,0) AS INTEGER) AS created,
-   CAST(ifnull(visited,0) AS INTEGER) AS visited
+   original_url                        AS url,
+   CAST(IFNULL(created, 0) AS INTEGER) AS created,
+   CAST(IFNULL(visited, 0) AS INTEGER) AS visited
 FROM
    link
 WHERE
@@ -1350,6 +1597,86 @@ func (q *Queries) LoadLink(ctx context.Context, id int64) (LoadLinkRow, error) {
 	return i, err
 }
 
+const loadLinkGroupMoveStatus = `-- name: LoadLinkGroupMoveStatus :one
+;
+
+SELECT
+   IFNULL(all_links_missing+no_to_groups_found,0)<>0 AS error_exception,
+   all_links_missing, no_to_groups_found, link_count, link_exceptions, from_group_exception, to_group_exception, from_link_group_exceptions, to_link_group_exceptions
+FROM (
+   SELECT
+      IFNULL(COUNT(*) - SUM(link_found), 0) = 0                         AS all_links_missing,
+      IFNULL(SUM(to_group_found), 0) = 0                                AS no_to_groups_found,
+      IFNULL(COUNT(*), 0)                                               AS link_count,
+      IFNULL(COUNT(*) - SUM(link_found), 0)                             AS link_exceptions,
+      IFNULL(COUNT(*) - SUM(from_group_found), 0) <> 0                  AS from_group_exception,
+      IFNULL(COUNT(*) - SUM(to_group_found), 0) <> 0                    AS to_group_exception,
+      CAST(IFNULL(COUNT(*) - SUM(from_link_group_found), 0) AS INTEGER) AS from_link_group_exceptions,
+      CAST(IFNULL(SUM(to_link_group_found), 0) AS INTEGER)              AS to_link_group_exceptions
+   --SELECT *
+   FROM
+      link_group_move_from_to
+   WHERE
+      TRUE
+      AND from_id IN (/*SLICE:from_ids*/?)
+      AND to_id IN (/*SLICE:to_ids*/?)
+      -- AND from_id IN (461, 462, 463, 464, 465)
+      -- AND to_id IN (466, 467, 468, 469, 470)
+)x
+`
+
+type LoadLinkGroupMoveStatusParams struct {
+	FromIds []int64 `json:"from_ids"`
+	ToIds   []int64 `json:"to_ids"`
+}
+
+type LoadLinkGroupMoveStatusRow struct {
+	ErrorException          bool        `json:"error_exception"`
+	AllLinksMissing         bool        `json:"all_links_missing"`
+	NoToGroupsFound         bool        `json:"no_to_groups_found"`
+	LinkCount               interface{} `json:"link_count"`
+	LinkExceptions          interface{} `json:"link_exceptions"`
+	FromGroupException      bool        `json:"from_group_exception"`
+	ToGroupException        bool        `json:"to_group_exception"`
+	FromLinkGroupExceptions int64       `json:"from_link_group_exceptions"`
+	ToLinkGroupExceptions   int64       `json:"to_link_group_exceptions"`
+}
+
+func (q *Queries) LoadLinkGroupMoveStatus(ctx context.Context, arg LoadLinkGroupMoveStatusParams) (LoadLinkGroupMoveStatusRow, error) {
+	query := loadLinkGroupMoveStatus
+	var queryParams []interface{}
+	if len(arg.FromIds) > 0 {
+		for _, v := range arg.FromIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:from_ids*/?", strings.Repeat(",?", len(arg.FromIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:from_ids*/?", "NULL", 1)
+	}
+	if len(arg.ToIds) > 0 {
+		for _, v := range arg.ToIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:to_ids*/?", strings.Repeat(",?", len(arg.ToIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:to_ids*/?", "NULL", 1)
+	}
+	row := q.db.QueryRowContext(ctx, query, queryParams...)
+	var i LoadLinkGroupMoveStatusRow
+	err := row.Scan(
+		&i.ErrorException,
+		&i.AllLinksMissing,
+		&i.NoToGroupsFound,
+		&i.LinkCount,
+		&i.LinkExceptions,
+		&i.FromGroupException,
+		&i.ToGroupException,
+		&i.FromLinkGroupExceptions,
+		&i.ToLinkGroupExceptions,
+	)
+	return i, err
+}
+
 const loadLinkIdByUrl = `-- name: LoadLinkIdByUrl :one
 ;
 
@@ -1418,9 +1745,12 @@ SET
 WHERE
    TRUE
    AND id NOT IN (
-      SELECT lg.link_id
-      FROM link_group lg
-      WHERE lg.group_id = ?
+      SELECT
+         lg.link_id
+      FROM
+         link_group lg
+      WHERE
+         lg.group_id = ?
       )
    AND id IN (
       SELECT lg.link_id FROM link_group lg WHERE lg.group_id IN (/*SLICE:group_ids*/?)
@@ -1485,10 +1815,11 @@ const moveLinksToGroup = `-- name: MoveLinksToGroup :many
 UPDATE link_group
 SET
    group_id = ?,
-   latest = STRFTIME('%s', 'now')
-WHERE true
-  AND group_id = ?
-  AND link_id IN (/*SLICE:link_ids*/?)
+   latest   = STRFTIME('%s', 'now')
+WHERE
+   TRUE
+   AND group_id = ?
+   AND link_id IN (/*SLICE:link_ids*/?)
 RETURNING id
 `
 
@@ -1791,46 +2122,29 @@ func (q *Queries) UpsertVar(ctx context.Context, arg UpsertVarParams) (int64, er
 	return id, err
 }
 
-const validateGroup = `-- name: ValidateGroup :one
-;
-
-SELECT
-   CASE WHEN COUNT(id)=0 THEN 0 ELSE 1 END AS group_exists
-FROM
-   ` + "`" + `group` + "`" + `
-WHERE id = ?
-`
-
-func (q *Queries) ValidateGroup(ctx context.Context, id int64) (int64, error) {
-	row := q.db.QueryRowContext(ctx, validateGroup, id)
-	var group_exists int64
-	err := row.Scan(&group_exists)
-	return group_exists, err
-}
-
-const validateLinks = `-- name: ValidateLinks :many
+const validateGroups = `-- name: ValidateGroups :many
 ;
 
 SELECT
    id
 FROM
-   link
+   ` + "`" + `group` + "`" + `
 WHERE
-   id IN (/*SLICE:link_ids*/?)
+   id IN (/*SLICE:group_ids*/?)
 GROUP BY
    id
 `
 
-func (q *Queries) ValidateLinks(ctx context.Context, linkIds []int64) ([]int64, error) {
-	query := validateLinks
+func (q *Queries) ValidateGroups(ctx context.Context, groupIds []int64) ([]int64, error) {
+	query := validateGroups
 	var queryParams []interface{}
-	if len(linkIds) > 0 {
-		for _, v := range linkIds {
+	if len(groupIds) > 0 {
+		for _, v := range groupIds {
 			queryParams = append(queryParams, v)
 		}
-		query = strings.Replace(query, "/*SLICE:link_ids*/?", strings.Repeat(",?", len(linkIds))[1:], 1)
+		query = strings.Replace(query, "/*SLICE:group_ids*/?", strings.Repeat(",?", len(groupIds))[1:], 1)
 	} else {
-		query = strings.Replace(query, "/*SLICE:link_ids*/?", "NULL", 1)
+		query = strings.Replace(query, "/*SLICE:group_ids*/?", "NULL", 1)
 	}
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {

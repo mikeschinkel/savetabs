@@ -90,7 +90,7 @@ func GetMenuHTML(ctx Context, p HTMLMenuParams) (hr HTMLResponse, err error) {
 		Type: menuType,
 	})
 	if err != nil {
-		hr.SetCode(http.StatusInternalServerError)
+		hr.StatusCode = http.StatusInternalServerError
 		goto end
 	}
 
@@ -108,7 +108,7 @@ func GetMenuHTML(ctx Context, p HTMLMenuParams) (hr HTMLResponse, err error) {
 
 	hr.HTML, err = menuTemplate.ExecuteToHTML(hm)
 	if err != nil {
-		hr.SetCode(http.StatusInternalServerError)
+		hr.StatusCode = http.StatusInternalServerError
 		goto end
 	}
 end:
