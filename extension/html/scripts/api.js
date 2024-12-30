@@ -14,7 +14,7 @@ function apiLinkByURLEndpoint(url) {
    return `${getApiServerUrl()}/links/by-url/${url}`
 }
 function apiDragDropEndpoint() {
-   return `${getApiServerUrl()}/drag-drop`
+   return `${getApiServerUrl()}/html/drag-drop`
 }
 function apiLinkEndpoint(id) {
    return `${getApiServerUrl()}/links/${id}`
@@ -88,6 +88,7 @@ export function apiPutLabel(label) {
    let endpoint;
    if (label.hasOwnProperty('id') && label.id) {
       endpoint = apiLabelEndpoint(label.id)
+   } else {
       throw new Error(`Label does not have an '.id' property.`)
    }
    httpPut(endpoint, label)
