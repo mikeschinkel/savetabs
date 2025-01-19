@@ -1,6 +1,75 @@
 # SaveTabs
 
-SaveTabs is a Chrome extension and local daemon used for keeping track of your tabs and tab groups in Chrome to make sure you never loose the URLs you have visited and grouped into tabs. 
+SaveTabs is a Chrome extension and local daemon used for keeping track of your tabs and tab 
+groups in Chrome and Edge to make sure you never loose the URLs you have visited and grouped into 
+tabs. 
+
+## Feedback Welcome
+Although this is a work-in-progress, I would like to see it become a useful solution for 
+myself and others where we can own all our own data. 
+
+Any feedback or questions in the form of [issues](https://github.com/mikeschinkel/savetabs/issues) or 
+[discussions](https://github.com/mikeschinkel/savetabs/discussions) is welcome. 
+
+
+## Prerequisites
+
+AFAIK, the only prerequisites are:
+
+1. macOS _(tested)_, Linux _(untested)_, or Windows WSL _(untested)_. 
+2. The latest version of Go in your path
+3. Chrome and/or Edge browsers installed
+
+However, as I have only ever run this on my machine I may be forgetting something. Please file 
+an issue, start a discussion, and/or submit a PR if you discover something I missed.
+
+## Running the Daemon
+
+To build and run the daemon:
+
+```shell
+git clone https://github.com/mikeschinkel/savetabs
+cd savetabs
+make
+```
+
+## Installing the Browser Extension
+
+Assuming you've cloned this Git repo as in the instructions for running the Daemon:
+
+1. Open **Google Chrome** or **Microsoft Edge**
+2. Open `chrome://extensions` or `edge://extensions`, as applicable
+3. Enable Developer mode by toggling the switch:
+   1. In the top-right corner _(Chrome)_, or  
+   2. On the left sidebar _(Edge)_ 
+4. Click the _"Load unpacked"_ button that appears
+5. Navigate to the `extension` directory inside your cloned repository
+6. Select the directory (don't select any files inside it, just the directory itself)
+7. Click _"Select Folder" (Windows)_ or _"Open" (Mac)_
+8. The extension should now appear in your extensions list
+9. You can pin it to your toolbar by clicking the puzzle piece icon, or in the 
+   toolbar and clicking the pin icon next to the extension
+
+### Troubleshooting
+
+If you see any errors during installation, check that:
+* You're selecting the `./extensions` directory of the repo, aka the one that contains the 
+  `manifest.json` file
+* The `manifest.json` file is still properly formatted
+* All referenced files in the manifest exist in the directory
+
+If the extension still does not appear to work:
+* Check the extension's error console in the extensions page
+* Try disabling and re-enabling the extension
+* Ensure all permissions requested by the extension are granted
+
+### Updating the Extension
+
+When you want to update the extension with new changes:
+1. Pull the latest changes from the repository
+2. Go to the extensions page in your browser
+3. Find the extension and click the refresh icon
+4. The extension will reload with the latest changes
 
 ## To Do
 
