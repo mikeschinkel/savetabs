@@ -1,2 +1,0 @@
-# SaveTabs Chrome Extension
-
