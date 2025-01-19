@@ -6,12 +6,12 @@ DIR="/Volumes/Backups/Projects/savetabs"
 PREFIX="savetabs"
 
 function ensure_backups_volume_exists {
-  mount | grep -q "^${MOUNT_POINT} " || {
-     printf "Mount %s does not exist at %s\n" \
+  if ! /sbin/mount | grep -q "${MOUNT_POINT} "; then
+    printf "Mount %s does not exist at %s\n" \
       "${MOUNT_POINT}" \
       "$(date)" >> "$ERROR_LOG"
-     exit
-  }
+    exit
+  fi
 }
 function hash {
   local file="$1"
@@ -26,13 +26,12 @@ function main {
   local dstFile
   local logFile
   srcFile="${HOME}/.config/savetabs/savetabs.db"
-  dstFile="${DIR}/${PREFIX}-$(date "+%Y-%m-%d_%H_%M").db"
+  dstFile="${DIR}/${PREFIX}-$(date "+%Y-%m-%d_%H").db"
   logFile="${DIR}log.txt"
 
   ensure_backups_volume_exists
 
   latestFile="$(latestFile)"
-
 
   srcHash="$(hash "${srcFile}")"
   latestHash="$(hash "${latestFile}")"
