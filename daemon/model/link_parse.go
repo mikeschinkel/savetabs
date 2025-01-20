@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"log/slog"
 	"net/url"
 	"regexp"
@@ -36,7 +37,7 @@ func NewParsedLink(ul UnparsedLink) (link ParsedLink) {
 	if u == nil {
 		msg := "UnparsedLink.URL is nil, but should contain an instantiated *url.URL."
 		slog.Error(msg, "url", ul.OriginalURL)
-		shared.Panicf(msg+" For URL '%s'", ul.OriginalURL)
+		panic(fmt.Sprintf(msg+" For URL '%s'", ul.OriginalURL))
 	}
 	link = ParsedLink{
 		url: u,

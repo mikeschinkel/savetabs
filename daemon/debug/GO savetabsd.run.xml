@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="GO savetabsd" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="savetabs" />
-    <working_directory value="$PROJECT_DIR$/" />
-    <go_parameters value="-o ../../bin/savetabsd" />
+    <working_directory value="$PROJECT_DIR$/daemon" />
+    <go_parameters value="-o ../bin/savetabsd" />
     <useCustomBuildTags value="true" />
     <EXTENSION ID="net.ashald.envfile">
       <option name="IS_ENABLED" value="false" />
@@ -14,11 +14,11 @@
         <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
       </ENTRIES>
     </EXTENSION>
-    <kind value="PACKAGE" />
+    <kind value="FILE" />
     <package value="savetabsd" />
     <directory value="$PROJECT_DIR$/daemon/cmd/savetabsd" />
-    <filePath value="$PROJECT_DIR$/cmd/savetabsd/main.go|$PROJECT_DIR$/daemon/cmd/savetabsd/main.go|$PROJECT_DIR$/daemon/cmd/savetabsd/main.go" />
-    <output_directory value="$PROJECT_DIR$/../bin" />
+    <filePath value="$PROJECT_DIR$/daemon/cmd/savetabsd/main.go" />
+    <output_directory value="$PROJECT_DIR$/daemon/bin" />
     <method v="2" />
   </configuration>
 </component>

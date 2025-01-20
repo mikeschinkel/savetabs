@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/mikeschinkel/savetabs/daemon"
 	"github.com/mikeschinkel/savetabs/daemon/sqlc"
-	"savetabs"
 )
 
 var _ DataStore = (*SqliteDataStore)(nil)
@@ -38,8 +38,6 @@ func NewSqliteDataStore(args Args) DataStore {
 func (ds *SqliteDataStore) Initialize(ctx context.Context) (err error) {
 	var configDir string
 
-	slog.Info("Initializing data store", "data_store", ds.Filepath())
-
 	configDir, err = os.UserConfigDir()
 	if err != nil {
 		err = ErrFailedToGetConfigPath
@@ -54,6 +52,10 @@ func (ds *SqliteDataStore) Initialize(ctx context.Context) (err error) {
 		)
 	}
 	ds.path = configDir
+
+	slog.Info("Initializing data store",
+		"data_store", relativeToHomeDir(ds.Filepath()),
+	)
 
 	err = ds.Open()
 	if err != nil {
@@ -83,4 +85,16 @@ func (ds *SqliteDataStore) Queries(dbtx sqlc.DBTX) *sqlc.Queries {
 
 func (ds *SqliteDataStore) DB() sqlc.DBTX {
 	return ds.db
+}
+
+func relativeToHomeDir(fp string) string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic("Unable to get user home directory")
+	}
+	rel, err := filepath.Rel(home, fp)
+	if err != nil {
+		panicf("Unable to get relative path to %s", fp)
+	}
+	return "~/" + rel
 }

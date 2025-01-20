@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"strings"
 
-	""github.com/mikeschinkel/savetabs/daemon/model"
+	"github.com/mikeschinkel/savetabs/daemon/model"
 	"golang.org/x/net/html"
 )
 
@@ -42,7 +42,7 @@ end:
 }
 
 func parseHTMLFragment(elem string, node *html.Node) (hf model.HTMLFragment, err error) {
-	if node.Data == "head" {
+	if node.Data == elem {
 		b := bytes.Buffer{}
 		err = html.Render(&b, node)
 		if err != nil {

@@ -9,7 +9,7 @@ require (
 	github.com/google/safehtml v0.1.0
 	github.com/oapi-codegen/nethttp-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
-	golang.org/x/net v0.24.0
+	golang.org/x/net v0.19.0
 )
 
 require (
