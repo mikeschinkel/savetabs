@@ -13,7 +13,7 @@ run-daemon: build-daemon
 build-daemon:
 	mkdir -p $(DAEMON_BIN_DIR)
 	cd $(DAEMON_CMD_DIR) \
-		&& go work use \
+	  	&& go mod tidy \
 		&& go build -o $(DAEMON_BIN) $(DAEMON_SRC)
 
 # Clean up the build artifacts

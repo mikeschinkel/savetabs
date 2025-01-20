@@ -5,9 +5,9 @@ go 1.23.5
 require github.com/mattn/go-sqlite3 v1.14.22
 
 require (
-	github.com/getkin/kin-openapi v0.123.0
+	github.com/getkin/kin-openapi v0.124.0
 	github.com/google/safehtml v0.1.0
-	github.com/oapi-codegen/nethttp-middleware v1.0.1
+	github.com/oapi-codegen/nethttp-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	golang.org/x/net v0.24.0
 )
@@ -27,3 +27,7 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/google/safehtml v0.1.0 => github.com/mikeschinkel/safehtml v0.1.0-alpha.0
+
+replace github.com/oapi-codegen/nethttp-middleware v1.0.2 => github.com/mikeschinkel/nethttp-middleware v1.1.0-alpha.0

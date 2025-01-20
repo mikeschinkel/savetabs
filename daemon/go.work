@@ -1,8 +1,0 @@
-go 1.23.5
-
-use (
-	.
-	../../nethttp-middleware
-	../../safehtml
-	cmd/savetabsd
-)
