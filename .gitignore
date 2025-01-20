@@ -2,3 +2,5 @@
 /extension/html/styles/dist.css
 go.work
 go.work.sum
+*.save
+**.save
