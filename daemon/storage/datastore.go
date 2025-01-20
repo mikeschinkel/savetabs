@@ -70,7 +70,12 @@ end:
 }
 
 func (ds *SqliteDataStore) Open() (err error) {
+	err = os.MkdirAll(filepath.Dir(ds.Filepath()), os.ModePerm)
+	if err != nil {
+		goto end
+	}
 	ds.db, err = sql.Open("sqlite3", ds.Filepath())
+end:
 	return err
 }
 
