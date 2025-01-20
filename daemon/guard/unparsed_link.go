@@ -1,8 +1,8 @@
 package guard
 
 import (
-	"savetabs/model"
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/model"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 type UnparsedLink model.UnparsedLink

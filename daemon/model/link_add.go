@@ -3,7 +3,7 @@ package model
 import (
 	"net/url"
 
-	"savetabs/storage"
+	"github.com/mikeschinkel/savetabs/daemon/storage"
 )
 
 type LinkToAdd struct {

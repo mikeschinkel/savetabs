@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"strconv"
 
-	"savetabs/model"
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/model"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 type UpsertLinkArgs struct {

@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strings"
 
-	"savetabs/guard"
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/guard"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 const (

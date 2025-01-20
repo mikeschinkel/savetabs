@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"savetabs/model"
-	"savetabs/shared"
-	"savetabs/ui"
+	"github.com/mikeschinkel/savetabs/daemon/model"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
+	"github.com/mikeschinkel/savetabs/daemon/ui"
 )
 
 type ApplyDragDropArgs struct {

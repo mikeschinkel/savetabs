@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"savetabs/shared"
-	"savetabs/sqlc"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
+	"github.com/mikeschinkel/savetabs/daemon/sqlc"
 )
 
 type UpsertLinkset struct {

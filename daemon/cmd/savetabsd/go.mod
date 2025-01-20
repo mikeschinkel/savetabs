@@ -1,4 +1,4 @@
-module savetabsd
+module github.com/mikeschinkel/savetabsd
 
 go 1.23
 
@@ -15,3 +15,5 @@ require (
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/mikeschinkel/savetabs/daemon v0.0.0-20250120005644-2dfa35fe0df2 => ../../../daemon

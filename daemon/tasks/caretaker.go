@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"time"
 
-	"savetabs/guard"
+	"github.com/mikeschinkel/savetabs/daemon/guard"
 )
 
 type unparsedLink guard.UnparsedLink

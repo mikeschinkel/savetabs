@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log/slog"
 
-	"savetabs/sqlc"
+	"github.com/mikeschinkel/savetabs/daemon/sqlc"
 )
 
 type NestedDBTX struct {

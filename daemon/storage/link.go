@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"slices"
 
-	"savetabs/sqlc"
+	"github.com/mikeschinkel/savetabs/daemon/sqlc"
 )
 
 type UpsertLink struct {

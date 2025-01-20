@@ -7,8 +7,8 @@ import (
 	"regexp"
 
 	"github.com/google/safehtml"
-	"savetabs/shared"
-	"savetabs/ui"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
+	"github.com/mikeschinkel/savetabs/daemon/ui"
 )
 
 type MenuItem struct {

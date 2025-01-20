@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"net/url"
 
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 type LinkWithGroup struct {

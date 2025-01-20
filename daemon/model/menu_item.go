@@ -1,7 +1,7 @@
 package model
 
 import (
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 type MenuItem struct {

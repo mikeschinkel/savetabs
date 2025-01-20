@@ -1,4 +1,4 @@
-module savetabs
+module github.com/mikeschinkel/savetabs/daemon
 
 go 1.23.5
 

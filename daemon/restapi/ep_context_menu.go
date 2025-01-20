@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"strings"
 
-	"savetabs/guard"
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/guard"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 func (a *API) PutContextMenuContextMenuTypeIdName(w http.ResponseWriter, r *http.Request, contextMenuType ContextMenuType, id IdParameter) {

@@ -3,7 +3,7 @@ package guard
 import (
 	"context"
 
-	"savetabs/ui"
+	"github.com/mikeschinkel/savetabs/daemon/ui"
 )
 
 type Context = context.Context

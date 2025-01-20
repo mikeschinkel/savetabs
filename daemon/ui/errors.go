@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 type HttpError struct {

@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"savetabs/shared"
-	"savetabs/sqlc"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
+	"github.com/mikeschinkel/savetabs/daemon/sqlc"
 )
 
 type GroupTypes struct {

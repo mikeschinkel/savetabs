@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/google/safehtml"
-	"savetabs/guard"
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/guard"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 type dragDropItems struct {

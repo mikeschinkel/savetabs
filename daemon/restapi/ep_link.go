@@ -8,8 +8,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"savetabs/guard"
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/guard"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 type link struct {

@@ -6,7 +6,7 @@ package ui
 //	"strings"
 //
 //	"github.com/google/safehtml"
-//	"savetabs/shared"
+//	"github.com/mikeschinkel/savetabs/daemon/shared"
 //)
 //
 //type htmlGroup struct {

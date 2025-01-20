@@ -11,8 +11,8 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
-	"savetabs/shared"
 )
 
 type swagger = openapi3.T

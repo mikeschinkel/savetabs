@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/url"
 
-	"savetabs/shared"
-	"savetabs/sqlc"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
+	"github.com/mikeschinkel/savetabs/daemon/sqlc"
 )
 
 type UnparsedLink struct {

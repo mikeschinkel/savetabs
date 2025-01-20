@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/google/safehtml"
-	"savetabs/model"
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/model"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 var _ shared.MenuItemParent = (*HTMLMenu)(nil)

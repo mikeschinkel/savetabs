@@ -1,7 +1,7 @@
 package guard
 
 import (
-	"savetabs/model"
+	"github.com/mikeschinkel/savetabs/daemon/model"
 )
 
 func LoadGroupName(ctx Context, groupId int64) (name string, err error) {

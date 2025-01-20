@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"savetabs/sqlc"
+	"github.com/mikeschinkel/savetabs/daemon/sqlc"
 )
 
 func UpsertLinksFromJSON(ctx context.Context, db *NestedDBTX, linksJSON string) (err error) {

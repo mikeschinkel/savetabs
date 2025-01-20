@@ -1,8 +1,8 @@
 package model
 
 import (
-	"savetabs/shared"
-	"savetabs/storage"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
+	"github.com/mikeschinkel/savetabs/daemon/storage"
 )
 
 func init() {

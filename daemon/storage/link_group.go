@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	"savetabs/shared"
-	"savetabs/sqlc"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
+	"github.com/mikeschinkel/savetabs/daemon/sqlc"
 )
 
 type LinkGroup struct {

@@ -3,7 +3,7 @@ package storage
 import (
 	"errors"
 
-	"savetabs/sqlc"
+	"github.com/mikeschinkel/savetabs/daemon/sqlc"
 )
 
 type ContentToInsert struct {

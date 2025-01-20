@@ -19,10 +19,10 @@ import (
 	"syscall"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"savetabs/restapi"
-	"savetabs/shared"
-	"savetabs/storage"
-	"savetabs/tasks"
+	"github.com/mikeschinkel/savetabs/daemon/restapi"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
+	"github.com/mikeschinkel/savetabs/daemon/storage"
+	"github.com/mikeschinkel/savetabs/daemon/tasks"
 )
 
 const (

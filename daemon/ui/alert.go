@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/google/safehtml"
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 type Message struct {

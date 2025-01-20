@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"strings"
 
+	""github.com/mikeschinkel/savetabs/daemon/model"
 	"golang.org/x/net/html"
-	"savetabs/model"
 )
 
 func ParseContent(h string) (c model.Content, err error) {

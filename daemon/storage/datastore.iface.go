@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"savetabs/sqlc"
+	"github.com/mikeschinkel/savetabs/daemon/sqlc"
 )
 
 type DataStore interface {

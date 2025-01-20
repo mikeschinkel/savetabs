@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/mikeschinkel/savetabs/daemon/sqlc"
 	"savetabs"
-	"savetabs/sqlc"
 )
 
 var _ DataStore = (*SqliteDataStore)(nil)

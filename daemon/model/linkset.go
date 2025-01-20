@@ -1,7 +1,7 @@
 package model
 
 import (
-	"savetabs/storage"
+	"github.com/mikeschinkel/savetabs/daemon/storage"
 )
 
 type LinksetToAdd storage.UpsertLinkset

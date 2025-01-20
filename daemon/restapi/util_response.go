@@ -9,8 +9,8 @@ import (
 	"net/http"
 
 	"github.com/google/safehtml"
-	"savetabs/guard"
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/guard"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 //goland:noinspection GoUnnecessarilyExportedIdentifiers

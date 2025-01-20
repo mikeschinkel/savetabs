@@ -2,7 +2,7 @@ package ui
 
 import (
 	"github.com/google/safehtml"
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 type IconState struct {

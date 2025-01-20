@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"savetabs/shared"
-	"savetabs/storage"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
+	"github.com/mikeschinkel/savetabs/daemon/storage"
 )
 
 type UnparsedLink storage.UnparsedLink

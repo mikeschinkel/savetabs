@@ -3,8 +3,8 @@ package ui
 import (
 	"testing"
 
-	"savetabs/model"
-	"savetabs/shared"
+	"github.com/mikeschinkel/savetabs/daemon/model"
+	"github.com/mikeschinkel/savetabs/daemon/shared"
 )
 
 var APIURL = shared.MakeSafeURL("http://localhost:8642")

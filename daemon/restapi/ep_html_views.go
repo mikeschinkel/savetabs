@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"savetabs/guard"
+	"github.com/mikeschinkel/savetabs/daemon/guard"
 )
 
 func (a *API) GetHtmlContextMenuContextMenuTypeId(w http.ResponseWriter, r *http.Request, contextMenuType ContextMenuType, id IdParameter) {
