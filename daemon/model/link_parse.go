@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"log/slog"
 	"net/url"
 	"regexp"
@@ -18,7 +17,13 @@ type ParsedLink struct {
 	IsIP         bool
 	IsLocal      bool
 	HasSubdomain bool
+	valid        bool
 	storage.ParsedLink
+}
+
+func (l *ParsedLink) IsValid() bool {
+	return l.valid
+
 }
 
 var matchIPv4Address = regexp.MustCompile(`^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4})$`)
@@ -26,19 +31,24 @@ var matchIPv4Address = regexp.MustCompile(`^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?
 // NewParsedLink returns a new ParsedLink given an UnparsedLink.
 // TODO: Handle `co.uk`, etc.
 func NewParsedLink(ul UnparsedLink) (link ParsedLink) {
+	var u *url.URL
+	var hn string
+	var cnt int
+
 	// Check pre-conditions for the parameter.
 	// Given the app's architecture, these should never fail, but if they do it is a programming error.
 	if ul.OriginalURL == "" {
-		msg := "UnparsedLink.OriginalURL should not be empty."
-		slog.Error(msg)
-		panic(msg)
+		slog.Error("UnparsedLink.OriginalURL should not be empty.")
+		goto end
 	}
-	u := ul.URL
+	u = ul.URL
 	if u == nil {
-		msg := "UnparsedLink.URL is nil, but should contain an instantiated *url.URL."
-		slog.Error(msg, "url", ul.OriginalURL)
-		panic(fmt.Sprintf(msg+" For URL '%s'", ul.OriginalURL))
+		slog.Error("UnparsedLink.URL is nil, but should contain an instantiated *url.URL.",
+			"url", ul.OriginalURL,
+		)
+		goto end
 	}
+	link.valid = true
 	link = ParsedLink{
 		url: u,
 		ParsedLink: storage.ParsedLink{
@@ -51,8 +61,8 @@ func NewParsedLink(ul UnparsedLink) (link ParsedLink) {
 			Fragment:    strings.ReplaceAll(u.Fragment, "%20", "+"),
 		},
 	}
-	hn := u.Hostname()
-	cnt := strings.Count(hn, ".")
+	hn = u.Hostname()
+	cnt = strings.Count(hn, ".")
 	switch {
 	case cnt == 0:
 		// When link is like 'localhost', or 'my_app'
