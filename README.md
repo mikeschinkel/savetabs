@@ -18,6 +18,7 @@ AFAIK, the only prerequisites are:
 
 1. macOS _(tested)_, Linux _(untested)_, or Windows WSL _(untested)_. 
 2. The latest version of Go in your path
+2. A recent version of [tailwindcss CLI](https://tailwindcss.com/blog/standalone-cli) in your path
 3. Chrome and/or Edge browsers installed
 
 However, as I have only ever run this on my machine I may be forgetting something. Please file 
